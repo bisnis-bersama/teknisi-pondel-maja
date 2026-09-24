@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FIXZY | Pesan WhatsApp</title>
+<style>
+#fixzy-wa-page{
+  --b:#0b0f14;--y:#ffc107;--bg:#eef2f6;--g:#16a34a;
+  width:100%;max-width:100%;min-width:0;
+  margin:0;padding:0;
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;color:#111827;
+  overflow-x:hidden;
+}
+#fixzy-wa-page *,#fixzy-wa-page *::before,#fixzy-wa-page *::after{box-sizing:border-box}
+#fixzy-wa-page .wa-bg{
+  width:100%;min-width:0;max-width:1100px;margin:0 auto;
+  padding:18px 12px 32px;
+  position:relative;
+}
+#fixzy-wa-page .wa-bg::before{
+  content:"FIXZY  •  FIXZY  •  FIXZY  •  FIXZY";
+  position:fixed;inset:-20%;z-index:0;
+  font-size:52px;font-weight:900;line-height:2.1;letter-spacing:5px;
+  transform:rotate(-18deg);color:rgba(17,24,39,.035);
+  white-space:pre-wrap;pointer-events:none;
+}
+#fixzy-wa-page .wa-content{position:relative;z-index:1;width:100%;min-width:0}
+#fixzy-wa-page .wa-page-head{
+  background:var(--b);color:#fff;border-bottom:3px solid var(--y);
+  border-radius:12px;padding:14px 16px;margin-bottom:12px;
+  box-shadow:4px 4px 0 #111827;
+}
+#fixzy-wa-page .wa-page-head h1{margin:0;font-size:19px;font-weight:900}
+#fixzy-wa-page .wa-page-head p{margin:4px 0 0;font-size:11px;color:#cbd5e1;font-weight:700}
+#fixzy-wa-page .wa-notice{
+  font-size:12px;font-weight:800;color:#64748b;margin:0 0 10px;
+}
+#fixzy-wa-page .wa-notice.ok{color:#15803d}
+#fixzy-wa-page .wa-notice.err{color:#dc2626}
+#fixzy-wa-page .wa-card{
+  width:100%;min-width:0;background:rgba(255,255,255,.97);
+  border:2px solid #111827;border-radius:12px;padding:15px;
+  margin-bottom:14px;box-shadow:4px 4px 0 #111827;
+}
+#fixzy-wa-page .wa-title{
+  font-size:16px;font-weight:900;color:#111827;
+  border-bottom:2px solid #111827;padding-bottom:9px;margin-bottom:12px;
+}
+#fixzy-wa-page .wa-tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;
+}
+#fixzy-wa-page button{
+  appearance:none;-webkit-appearance:none;
+  font:inherit;
+}
+#fixzy-wa-page .wa-btn{
+  min-width:0;width:100%;
+  border:2px solid #111827;border-radius:9px;padding:11px 12px;
+  font-weight:900;cursor:pointer;box-shadow:3px 3px 0 #111827;
+  background:#fff;color:#111827;
+}
+#fixzy-wa-page .wa-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #111827}
+#fixzy-wa-page .wa-tab.active{background:var(--y)}
+#fixzy-wa-page .wa-info{
+  font-size:11px;color:#64748b;line-height:1.5;margin-top:9px;
+}
+#fixzy-wa-page .wa-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;min-width:0;
+}
+#fixzy-wa-page .wa-field{min-width:0;width:100%}
+#fixzy-wa-page .wa-full{grid-column:1/-1}
+#fixzy-wa-page label{
+  display:block;font-size:11px;font-weight:900;color:#4b5563;margin-bottom:5px;
+}
+#fixzy-wa-page input,#fixzy-wa-page textarea{
+  display:block;width:100%;max-width:100%;min-width:0;
+  padding:11px;border:2px solid #111827;border-radius:8px;
+  background:#fff;color:#111827;font:inherit;box-shadow:2px 2px 0 #111827;
+}
+#fixzy-wa-page input{height:46px}
+#fixzy-wa-page textarea{min-height:150px;resize:vertical;line-height:1.5}
+#fixzy-wa-page #waPreview{min-height:260px}
+#fixzy-wa-page .wa-actions{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:10px;
+}
+#fixzy-wa-page .wa-primary{background:#111827;color:#fff}
+#fixzy-wa-page .wa-green{background:#16a34a;color:#fff}
+#fixzy-wa-page .wa-secondary{background:#e5e7eb}
+#fixzy-wa-page .hidden{display:none!important}
+@media(max-width:650px){
+  #fixzy-wa-page .wa-bg{padding:12px 8px 24px}
+  #fixzy-wa-page .wa-page-head{border-radius:10px;padding:12px}
+  #fixzy-wa-page .wa-page-head h1{font-size:17px}
+  #fixzy-wa-page .wa-card{padding:12px}
+  #fixzy-wa-page .wa-grid{grid-template-columns:1fr}
+  #fixzy-wa-page .wa-full{grid-column:auto}
+  #fixzy-wa-page .wa-tabs{grid-template-columns:1fr}
+  #fixzy-wa-page .wa-actions{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="fixzy-wa-page">
+  <div class="wa-bg">
+    <div class="wa-content">
+      <div class="wa-page-head">
+        <h1>Pesan WhatsApp FIXZY</h1>
+        <p>Buat pesan pembukaan order dan promosi dengan cepat.</p>
+      </div>
+
+      <div id="waNotice" class="wa-notice">Siap membuat pesan WhatsApp.</div>
+
+      <div class="wa-card">
+        <div class="wa-title">JENIS PESAN WHATSAPP</div>
+        <div class="wa-tabs">
+          <button type="button" class="wa-btn wa-tab active" data-type="order">📦 PEMBUKAAN ORDER</button>
+          <button type="button" class="wa-btn wa-tab" data-type="promo">📣 PROMOSI PRODUK</button>
+        </div>
+        <div class="wa-info">Pilih jenis pesan, isi informasi, cek preview, lalu salin atau buka WhatsApp.</div>
+      </div>
+
+      <section id="waOrderCard" class="wa-card">
+        <div class="wa-title">📦 PEMBUKAAN ORDER</div>
+        <div class="wa-grid">
+          <div class="wa-field">
+            <label>HARI ORDER</label>
+            <input id="orderDays" value="Minggu – Selasa" placeholder="Contoh: Minggu – Selasa">
+          </div>
+          <div class="wa-field">
+            <label>BATAS ORDER</label>
+            <input id="orderDeadline" placeholder="Contoh: Selasa, 20:00 WIB">
+          </div>
+          <div class="wa-field wa-full">
+            <label>JUDUL PESAN</label>
+            <input id="orderTitle" value="📦 PEMBERITAHUAN PEMBUKAAN ORDER">
+          </div>
+          <div class="wa-field wa-full">
+            <label>ISI PESAN</label>
+            <textarea id="orderBody">Mohon mulai dicek dan disiapkan barang-barang yang kosong atau yang perlu dipesan kembali.
+
+Silakan siapkan daftar kebutuhan order agar tidak ada barang yang terlewat.</textarea>
+          </div>
+          <div class="wa-field wa-full">
+            <label>LINK WEBSITE ORDER</label>
+            <input id="orderLink" value="https://alinatacell.github.io/Teknisi-ponsel-maja/" readonly>
+          </div>
+          <div class="wa-field wa-full">
+            <label>CATATAN PENUTUP</label>
+            <input id="orderFooter" value="Kami tunggu orderannya. Terima kasih atas perhatian dan kerjasamanya.">
+          </div>
+        </div>
+      </section>
+
+      <section id="waPromoCard" class="wa-card hidden">
+        <div class="wa-title">📣 PROMOSI PRODUK</div>
+        <div class="wa-grid">
+          <div class="wa-field wa-full">
+            <label>JUDUL PROMO</label>
+            <input id="promoTitle" value="📣 PROMO PRODUK FIXZY">
+          </div>
+          <div class="wa-field">
+            <label>PRODUK</label>
+            <input id="promoProduct" placeholder="Contoh: LCD OPPO A15">
+          </div>
+          <div class="wa-field">
+            <label>INFO UTAMA</label>
+            <input id="promoInfo" placeholder="Contoh: Diskon 15% / Ready">
+          </div>
+          <div class="wa-field">
+            <label>HARGA NORMAL</label>
+            <input id="promoNormal" placeholder="Opsional">
+          </div>
+          <div class="wa-field">
+            <label>HARGA PROMO</label>
+            <input id="promoPrice" placeholder="Opsional">
+          </div>
+          <div class="wa-field">
+            <label>PERIODE PROMO</label>
+            <input id="promoPeriod" placeholder="Opsional">
+          </div>
+          <div class="wa-field">
+            <label>STOK / KETERANGAN</label>
+            <input id="promoStock" placeholder="Contoh: Stok terbatas">
+          </div>
+          <div class="wa-field wa-full">
+            <label>ISI PROMO TAMBAHAN</label>
+            <textarea id="promoBody" placeholder="Contoh: Ganti LCD gratis anti gores selama stok tersedia."></textarea>
+          </div>
+          <div class="wa-field wa-full">
+            <label>AJAKAN / CTA</label>
+            <input id="promoCta" value="Silakan hubungi kami untuk cek stok, harga, dan pemesanan.">
+          </div>
+        </div>
+      </section>
+
+      <div class="wa-card">
+        <div class="wa-title">👁️ PREVIEW PESAN</div>
+        <textarea id="waPreview" placeholder="Pesan akan dibuat otomatis..."></textarea>
+        <div class="wa-actions">
+          <button type="button" class="wa-btn wa-primary" id="waCopy">📋 SALIN PESAN</button>
+          <button type="button" class="wa-btn wa-green" id="waOpen">🟢 BUKA WHATSAPP</button>
+          <button type="button" class="wa-btn wa-secondary" id="waReset">↺ RESET</button>
+        </div>
+        <div class="wa-info">Preview dapat diedit langsung sebelum dikirim.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const root=document.getElementById("fixzy-wa-page");
+  const $=id=>root.querySelector("#"+id);
+  let type="order";
+
+  function val(id){return ($(id)?.value||"").trim()}
+  function notice(t,c=""){
+    $("waNotice").textContent=t;
+    $("waNotice").className="wa-notice "+c;
+  }
+  function build(){
+    if(type==="promo"){
+      let m=`${val("promoTitle")||"📣 PROMO PRODUK FIXZY"}
+
+Halo,
+
+📦 Produk: ${val("promoProduct")||"[nama produk]"}
+ℹ️ Info: ${val("promoInfo")||"[informasi promo]"}`;
+      if(val("promoNormal"))m+=`\n💰 Harga normal: ${val("promoNormal")}`;
+      if(val("promoPrice"))m+=`\n🔥 Harga promo: ${val("promoPrice")}`;
+      if(val("promoPeriod"))m+=`\n📅 Periode: ${val("promoPeriod")}`;
+      if(val("promoStock"))m+=`\n📌 ${val("promoStock")}`;
+      if(val("promoBody"))m+=`\n\n${val("promoBody")}`;
+      m+=`\n\n${val("promoCta")||"Silakan hubungi kami untuk cek stok, harga, dan pemesanan."}
+
+Terima kasih.
+FIXZY`;
+      $("waPreview").value=m;
+    }else{
+      let m=`Assalamu'alaikum,
+
+${val("orderTitle")||"📦 PEMBERITAHUAN PEMBUKAAN ORDER"}
+
+📅 Jadwal order: ${val("orderDays")||"Minggu – Selasa"}`;
+      if(val("orderDeadline"))m+=`\n⏰ Batas order: ${val("orderDeadline")}`;
+      m+=`\n\n${val("orderBody")||"Silakan siapkan daftar kebutuhan order agar tidak ada barang yang terlewat."}
+
+🔗 *LINK WEBSITE ORDER:*
+${val("orderLink")||"https://alinatacell.github.io/Teknisi-ponsel-maja/"}
+
+${val("orderFooter")||"Kami tunggu orderannya. Terima kasih atas perhatian dan kerjasamanya."}
+
+FIXZY`;
+      $("waPreview").value=m;
+    }
+  }
+
+  root.querySelectorAll(".wa-tab").forEach(b=>b.addEventListener("click",function(){
+    type=this.dataset.type;
+    root.querySelectorAll(".wa-tab").forEach(x=>x.classList.remove("active"));
+    this.classList.add("active");
+    $("waOrderCard").classList.toggle("hidden",type!=="order");
+    $("waPromoCard").classList.toggle("hidden",type!=="promo");
+    build();
+    notice(type==="order"?"Mode pembukaan order aktif.":"Mode promosi produk aktif.","ok");
+  }));
+
+  root.querySelectorAll("input,textarea").forEach(el=>{
+    if(el.id!=="waPreview")el.addEventListener("input",build);
+  });
+
+  $("waCopy").addEventListener("click",async()=>{
+    const t=$("waPreview").value.trim();
+    if(!t)return notice("Pesan masih kosong.","err");
+    try{await navigator.clipboard.writeText(t)}
+    catch(e){$("waPreview").select();document.execCommand("copy")}
+    notice("Pesan berhasil disalin.","ok");
+  });
+
+  $("waOpen").addEventListener("click",()=>{
+    const t=$("waPreview").value.trim();
+    if(!t)return notice("Pesan masih kosong.","err");
+    window.open("https://wa.me/?text="+encodeURIComponent(t),"_blank");
+  });
+
+  $("waReset").addEventListener("click",()=>{
+    if(type==="order"){
+      $("orderDays").value="Minggu – Selasa";
+      $("orderDeadline").value="";
+      $("orderTitle").value="📦 PEMBERITAHUAN PEMBUKAAN ORDER";
+      $("orderBody").value="Mohon mulai dicek dan disiapkan barang-barang yang kosong atau yang perlu dipesan kembali.\n\nSilakan siapkan daftar kebutuhan order agar tidak ada barang yang terlewat.";
+      $("orderLink").value="https://alinatacell.github.io/Teknisi-ponsel-maja/";
+      $("orderFooter").value="Kami tunggu orderannya. Terima kasih atas perhatian dan kerjasamanya.";
+    }else{
+      $("promoTitle").value="📣 PROMO PRODUK FIXZY";
+      $("promoProduct").value="";
+      $("promoInfo").value="";
+      $("promoNormal").value="";
+      $("promoPrice").value="";
+      $("promoPeriod").value="";
+      $("promoStock").value="";
+      $("promoBody").value="";
+      $("promoCta").value="Silakan hubungi kami untuk cek stok, harga, dan pemesanan.";
+    }
+    build();
+    notice("Form berhasil direset.","ok");
+  });
+
+  build();
+})();
+</script>
+</body>
+</html>
