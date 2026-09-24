@@ -1,0 +1,1 @@
+# teknisi-pondel-maja
