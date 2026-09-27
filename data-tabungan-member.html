@@ -169,7 +169,12 @@ header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}
 </div>
 
 <div class="card">
-  <div class="title">RIWAYAT TRANSFER PEMEGANG MEMBER</div>
+  <div class="title">TRANSFER ANTAR KARYAWAN</div>
+  <button class="btn primary" type="button" onclick="bukaTransferUang()">⇄ Transfer Uang</button>
+</div>
+
+<div class="card">
+  <div class="title">RIWAYAT TRANSFER ANTAR KARYAWAN</div>
   <div id="transferHistory" class="history-list">
     <div class="history-empty">Memuat riwayat...</div>
   </div>
@@ -178,19 +183,24 @@ header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}
 
 <div id="transferModal" class="modal-backdrop">
   <div class="modal">
-    <h2>Transfer Pemegang Member</h2>
-    <div class="modal-sub">Memindahkan pengelolaan member ke karyawan lain. Saldo tabungan tidak berkurang.</div>
+    <h2>Transfer Antar Karyawan</h2>
+    <div class="modal-sub">Transfer uang antar karyawan. Nominal diisi manual dan tidak mengubah kepemilikan tabungan member.</div>
 
     <div id="transferPreview" class="transfer-preview"></div>
 
     <div class="form-row">
-      <div class="form-label">Pilih Karyawan Tujuan</div>
+      <div class="form-label">Karyawan Tujuan</div>
       <select id="transferEmployee"></select>
     </div>
 
     <div class="form-row">
+      <div class="form-label">Nominal Transfer</div>
+      <input id="transferAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Masukkan nominal">
+    </div>
+
+    <div class="form-row">
       <div class="form-label">Keterangan</div>
-      <input id="transferNote" type="text" placeholder="Contoh: Pindah penanggung jawab">
+      <input id="transferNote" type="text" placeholder="Contoh: Transfer uang operasional">
     </div>
 
     <div class="modal-actions">
@@ -680,9 +690,7 @@ function employeeDisplay(uidValue,nameValue){
 }
 
 function canTransfer(r){
-  if(!r?.member?.id)return false;
-  if(!isOwner && r.employeeUid!==uid)return false;
-  return employees.length>0;
+  return employees.length>0 && (isOwner || currentRole==="employee" || currentRole==="karyawan");
 }
 
 function render(){
@@ -730,7 +738,7 @@ function render(){
           <span class="badge ${status}">${esc(a.status||"aktif")}</span>
         </span>
 
-        <div class="member-owner-label">PEMILIK TABUNGAN MEMBER</div>
+        <div class="member-owner-label">DATA MEMBER</div>
         <div class="member-owner">${esc(nama(a))}</div>
 
         <div class="member-id">
@@ -788,19 +796,19 @@ function render(){
         </div>
 
         <div class="employee-owner-box">
-          <div class="employee-owner-title">PEMEGANG / KARYAWAN</div>
+          <div class="employee-owner-title">KARYAWAN PEMEGANG DATA</div>
           <div class="employee-owner-name">${esc(pemegang)}</div>
 
           <div class="transfer-info">
             ${isOwner
-              ?"Owner dapat memindahkan member ke karyawan lain dalam Owner yang sama."
+              ?"Transfer uang hanya antar karyawan dalam Owner yang sama."
               :"Anda hanya melihat member yang menjadi tanggung jawab akun login ini."}
           </div>
 
           ${
             canTransfer(r)
-            ? `<button class="btn transfer-btn" type="button" onclick="bukaTransfer('${esc(r.key)}')">
-                ⇄ Transfer ke Karyawan
+            ? `<button class="btn transfer-btn" type="button" onclick="bukaTransferUang()">
+                ⇄ Transfer Uang Antar Karyawan
               </button>`
             : ""
           }
@@ -826,16 +834,14 @@ function renderHistory(){
 
     return `<div class="history-row">
       <div class="hmain">
-        ${esc(x.memberName||x.memberNama||"Member")} :
         ${esc(x.fromEmployeeName||"Karyawan asal")}
         → ${esc(x.toEmployeeName||"Karyawan tujuan")}
+        &nbsp; <b>${rp(x.nominal)}</b>
       </div>
 
       <div class="hsub">
-        Nilai tabungan saat transfer:
-        <b>${rp(x.saldoSaatTransfer)}</b><br>
+        ${esc(x.keterangan||"Transfer antar karyawan")}<br>
         Oleh: ${esc(x.createdByName||x.createdBy||"-")}<br>
-        ${esc(x.note||"Tanpa keterangan")}<br>
         ${tanggal}
       </div>
     </div>`;
@@ -848,7 +854,7 @@ async function loadTransferHistory(){
   for(const field of ["ownerUid","ownerId"]){
     const s=await safeQuery(
       query(
-        collection(db,"transfer_tabungan"),
+        collection(db,"transfer_karyawan"),
         where(field,"==",ownerUid)
       )
     );
@@ -876,49 +882,33 @@ async function loadTransferHistory(){
   transferHistory=arr.slice(0,100);
 }
 
-function populateTransferEmployees(currentEmployeeUid){
+function populateTransferEmployees(){
   const el=$("transferEmployee");
   if(!el)return;
 
-  const list=employees.filter(e=>{
-    const id=String(e.id);
-    if(id===String(currentEmployeeUid))return false;
-    if(id===uid && !isOwner)return false;
-    return true;
-  });
+  const list=employees.filter(e=>String(e.id)!==String(uid));
 
   el.innerHTML='<option value="">-- Pilih Karyawan Tujuan --</option>'+
     list.map(e=>`<option value="${esc(e.id)}">${esc(nama(e))}${e.email?" • "+esc(e.email):""}</option>`).join("");
 
-  if(!list.length){
-    el.innerHTML='<option value="">Tidak ada karyawan tujuan</option>';
-  }
+  if(!list.length)el.innerHTML='<option value="">Tidak ada karyawan tujuan</option>';
 }
 
-function bukaTransfer(key){
-  const r=aggregate().find(x=>String(x.key)===String(key));
-  if(!r){
-    alert("Data member tidak ditemukan.");
+function bukaTransferUang(){
+  if(!employees.length){
+    alert("Belum ada karyawan lain dalam Owner ini.");
     return;
   }
 
-  if(!canTransfer(r)){
-    alert("Anda tidak memiliki hak untuk mentransfer member ini.");
-    return;
-  }
-
-  selectedTransfer=r;
-
-  const currentName=employeeDisplay(r.employeeUid,r.employeeName);
-
+  selectedTransfer={};
   $("transferPreview").innerHTML=`
-    <strong>${esc(nama(r.member))}</strong><br>
-    Kode: ${esc(kode(r.member)||"-")}<br>
-    Saldo tabungan: <b>${rp(Math.max(0,r.total-r.withdraw))}</b><br>
-    Pemegang saat ini: <b>${esc(currentName)}</b>
+    <strong>Transfer Antar Karyawan</strong><br>
+    Pengirim: <b>${esc(nama(profile)||auth.currentUser?.email||"-")}</b><br>
+    Nominal bebas/manual. Transaksi ini <b>tidak memindahkan kepemilikan tabungan member</b>.
   `;
 
-  populateTransferEmployees(r.employeeUid);
+  populateTransferEmployees();
+  $("transferAmount").value="";
   $("transferNote").value="";
   $("confirmTransferBtn").disabled=false;
   $("transferModal").classList.add("show");
@@ -933,6 +923,7 @@ async function prosesTransfer(){
   if(!selectedTransfer)return;
 
   const tujuanUid=String($("transferEmployee")?.value||"").trim();
+  const nominal=Math.max(0,num($("transferAmount")?.value));
   const note=String($("transferNote")?.value||"").trim();
 
   if(!tujuanUid){
@@ -940,13 +931,13 @@ async function prosesTransfer(){
     return;
   }
 
-  if(tujuanUid===String(selectedTransfer.employeeUid||"")){
-    alert("Karyawan tujuan sama dengan pemegang saat ini.");
+  if(tujuanUid===String(uid)){
+    alert("Tidak dapat transfer ke akun sendiri.");
     return;
   }
 
-  if(tujuanUid===uid && !isOwner){
-    alert("Transfer ke akun sendiri tidak diperlukan.");
+  if(!nominal || nominal<=0){
+    alert("Masukkan nominal transfer yang valid.");
     return;
   }
 
@@ -956,64 +947,43 @@ async function prosesTransfer(){
     return;
   }
 
-  const memberId=String(selectedTransfer.member?.id||"").trim();
-  if(!memberId){
-    alert("UID member tidak ditemukan.");
-    return;
-  }
-
   const btn=$("confirmTransferBtn");
   btn.disabled=true;
   btn.textContent="Menyimpan...";
 
   try{
-    const oldEmployeeUid=String(selectedTransfer.employeeUid||"").trim();
-    const oldEmployeeName=employeeDisplay(oldEmployeeUid,selectedTransfer.employeeName);
-    const newEmployeeName=nama(target);
-    const saldoSaatTransfer=Math.max(0,selectedTransfer.total-selectedTransfer.withdraw);
+    const senderName=profile.nama||profile.namaKaryawan||profile.name||profile.displayName||auth.currentUser?.email||"-";
+    const receiverName=nama(target);
 
     /*
-     * PENTING:
-     * Transfer hanya mengubah pemegang member.
-     * Saldo tabungan tidak dikurangi.
+     * TRANSFER ANTAR KARYAWAN
+     * Tidak mengubah users.member.employeeUid.
+     * Tidak mengubah saldo tabungan member.
+     * Hanya membuat transaksi debit/kredit transfer.
      */
-    await updateDoc(doc(db,"users",memberId),{
-      employeeUid:tujuanUid,
-      employeeName:newEmployeeName,
-      assignedEmployeeUid:tujuanUid,
-      assignedEmployeeName:newEmployeeName,
-      updatedAt:serverTimestamp(),
-      updatedBy:uid
-    });
-
-    await addDoc(collection(db,"transfer_tabungan"),{
+    await addDoc(collection(db,"transfer_karyawan"),{
       ownerUid,
-      memberUid:memberId,
-      memberName:nama(selectedTransfer.member),
-      memberEmail:email(selectedTransfer.member),
-      memberKode:kode(selectedTransfer.member),
 
-      fromEmployeeUid:oldEmployeeUid,
-      fromEmployeeName:oldEmployeeName,
+      fromEmployeeUid:uid,
+      fromEmployeeName:senderName,
 
       toEmployeeUid:tujuanUid,
-      toEmployeeName:newEmployeeName,
+      toEmployeeName:receiverName,
 
-      saldoSaatTransfer,
+      nominal,
+      keterangan:note||"Transfer antar karyawan",
 
-      type:"pemindahan_pemegang",
       status:"approved",
-
-      note:note||"Pemindahan pemegang member",
       createdBy:uid,
-      createdByName:profile.nama||profile.namaKaryawan||profile.name||profile.displayName||auth.currentUser?.email||"-",
+      createdByName:senderName,
       createdAt:serverTimestamp()
     });
 
     tutupTransfer();
-    notice("Transfer pemegang member berhasil disimpan.","ok");
+    notice(`Transfer ${rp(nominal)} ke ${receiverName} berhasil disimpan.`,"ok");
 
-    await load();
+    await loadTransferHistory();
+    renderHistory();
   }catch(e){
     console.error(e);
     alert("Transfer gagal: "+(e?.message||e));
@@ -1024,7 +994,7 @@ async function prosesTransfer(){
   }
 }
 
-window.bukaTransfer=bukaTransfer;
+window.bukaTransferUang=bukaTransferUang;
 window.tutupTransfer=tutupTransfer;
 window.prosesTransfer=prosesTransfer;
 
