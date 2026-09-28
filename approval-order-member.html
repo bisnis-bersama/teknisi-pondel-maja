@@ -321,8 +321,67 @@ function finalProductPrice(r,p,old={}){
  );
  return {base,tab,up,final:Math.max(0,base+tab+up)};
 }
-function recalcOrder(id){return id}
-function checkStock(id){return id}
+function recalcOrder(id){
+ const card=document.querySelector(`[data-id="${CSS.escape(id)}"]`);
+ if(!card)return;
+ const r=rows.find(x=>x.id===id);
+ if(!r)return;
+ const originalItems=normalizeItems(r);
+ let total=0,approved=0;
+
+ card.querySelectorAll(".item").forEach((el,i)=>{
+  const original=originalItems[i]||{};
+  const qty=Math.max(0,Number(el.querySelector(".approved")?.value)||0);
+  const price=Math.max(0,Number(el.querySelector(".price")?.value)||0);
+  const diskon=Math.min(Math.max(0,Number(original.diskon)||0),price*qty);
+  const line=Math.max(0,price*qty-diskon);
+  const lineEl=el.querySelector(".line");
+  if(lineEl)lineEl.value=line;
+  total+=line;
+  approved+=qty;
+ });
+
+ const cash=isCash(r);
+ const dp=cash?total:Math.min(Number(r.dp??r.uangMuka??0)||0,total);
+ const sisa=cash?0:Math.max(0,total-dp);
+ const tab=orderTabungan(r);
+ const up=orderUP(r);
+ const kas=Number(r.kasBulanan??r.uangKasBulanan??0)||0;
+ const sum=$(`sum_${id}`);
+
+ if(sum){
+  sum.innerHTML=`Produk disetujui: <b>${approved} pcs</b> • Nilai barang: <b>${rp(total)}</b><br>
+   Tabungan Member: <b>${rp(tab)}/pcs</b> • UP Pengelola: <b>${rp(up)}/pcs</b> • Uang Kas: <b>${rp(kas)}/bulan</b><br>
+   ${cash
+    ? `<b>💵 CASH / TUNAI — LUNAS</b><br><small>Tidak ada DP, sisa tagihan, piutang, atau jatuh tempo.</small>`
+    : `DP tercatat: <b>${rp(dp)}</b> • Sisa estimasi: <b>${rp(sisa)}</b><br><small>Total dihitung dari produk, harga, diskon, dan qty yang disetujui.</small>`}`;
+ }
+}
+
+function checkStock(id){
+ const r=rows.find(x=>x.id===id);
+ if(!r)return;
+ const byId=new Map((Array.isArray(stockCatalog)?stockCatalog:[]).map(x=>[String(x.id),x]));
+ const byCode=new Map((Array.isArray(stockCatalog)?stockCatalog:[]).map(x=>[String(x.kode??x.kodeProduk??"").trim().toLowerCase(),x]).filter(([k])=>k));
+
+ normalizeItems(r).forEach((x,i)=>{
+  const el=$(`stock_${id}_${i}`);
+  if(!el)return;
+  if(!x.produkId){
+   el.textContent="Produk manual";
+   return;
+  }
+  const d=byId.get(String(x.produkId))||
+          byCode.get(String(x.kode??x.kodeProduk??"").trim().toLowerCase());
+  if(!d){
+   el.innerHTML='<span class="stock-no">STOK TIDAK ADA DI KATALOG</span>';
+   return;
+  }
+  const st=Math.max(0,Number(d.stock??d.stok??d.sisa??0)||0);
+  const qty=Math.max(0,Number(x.qty??x.jumlah??1)||0);
+  el.innerHTML=`<span class="${st>=qty?"stock-ok":"stock-no"}">Stok: ${st} • ${st>=qty?"TERSEDIA":"KURANG"}</span>`;
+ });
+}
 function getSpreadsheetLinks(){
  const raw=profile?.spreadsheetLinks??profile?.sheetLinks??profile?.linksSpreadsheet??profile?.urlSpreadsheet??[];
  if(Array.isArray(raw))return raw.map(x=>typeof x==="string"?x:(x?.url??x?.link??"")).filter(Boolean);
@@ -551,6 +610,7 @@ function render(){
  }
  const list=rows.filter(r=>status(r)==="menunggu_approval"&&matchEmployee(r,sel));
  $("list").innerHTML=list.length?list.map(r=>renderOrder(r)).join(""):'<div class="card empty">Tidak ada order yang menunggu approval untuk karyawan ini.</div>';
+ list.forEach(r=>{recalcOrder(r.id);checkStock(r.id);});
  refreshEmployeePendingUI();
 }
 
