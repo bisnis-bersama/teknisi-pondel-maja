@@ -433,27 +433,126 @@ function transferTotalsForEmployee(employeeUid){
   });
   return{masuk,keluar,bersih:masuk-keluar};
 }
+/*
+  ============================================================
+  SUMBER RESMI SALDO TABUNGAN KARYAWAN
+  ============================================================
+  Halaman Approval Order Owner menyimpan tabungan ke collection
+  `order_member`. Field yang menjadi sumber utama:
+    - employeeUid / employeeName
+    - totalTabunganMember
+    - totalTabungan / totalTabunganOrder (fallback field yang
+      juga ditulis oleh halaman Approval)
+    - items[].totalTabunganMember / totalTabungan /
+      tabunganPerPcs * qty sebagai fallback data lama.
+
+  PENTING:
+  - Tidak menggunakan `aggregate()` untuk menentukan saldo
+    tabungan karyawan.
+  - Tidak menggunakan default Rp4.000.
+  - Tidak menebak saldo dari harga order.
+  - Pengambilan tabungan member tetap terpisah dari saldo
+    tabungan yang dikelola karyawan.
+*/
+function tabunganOrderMember(r){
+  const explicit =
+    r?.totalTabunganMember ??
+    r?.totalTabungan ??
+    r?.totalTabunganOrder;
+
+  if(explicit!==undefined && explicit!==null && explicit!==""){
+    return Math.max(0,num(explicit));
+  }
+
+  const items = itemList(r);
+  if(!items.length)return 0;
+
+  return items.reduce((sum,x)=>{
+    const totalItem =
+      x?.totalTabunganMember ??
+      x?.totalTabungan ??
+      x?.tabunganTotal;
+
+    if(totalItem!==undefined && totalItem!==null && totalItem!==""){
+      return sum + Math.max(0,num(totalItem));
+    }
+
+    const perPcs =
+      x?.tabunganPerPcs ??
+      x?.tabunganMember ??
+      x?.menabungMemberPerPcs ??
+      x?.menabungMember;
+
+    return sum + (Math.max(0,num(x.qty)) * Math.max(0,num(perPcs)));
+  },0);
+}
+
 function baseEmployeeBalances(){
   const map=new Map();
-  aggregate().forEach(r=>{
-    const euid=String(r.employeeUid||employeeUidOf(r.member)||"").trim();
+
+  /*
+    SUMBER: order_member yang sudah di-load sebagai `orders`.
+    Hanya order approved yang sudah lolos loadOrders() yang masuk.
+  */
+  orders.forEach(r=>{
+    const euid=employeeUidOf(r);
     if(!euid)return;
-    const saldo=Math.max(0,r.total-r.withdraw);
-    const old=map.get(euid)||{uid:euid,name:r.employeeName||employeeNameOf(r.member)||("UID "+euid),base:0};
-    old.base+=saldo;
-    if(!old.name||old.name.startsWith("UID "))old.name=r.employeeName||employeeNameOf(r.member)||old.name;
+
+    const amount=tabunganOrderMember(r);
+    const old=map.get(euid)||{
+      uid:euid,
+      name:employeeNameOf(r)||("UID "+euid),
+      base:0,
+      orderCount:0
+    };
+
+    old.base += amount;
+    old.orderCount += 1;
+
+    const nm=employeeNameOf(r);
+    if(nm && (!old.name || old.name.startsWith("UID "))){
+      old.name=nm;
+    }
+
     map.set(euid,old);
   });
+
   return map;
 }
 function employeeBalanceSnapshot(){
   const base=baseEmployeeBalances();
+
+  /*
+    Tambahkan semua karyawan Owner meskipun belum pernah memiliki
+    order_member. Saldo awal mereka tetap Rp0.
+  */
   employees.forEach(e=>{
-    const euid=employeeUidRecord(e);if(!euid)return;
-    if(!base.has(euid))base.set(euid,{uid:euid,name:employeeDisplayName(e),base:0});
-    else base.get(euid).name=employeeDisplayName(e);
+    const euid=employeeUidRecord(e);
+    if(!euid)return;
+
+    if(!base.has(euid)){
+      base.set(euid,{
+        uid:euid,
+        name:employeeDisplayName(e),
+        base:0,
+        orderCount:0
+      });
+    }else{
+      base.get(euid).name=employeeDisplayName(e);
+    }
   });
-  return [...base.values()].map(x=>{const t=transferTotalsForEmployee(x.uid);return{...x,masuk:t.masuk,keluar:t.keluar,saldo:x.base+t.bersih};}).sort((a,b)=>a.name.localeCompare(b.name,"id"));
+
+  return [...base.values()]
+    .map(x=>{
+      const t=transferTotalsForEmployee(x.uid);
+      return {
+        ...x,
+        masuk:t.masuk,
+        keluar:t.keluar,
+        saldo:Math.max(0,x.base+t.bersih)
+      };
+    })
+    .sort((a,b)=>a.name.localeCompare(b.name,"id"));
 }
 function setTransferMessage(text,type=""){
   const e=$("transferMessage");if(!e)return;e.className=type==="ok"?"transfer-ok":"transfer-error";e.textContent=text;
@@ -478,7 +577,7 @@ function renderEmployeeBalances(){
   const body=$("employeeBalanceList");if(!body)return;
   const rows=employeeBalanceSnapshot().filter(x=>isOwner||x.uid===uid);
   if(!rows.length){body.innerHTML='<div class="empty">Belum ada data saldo karyawan.</div>';return;}
-  body.innerHTML=rows.map(x=>`<div class="employee-balance-row"><div><div class="name">${esc(x.name)}</div><div class="small">Tabungan dikelola ${rp(x.base)} • Masuk ${rp(x.masuk)} • Keluar ${rp(x.keluar)}</div></div><div class="amount">${rp(x.saldo)}</div></div>`).join("");
+  body.innerHTML=rows.map(x=>`<div class="employee-balance-row"><div><div class="name">${esc(x.name)}</div><div class="small">Dari order_member: ${rp(x.base)} • ${x.orderCount||0} order • Masuk ${rp(x.masuk)} • Keluar ${rp(x.keluar)}</div></div><div class="amount">${rp(x.saldo)}</div></div>`).join("");
 }
 function renderTransferHistory(){
   const body=$("transferHistory");if(!body)return;
@@ -551,8 +650,12 @@ async function loadMembers(){
     for(const field of [
       "employeeUid",
       "karyawanUid",
+      "employeeId",
+      "karyawanId",
       "assignedEmployeeUid",
-      "pemegangUid"
+      "assignedKaryawanUid",
+      "pemegangUid",
+      "pemegangKaryawanUid"
     ]){
       const s=await safeQuery(
         query(collection(db,"users"),where(field,"==",uid))
@@ -582,6 +685,12 @@ async function loadMembers(){
   ================================
 */
 async function loadOrders(){
+  /*
+    SUMBER TABUNGAN KARYAWAN:
+    collection `order_member`.
+    Halaman Approval Order Owner menulis order approved ke collection
+    ini beserta employeeUid/employeeName dan totalTabunganMember.
+  */
   const map=new Map();
 
   if(isOwner){
@@ -605,8 +714,12 @@ async function loadOrders(){
     for(const field of [
       "employeeUid",
       "karyawanUid",
+      "employeeId",
+      "karyawanId",
       "assignedEmployeeUid",
-      "pemegangUid"
+      "assignedKaryawanUid",
+      "pemegangUid",
+      "pemegangKaryawanUid"
     ]){
       const s=await safeQuery(
         query(collection(db,"order_member"),where(field,"==",uid))
