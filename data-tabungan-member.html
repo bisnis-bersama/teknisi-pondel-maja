@@ -659,11 +659,27 @@ function orderMatchesEmployee(r,e){
  return false;
 }
 function orderTabunganValue(r){
- // HANYA order yang menurut perhitungan Rekap Order Member sudah LUNAS.
- const calc=rekapOrderCalculation(r);
- if(!(calc.cash || (calc.totalTagihan>0 && calc.sisa<=0)))return 0;
- // Nilai tabungan diambil persis dari item/order record, bukan tarif baru.
- return calc.tabungan;
+ // STATUS LUNAS mengikuti record pembayaran Rekap Order Member.
+ const orderTotal=Math.max(0,num(r.approvedTotal??r.totalBayar??r.total??0));
+ const paidRecorded=Math.max(0,num(r.totalDibayar??r.pembayaran??r.approvedDp??r.dp??r.uangMuka??0));
+ const paymentType=norm(r.tipeOrder||r.tipeTransaksi||r.jenisTransaksi||r.metodePembayaran||r.paymentMethod||r.pembayaranJenis||"");
+ const cashOrder=/cash|tunai/.test(paymentType)||paymentType==="member_cash";
+ const st=norm(r.status||r.paymentStatus||r.statusPembayaran||"");
+ const explicitLunas=st==="lunas"||norm(r.statusPembayaran||r.paymentStatus||"")==="lunas";
+ const sisa=Math.max(0,num(r.sisaBayar??r.sisaTagihan??r.sisa??(orderTotal-paidRecorded)));
+ const lunas=explicitLunas||cashOrder||(orderTotal>0&&paidRecorded>=orderTotal)||(orderTotal>0&&sisa<=0);
+ if(!lunas)return 0;
+ // PENTING: gunakan nilai tabungan yang DISIMPAN pada order_member,
+ // sama seperti sumber Rekap, bukan menghitung ulang dari tarif.
+ const explicit=r.totalTabunganOrder??r.totalTabunganMember??r.totalTabungan??r.tabunganTotal??r.totalMenabungMember;
+ if(explicit!==undefined&&explicit!==null&&explicit!=="")return Math.max(0,num(explicit));
+ const items=itemList(r);
+ return items.reduce((sum,x)=>{
+   const totalItem=x?.totalTabunganMember??x?.totalTabungan??x?.tabunganTotal;
+   if(totalItem!==undefined&&totalItem!==null&&totalItem!=="")return sum+Math.max(0,num(totalItem));
+   const perPcs=x?.tabunganPerPcs??x?.tabunganMember??x?.menabungMemberPerPcs??x?.menabungMember??x?.tabStored;
+   return sum+Math.max(0,num(x.qty))*Math.max(0,num(perPcs));
+ },0);
 }
 
 function currentEmployeeSavings(e){
