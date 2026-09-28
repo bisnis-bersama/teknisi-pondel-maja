@@ -516,7 +516,18 @@ function sameIdentity(a,b){
  return A.ids.some(x=>B.ids.includes(x))||A.emails.some(x=>B.emails.includes(x))||
         A.codes.some(x=>B.codes.includes(x))||A.names.some(x=>B.names.includes(x));
 }
-function employeeUid(e){return String(e?.id||e?.uid||"").trim()}
+function employeeUid(e){
+ return String(e?.uid||e?.id||e?.employeeUid||e?.karyawanUid||e?.userId||e?.userUid||"").trim();
+}
+function employeeKeys(e){
+ const vals=[
+  e?.uid,e?.id,e?.employeeUid,e?.karyawanUid,e?.userId,e?.userUid,
+  e?.employeeId,e?.karyawanId,e?.idEmployee,e?.idKaryawan,
+  e?.email,e?.emailKaryawan,e?.emailEmployee,
+  e?.nama,e?.namaKaryawan,e?.namaEmployee,e?.name,e?.displayName
+ ];
+ return new Set(vals.map(v=>String(v??"").trim().toLowerCase()).filter(Boolean));
+}
 function employeeName(e){return nama(e)||e?.email||employeeUid(e)}
 
 async function loadEmployees(){
@@ -621,46 +632,31 @@ function renderTransferHistory(){
  body.innerHTML=transfers.length?transfers.map(t=>{const d=toDate(t.tanggal||t.createdAt);return `<div class="transfer-history-item"><div class="transfer-history-head"><span>${esc(t.fromEmployeeName||"-")} → ${esc(t.toEmployeeName||"-")}</span><span>${rp(transferAmount(t))}</span></div><div class="transfer-history-sub">${esc(d?d.toLocaleString("id-ID"):"-")}${t.keterangan?" • "+esc(t.keterangan):""}</div></div>`}).join(""):'<div class="empty">Belum ada riwayat transfer.</div>';
 }
 
-function orderEmployeeUid(r){
+function orderEmployeeKeys(r){
  const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||{};
- return String(
-   r?.employeeUid||
-   r?.approvalEmployeeUid||
-   r?.karyawanUid||
-   r?.uidKaryawan||
-   r?.uidEmployee||
-   r?.employeeId||
-   r?.karyawanId||
-   r?.idKaryawan||
-   r?.idEmployee||
-   r?.assignedEmployeeUid||
-   r?.assignedKaryawanUid||
-   r?.pemegangUid||
-   r?.pemegangKaryawanUid||
-   e?.uid||
-   e?.userId||
-   e?.userUid||
-   e?.employeeUid||
-   e?.karyawanUid||
-   e?.id||
-   ""
- ).trim();
+ const vals=[
+  r?.employeeUid,r?.approvalEmployeeUid,r?.karyawanUid,r?.uidKaryawan,r?.uidEmployee,
+  r?.employeeId,r?.karyawanId,r?.idKaryawan,r?.idEmployee,
+  r?.assignedEmployeeUid,r?.assignedKaryawanUid,r?.pemegangUid,r?.pemegangKaryawanUid,
+  r?.employeeEmail,r?.approvalEmployeeEmail,r?.karyawanEmail,r?.employeeName,r?.approvalEmployeeName,
+  r?.karyawanName,r?.employeeNama,r?.karyawanNama,r?.namaKaryawan,r?.namaEmployee,
+  r?.namaKaryawanPemegang,r?.pemegangNama,
+  e?.uid,e?.userId,e?.userUid,e?.employeeUid,e?.karyawanUid,e?.id,
+  e?.email,e?.namaKaryawan,e?.nama,e?.name,e?.displayName
+ ];
+ return new Set(vals.map(v=>String(v??"").trim().toLowerCase()).filter(Boolean));
 }
+function orderEmployeeUid(r){return [...orderEmployeeKeys(r)][0]||""}
 function orderEmployeeName(r){
  const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||{};
- return String(
-   r?.employeeName||r?.approvalEmployeeName||r?.karyawanName||
-   r?.employeeNama||r?.karyawanNama||r?.namaKaryawan||r?.namaEmployee||
-   r?.namaKaryawanPemegang||r?.pemegangNama||
-   e?.namaKaryawan||e?.nama||e?.name||e?.displayName||""
- ).trim();
+ return String(r?.employeeName||r?.approvalEmployeeName||r?.karyawanName||r?.employeeNama||r?.karyawanNama||r?.namaKaryawan||r?.namaEmployee||r?.namaKaryawanPemegang||r?.pemegangNama||e?.namaKaryawan||e?.nama||e?.name||e?.displayName||"").trim();
 }
 function orderMatchesEmployee(r,e){
- // PENTING: saldo karyawan TIDAK dicari lewat memberUid/memberId/email member.
- // Sumber identitasnya adalah assignment KARYAWAN pada record order.
- const euid=employeeUid(e);
- if(!euid)return false;
- return orderEmployeeUid(r)===euid;
+ // SUMBER IDENTITAS HANYA KARYAWAN/EMPLOYEE pada order_member.
+ // Tidak pernah menggunakan memberUid/memberId/email member.
+ const A=employeeKeys(e), B=orderEmployeeKeys(r);
+ for(const k of A) if(B.has(k)) return true;
+ return false;
 }
 function orderTabunganValue(r){
  // HANYA order yang menurut perhitungan Rekap Order Member sudah LUNAS.
