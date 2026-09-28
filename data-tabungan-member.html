@@ -561,8 +561,11 @@ function transferTotalsForEmployee(euid){
  return{masuk,keluar,bersih:masuk-keluar};
 }
 function employeeBaseBalance(e){
- const rec=aggregate().find(r=>sameIdentity(r.member,e));
- return rec?Math.max(0,rec.total-rec.withdraw):0;
+ // Saldo dasar karyawan berasal langsung dari order_member yang
+ // mempunyai assignment employee/karyawan yang sama dengan UID karyawan.
+ // Tidak menggunakan identitas member.
+ const sv=currentEmployeeSavings(e);
+ return Math.max(0,sv.total-sv.withdraw);
 }
 function employeeSnapshot(){
  return employees.map(e=>{
@@ -618,16 +621,46 @@ function renderTransferHistory(){
  body.innerHTML=transfers.length?transfers.map(t=>{const d=toDate(t.tanggal||t.createdAt);return `<div class="transfer-history-item"><div class="transfer-history-head"><span>${esc(t.fromEmployeeName||"-")} → ${esc(t.toEmployeeName||"-")}</span><span>${rp(transferAmount(t))}</span></div><div class="transfer-history-sub">${esc(d?d.toLocaleString("id-ID"):"-")}${t.keterangan?" • "+esc(t.keterangan):""}</div></div>`}).join(""):'<div class="empty">Belum ada riwayat transfer.</div>';
 }
 
+function orderEmployeeUid(r){
+ const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||{};
+ return String(
+   r?.employeeUid||
+   r?.approvalEmployeeUid||
+   r?.karyawanUid||
+   r?.uidKaryawan||
+   r?.uidEmployee||
+   r?.employeeId||
+   r?.karyawanId||
+   r?.idKaryawan||
+   r?.idEmployee||
+   r?.assignedEmployeeUid||
+   r?.assignedKaryawanUid||
+   r?.pemegangUid||
+   r?.pemegangKaryawanUid||
+   e?.uid||
+   e?.userId||
+   e?.userUid||
+   e?.employeeUid||
+   e?.karyawanUid||
+   e?.id||
+   ""
+ ).trim();
+}
+function orderEmployeeName(r){
+ const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||{};
+ return String(
+   r?.employeeName||r?.approvalEmployeeName||r?.karyawanName||
+   r?.employeeNama||r?.karyawanNama||r?.namaKaryawan||r?.namaEmployee||
+   r?.namaKaryawanPemegang||r?.pemegangNama||
+   e?.namaKaryawan||e?.nama||e?.name||e?.displayName||""
+ ).trim();
+}
 function orderMatchesEmployee(r,e){
- const m=r.member||r.pelanggan||{};
+ // PENTING: saldo karyawan TIDAK dicari lewat memberUid/memberId/email member.
+ // Sumber identitasnya adalah assignment KARYAWAN pada record order.
  const euid=employeeUid(e);
- const ids=[r.memberUid,r.memberId,r.createdByMemberUid,r.uidMember,m.uid,m.userId].map(v=>String(v??"").trim()).filter(Boolean);
- // Hanya email milik DATA ORDER yang boleh dibandingkan dengan email karyawan.
- // Jangan memasukkan email karyawan/profile ke array order, karena itu membuat
- // semua order seolah-olah cocok dan saldo menjadi terlalu besar.
- const orderEmails=[r.memberEmail,m.email].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
- const employeeEmail=String(e?.email??"").trim().toLowerCase();
- return (euid&&ids.includes(euid)) || (!!employeeEmail && orderEmails.includes(employeeEmail));
+ if(!euid)return false;
+ return orderEmployeeUid(r)===euid;
 }
 function orderTabunganValue(r){
  // HANYA order yang menurut perhitungan Rekap Order Member sudah LUNAS.
@@ -643,11 +676,13 @@ function currentEmployeeSavings(e){
  orders.forEach(r=>{if(orderMatchesEmployee(r,e))total+=orderTabunganValue(r);});
  let withdraw=0;
  withdrawals.forEach(w=>{
-  const ids=[w.memberId,w.memberUid,w.uidMember,w.uid].map(v=>String(v??"").trim()).filter(Boolean);
-  const emails=[w.memberEmail,w.email].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
-  const names=[w.memberNama,w.namaMember,w.memberName].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
-  const ename=norm(employeeName(e));
-  if(ids.includes(employeeUid(e))||emails.includes(norm(e?.email||profile?.email))||names.includes(ename))withdraw+=num(w.nominal);
+  const euid=employeeUid(e);
+  const assigned=String(
+    w.employeeUid||w.karyawanUid||w.uidKaryawan||w.uidEmployee||
+    w.employeeId||w.karyawanId||w.assignedEmployeeUid||
+    w.assignedKaryawanUid||w.pemegangUid||w.pemegangKaryawanUid||""
+  ).trim();
+  if(euid && assigned===euid)withdraw+=num(w.nominal);
  });
  return{total,withdraw};
 }
