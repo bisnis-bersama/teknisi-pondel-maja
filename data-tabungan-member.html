@@ -17,37 +17,76 @@ body.dark{background:#0b1220;color:#e5e7eb}body.dark .card,body.dark .metric,bod
 @media(max-width:850px){.summary-grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.filters .actions{grid-column:1/-1}}
 @media(max-width:650px){header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}.summary-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.acts .btn{padding:8px}.metric .value{font-size:18px}.card{padding:12px}.saving-balance-grid{grid-template-columns:1fr}.member-owner{font-size:17px}.saving-total{font-size:25px}}
 .transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.transfer-info{margin:12px 0;padding:10px;border:2px dashed #94a3b8;border-radius:9px;background:#f8fafc;font-size:12px;font-weight:800}.transfer-btn{background:#ffc107;color:#111827;margin-top:2px}.employee-balance-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.employee-balance-item{border:2px solid #111827;border-radius:10px;padding:12px;background:#f8fafc}.employee-balance-name{font-weight:900}.employee-balance-sub{font-size:10px;color:#64748b;margin-top:3px}.employee-balance-value{font-size:20px;font-weight:900;margin-top:7px}.transfer-history-item{border:2px solid #111827;border-radius:10px;padding:10px;margin-bottom:8px;background:#fff}.transfer-history-head{display:flex;justify-content:space-between;gap:8px;font-weight:900}.transfer-history-sub{font-size:10px;color:#64748b;margin-top:4px}@media(max-width:650px){.transfer-grid{grid-template-columns:1fr}.employee-balance-list{grid-template-columns:1fr}}</style>
+
+<style>
+.ew-main{max-width:520px!important;padding:86px 12px 30px!important}
+.wallet{background:linear-gradient(145deg,#111827,#020617);color:#fff;border-radius:24px;padding:22px;margin-bottom:14px;box-shadow:0 10px 28px rgba(15,23,42,.22);border:1px solid #334155}
+.wallet-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;color:#cbd5e1}.wallet-name{font-size:15px;font-weight:900;color:#fff}.wallet-balance-label{font-size:11px;color:#cbd5e1;margin-top:24px}.wallet-balance{font-size:34px;font-weight:900;letter-spacing:-1px;margin-top:4px}.wallet-id{font-size:10px;color:#94a3b8;margin-top:5px}.wallet-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px}.waction{border:0;border-radius:15px;padding:10px 5px;background:#fff;color:#111827;font-weight:900;font-size:10px;cursor:pointer;min-height:68px}.waction .ico{font-size:22px;display:block;margin-bottom:4px}.section{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:14px;margin-bottom:14px}.section-title{font-size:14px;font-weight:900;margin-bottom:12px}.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick{border:1px solid #e2e8f0;border-radius:15px;background:#fff;padding:13px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:11px}.quick .qico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#f1f5f9;font-size:21px}.quick b{font-size:12px}.quick small{display:block;color:#64748b;font-size:9px;margin-top:3px}.mutasi-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}.mtab{border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;padding:9px 5px;font-size:10px;font-weight:900;cursor:pointer}.mtab.active{background:#111827;color:#fff;border-color:#111827}.mutasi{display:grid;gap:8px}.mutasi-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #eef2f7}.mutasi-row:last-child{border-bottom:0}.micon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#f1f5f9;font-size:18px;flex:0 0 auto}.minfo{min-width:0;flex:1}.mtitle{font-size:11px;font-weight:900}.mmeta{font-size:9px;color:#64748b;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mamount{font-size:12px;font-weight:900;white-space:nowrap}.in .mamount{color:#15803d}.out .mamount{color:#dc2626}.pending .mamount{color:#d97706}.status-pill{font-size:8px;font-weight:900;border-radius:999px;padding:3px 6px;background:#fef3c7;color:#92400e;margin-left:4px}.bank-form{display:none;margin-top:12px;padding:12px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.bank-form.show{display:block}.bank-grid{display:grid;gap:9px}.bank-grid input{box-shadow:none!important;border:1px solid #cbd5e1!important}.bank-submit{width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:#ffc107;color:#111827;font-weight:900;cursor:pointer}.bank-note{font-size:9px;color:#64748b;line-height:1.5;margin-top:8px}.balance-mini{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:12px}.mini{padding:9px;border-radius:11px;background:#f8fafc}.mini b{display:block;font-size:11px;margin-top:3px}.mini span{font-size:8px;color:#64748b}.empty-wallet{text-align:center;padding:18px;color:#64748b;font-size:10px}.old-admin{display:none!important}
+@media(max-width:420px){.wallet-actions{grid-template-columns:repeat(4,1fr)}.wallet-balance{font-size:30px}.quick-grid{grid-template-columns:1fr}.balance-mini{grid-template-columns:1fr 1fr 1fr}.waction{font-size:9px}}
+</style>
+
 </head>
 <body>
 <header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="hi"><h1>Data Tabungan Member</h1><span id="email" class="email">-</span></div><div class="acts"><button class="btn refresh" type="button" onclick="muatUlang()">↻ Refresh</button><button id="dark" class="btn dark" type="button">🌙</button></div></div></header>
-<main>
-<div id="notice" class="notice">Menunggu akun...</div>
-<div class="card"><div class="title">DATA TABUNGAN MEMBER</div>
-<div class="filters"><div><label>PILIH MEMBER</label><select id="search"><option value="">Semua Member</option></select></div><div><label>STATUS AKUN</label><select id="statusFilter"><option value="">Semua Status</option><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></div><div class="actions"><button class="btn secondary" type="button" onclick="resetFilter()">Reset</button></div></div>
-</div>
-<div class="summary-grid">
-<div class="metric orange"><div class="label">Total Qty</div><div class="value" id="totalQty">0 pcs</div><div class="sub">Qty order yang masuk tabungan</div></div>
-<div class="metric red"><div class="label">Saldo Tabungan</div><div class="value" id="saldoTabungan">Rp 0</div><div class="sub">Setelah pengambilan tabungan</div></div>
-<div class="metric green"><div class="label">Saldo UP Pengelola</div><div class="value" id="saldoUpPengelola">Rp 0</div><div class="sub">UP masuk − pengeluaran UP</div></div>
-<div class="metric orange"><div class="label">Saldo Uang Kas</div><div class="value" id="saldoUangKas">Rp 0</div><div class="sub">Kas masuk − pengeluaran Kas</div></div>
-</div>
-<div class="card"><div class="title">SALDO TABUNGAN MEMBER</div>
-<div id="memberPanels" class="member-panels"><div class="empty">Memuat Firebase...</div></div>
-</div>
-<div class="card" id="transferCard"><div class="title">TRANSFER SALDO TABUNGAN ANTAR KARYAWAN</div>
-<div class="transfer-grid">
-<div><label>DARI KARYAWAN</label><select id="transferFrom"></select></div>
-<div><label>KE KARYAWAN</label><select id="transferTo"></select></div>
-<div><label>NOMINAL TRANSFER</label><input id="transferAmount" type="number" min="1" step="1" placeholder="Masukkan nominal"></div>
-<div><label>KETERANGAN</label><input id="transferNote" type="text" maxlength="120" placeholder="Opsional"></div>
-</div>
-<div id="transferBalanceInfo" class="transfer-info">Memuat saldo karyawan...</div>
-<button class="btn transfer-btn" id="btnTransfer" type="button">TRANSFER SALDO</button></div>
-<div class="card"><div class="title">SALDO TABUNGAN PER KARYAWAN</div>
-<div id="employeeBalanceList" class="employee-balance-list"><div class="empty">Memuat...</div></div></div>
-<div class="card"><div class="title">RIWAYAT TRANSFER</div>
-<div id="transferHistory" class="transfer-history"><div class="empty">Memuat...</div></div></div>
+
+<main class="ew-main">
+ <div id="notice" class="notice">Memuat akun...</div>
+ <section class="wallet">
+   <div class="wallet-top"><span>FIXZY WALLET</span><span>💳 TABUNGAN</span></div>
+   <div class="wallet-balance-label">Saldo tersedia</div>
+   <div class="wallet-balance" id="walletBalance">Rp 0</div>
+   <div class="wallet-name" id="walletName">-</div>
+   <div class="wallet-id" id="walletId">Saldo dari order LUNAS</div>
+   <div class="wallet-actions">
+    <button class="waction" onclick="openBankForm()"><span class="ico">🏦</span>Transfer Bank</button>
+    <button class="waction" onclick="transferEmployee()"><span class="ico">↔️</span>Transfer</button>
+    <button class="waction" onclick="goApproval()"><span class="ico">📱</span>Beli Pulsa</button>
+    <button class="waction" onclick="goProduct()"><span class="ico">🛒</span>Beli Produk</button>
+   </div>
+ </section>
+ <section class="section">
+   <div class="section-title">Menu Wallet</div>
+   <div class="quick-grid">
+    <button class="quick" onclick="showMutasi('all')"><span class="qico">📋</span><span><b>Mutasi Rekening</b><small>Semua uang masuk & keluar</small></span></button>
+    <button class="quick" onclick="showMutasi('transfer')"><span class="qico">↔️</span><span><b>Riwayat Transfer</b><small>Transfer antar karyawan</small></span></button>
+    <button class="quick" onclick="openBankForm()"><span class="qico">🏦</span><span><b>Transfer Bank</b><small>Menunggu persetujuan Owner</small></span></button>
+    <button class="quick" onclick="goProduct()"><span class="qico">🛍️</span><span><b>Beli Produk</b><small>Masuk proses approval</small></span></button>
+   </div>
+ </section>
+ <section class="section" id="bankSection" style="display:none">
+   <div class="section-title">🏦 Transfer ke Rekening Bank</div>
+   <div class="bank-form show">
+    <div class="bank-grid">
+      <input id="bankName" placeholder="Nama Bank (BCA / BRI / Mandiri...)" />
+      <input id="bankAccount" inputmode="numeric" placeholder="Nomor rekening" />
+      <input id="bankOwner" placeholder="Nama pemilik rekening" />
+      <input id="bankAmount" type="number" min="1" inputmode="numeric" placeholder="Nominal transfer" />
+      <input id="bankNote" placeholder="Keterangan (opsional)" />
+    </div>
+    <button class="bank-submit" id="bankSubmit" onclick="submitBankTransfer()">AJUKAN TRANSFER</button>
+    <div class="bank-note">Transfer bank tidak langsung mengurangi saldo. Permintaan akan berstatus <b>Menunggu Persetujuan Owner</b>. Setelah disetujui Owner, transaksi masuk mutasi sebagai pengeluaran dan dilanjutkan admin ke bank.</div>
+  </div>
+ </section>
+ <section class="section">
+   <div class="section-title">Riwayat & Mutasi</div>
+   <div class="mutasi-tabs">
+    <button class="mtab active" id="tabAll" onclick="showMutasi('all')">Semua</button>
+    <button class="mtab" id="tabTransfer" onclick="showMutasi('transfer')">Transfer</button>
+    <button class="mtab" id="tabBank" onclick="showMutasi('bank')">Bank</button>
+   </div>
+   <div id="mutasiList" class="mutasi"><div class="empty-wallet">Memuat mutasi...</div></div>
+ </section>
+ <section class="section">
+   <div class="section-title">Ringkasan Saldo</div>
+   <div class="balance-mini">
+    <div class="mini"><span>SALDO AWAL</span><b id="miniAwal">Rp 0</b></div>
+    <div class="mini"><span>MASUK</span><b id="miniMasuk">Rp 0</b></div>
+    <div class="mini"><span>KELUAR</span><b id="miniKeluar">Rp 0</b></div>
+   </div>
+   <div class="bank-note">Saldo awal berasal dari tabungan order yang sudah LUNAS. Order yang masih TAGIHAN tidak menambah saldo.</div>
+ </section>
 </main>
+
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -242,6 +281,17 @@ function getOrderUp(r,items,q,member){
  }
 
  return q*Math.max(0,num(fallbackUp));
+}
+
+
+function isOrderLunas(r){
+ const total=Math.max(0,num(r.approvedTotal??r.totalBayar??r.total??0));
+ const paid=Math.max(0,num(r.totalDibayar??r.pembayaran??r.approvedDp??r.dp??r.uangMuka??0));
+ const typ=norm(r.jenisHarga||r.tipeOrder||r.tipeTransaksi||r.metodePembayaran||r.paymentMethod||"");
+ const st=norm(r.status||r.paymentStatus||r.statusPembayaran||"");
+ if(st==="lunas"||/cash|tunai/.test(typ)||typ==="member_cash")return true;
+ const sisa=Math.max(0,num(r.sisaBayar??r.sisaTagihan??r.sisa??(total-paid)));
+ return total>0&&(paid>=total||sisa<=0);
 }
 
 function aggregate(){
@@ -476,72 +526,87 @@ function renderTransferHistory(){
  body.innerHTML=transfers.length?transfers.map(t=>{const d=toDate(t.tanggal||t.createdAt);return `<div class="transfer-history-item"><div class="transfer-history-head"><span>${esc(t.fromEmployeeName||"-")} → ${esc(t.toEmployeeName||"-")}</span><span>${rp(transferAmount(t))}</span></div><div class="transfer-history-sub">${esc(d?d.toLocaleString("id-ID"):"-")}${t.keterangan?" • "+esc(t.keterangan):""}</div></div>`}).join(""):'<div class="empty">Belum ada riwayat transfer.</div>';
 }
 
+function currentWallet(){
+ const me=currentEmployee();
+ const rec=me?aggregate().find(r=>sameIdentity(r.member,me)):null;
+ const base=rec?Math.max(0,rec.total-rec.withdraw):0;
+ const tr=me?transferTotalsForEmployee(employeeUid(me)):{masuk:0,keluar:0,bersih:0};
+ const bankOut=0;
+ return {me,base,withdraw:rec?.withdraw||0,masuk:tr.masuk,keluar:tr.keluar,bankOut,saldo:Math.max(0,base+tr.bersih)};
+}
+function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
 function render(){
  if(!ready)return;
-
- const search=String($("search")?.value||"").trim();
- const sf=norm($("statusFilter")?.value);
-
- const data=visibleAggregateData().filter(r=>{
-   const a=r.member;
-   return(!search||String(a.id||"")===search)&&(!sf||norm(a.status||"aktif")===sf);
+ const w=currentWallet(),me=w.me;
+ setText("walletName",me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda");
+ setText("walletId",me?`UID ${employeeUid(me)} • Tabungan dari order LUNAS`:"Tabungan dari order LUNAS");
+ setText("walletBalance",rp(w.saldo));
+ setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar+w.withdraw));
+ renderMutasi();
+}
+function renderMutasi(filter=window.walletFilter||"all"){
+ window.walletFilter=filter;
+ ["tabAll","tabTransfer","tabBank"].forEach(id=>$(id)?.classList.remove("active"));
+ $(filter==="all"?"tabAll":filter==="transfer"?"tabTransfer":"tabBank")?.classList.add("active");
+ const body=$("mutasiList");if(!body)return;
+ const me=currentEmployee(),euid=me?employeeUid(me):uid;
+ const arr=[];
+ transfers.filter(t=>String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid||String(t.toEmployeeUid||t.toKaryawanUid||"")===euid).forEach(t=>{
+  const out=String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid;
+  arr.push({kind:"transfer",date:toDate(t.tanggal||t.createdAt),out,icon:"↔️",title:out?`Transfer ke ${t.toEmployeeName||"Karyawan"}`:`Transfer dari ${t.fromEmployeeName||"Karyawan"}`,meta:t.keterangan||"Transfer saldo karyawan",amount:transferAmount(t),status:"Berhasil"});
  });
-
- let total=0,qty=0,up=0,kas=0,withdraw=0;
- data.forEach(r=>{
-   total+=r.total;
-   qty+=r.qty;
-   up+=r.up;
-   kas+=r.kas;
-   withdraw+=r.withdraw;
+ bankRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{
+  const st=norm(x.status||"pending");
+  arr.push({kind:"bank",date:toDate(x.createdAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"🏦",title:`Transfer ${x.bankName||"Bank"}`,meta:`${x.bankAccount||""} • ${x.accountName||""}`,amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"});
  });
+ const list=arr.filter(x=>filter==="all"||x.kind===filter).sort((a,b)=>(b.date?.getTime()||0)-(a.date?.getTime()||0));
+ if(!list.length){body.innerHTML='<div class="empty-wallet">Belum ada transaksi pada menu ini.</div>';return;}
+ body.innerHTML=list.map(x=>`<div class="mutasi-row ${x.pending?"pending":x.out?"out":"in"}"><div class="micon">${x.icon}</div><div class="minfo"><div class="mtitle">${esc(x.title)} <span class="status-pill">${esc(x.status)}</span></div><div class="mmeta">${esc(fmtDate(x.date))} • ${esc(x.meta)}</div></div><div class="mamount">${x.pending?"":""}${x.out?"-":"+"}${rp(x.amount)}</div></div>`).join("");
+}
+window.showMutasi=renderMutasi;
+function openBankForm(){const s=$("bankSection");if(s)s.style.display=s.style.display==="none"?"block":"none";s?.scrollIntoView({behavior:"smooth",block:"center"})}
+window.openBankForm=openBankForm;
+function transferEmployee(){
+ const el=$("transferFrom");
+ document.querySelectorAll(".transfer-card").forEach(x=>x.remove());
+ const sec=document.createElement("section");sec.className="section transfer-card";sec.innerHTML='<div class="section-title">↔️ Transfer Saldo Antar Karyawan</div><div class="bank-grid"><select id="transferToNew"><option value="">Pilih karyawan</option></select><input id="transferAmountNew" type="number" min="1" placeholder="Nominal transfer"><input id="transferNoteNew" placeholder="Keterangan"></div><button class="bank-submit" id="transferNewBtn">TRANSFER SEKARANG</button><div class="bank-note">Transfer antar karyawan langsung tercatat sebagai mutasi setelah berhasil.</div>';
+ $("bankSection").parentNode.insertBefore(sec,$("bankSection"));
+ const to=$("transferToNew");employees.filter(e=>employeeUid(e)!==uid).forEach(e=>{to.insertAdjacentHTML("beforeend",`<option value="${esc(employeeUid(e))}">${esc(employeeName(e))}</option>`)});
+ $("transferNewBtn").onclick=async()=>{
+  const target=to.value,amount=Math.max(0,num($("transferAmountNew").value)),note=String($("transferNoteNew").value||"").trim();
+  const w=currentWallet();if(!target||amount<=0)return alert("Pilih karyawan dan isi nominal.");if(amount>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);
+  try{await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,fromEmployeeUid:uid,fromEmployeeName:employeeName(me||profile),toEmployeeUid:target,toEmployeeName:employeeName(employees.find(e=>employeeUid(e)===target)),nominal:amount,tanggal:serverTimestamp(),keterangan:note||"Transfer saldo tabungan",createdByUid:uid,createdByName:nama(profile),status:"approved"});await loadTransfers();render();alert("Transfer saldo berhasil.");}catch(e){alert("Transfer gagal: "+(e.message||e))}
+ };
+ sec.scrollIntoView({behavior:"smooth",block:"center"});
+}
+window.transferEmployee=transferEmployee;
+function goApproval(){location.href="approval-order-member.html"}window.goApproval=goApproval;
+function goProduct(){location.href="data-order-member.html"}window.goProduct=goProduct;
 
- setText("totalQty",qty.toLocaleString("id-ID")+" pcs");
- setText("saldoTabungan",rp(Math.max(0,total-withdraw)));
 
- const ex=expenseTotals();
 
- /*
-  * Saldo UP:
-  * UP masuk dari order approved
-  * dikurangi pengeluaran UP.
-  */
- setText("saldoUpPengelola",rp(Math.max(0,up-ex.up)));
- setText("saldoUangKas",rp(Math.max(0,kas-ex.kas)));
+async function submitBankTransfer(){
+ const me=currentEmployee(),w=currentWallet();
+ if(!me)return alert("Akun karyawan tidak ditemukan.");
+ const bankName=String($("bankName")?.value||"").trim(),bankAccount=String($("bankAccount")?.value||"").trim(),accountName=String($("bankOwner")?.value||"").trim(),nominal=Math.max(0,num($("bankAmount")?.value)),note=String($("bankNote")?.value||"").trim();
+ if(!bankName||!bankAccount||!accountName||nominal<=0)return alert("Lengkapi data bank dan nominal transfer.");
+ if(nominal>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);
+ const btn=$("bankSubmit");if(btn){btn.disabled=true;btn.textContent="MENGIRIM...";}
+ try{
+  await addDoc(collection(db,"tabungan_member"),{ownerUid,jenis:"transfer_bank",tipe:"transfer_bank",status:"pending",employeeUid:uid,karyawanUid:uid,employeeName:employeeName(me),karyawanNama:employeeName(me),bankName,bankAccount,accountName,nominal,keterangan:note||"Transfer antar bank",createdAt:serverTimestamp(),requestedAt:serverTimestamp(),createdByUid:uid});
+  $("bankAmount").value="";$("bankNote").value="";await loadBankRequests();render();alert("Pengajuan transfer dikirim. Menunggu persetujuan Owner.");
+ }catch(e){console.error(e);alert("Pengajuan gagal: "+(e.message||e));}
+ finally{if(btn){btn.disabled=false;btn.textContent="AJUKAN TRANSFER";}}
+}
+window.submitBankTransfer=submitBankTransfer;
 
- const body=$("memberPanels");
- if(!body)return;
-
- body.innerHTML=data.length?data.map((r,i)=>{
-   const a=r.member,saldo=Math.max(0,r.total-r.withdraw);
-   const status=norm(a.status)==="nonaktif"?"off":"active";
-
-   return `<div class="member-panel">
-     <div class="member-panel-head">
-       <span class="member-status"><span class="badge ${status}">${esc(a.status||"aktif")}</span></span>
-       <div class="member-owner-label">PEMILIK TABUNGAN MEMBER</div>
-       <div class="member-owner">${esc(nama(a))}</div>
-       <div class="member-id">Kode Member: <b>${esc(kode(a)||"-")}</b> &nbsp;•&nbsp; No. ${i+1}</div>
-     </div>
-     <div class="member-main">
-       <div class="member-contact"><b>Email:</b> ${esc(email(a)||"-")} &nbsp; • &nbsp; <b>WA:</b> ${esc(wa(a)||"-")}</div>
-
-       <div class="saving-box">
-         <div class="saving-label">TABUNGAN AWAL — MILIK ${esc(nama(a))}</div>
-         <div class="saving-total">${rp(r.total)}</div>
-         <div class="saving-sub">Total tabungan yang terkumpul dari ${r.qty.toLocaleString("id-ID")} pcs approved.</div>
-       </div>
-
-       <div class="saving-balance-grid">
-         <div class="saving-balance-box awal"><div class="k">TABUNGAN AWAL</div><div class="v">${rp(r.total)}</div></div>
-         <div class="saving-balance-box ambil"><div class="k">PENGAMBILAN</div><div class="v">${rp(r.withdraw)}</div></div>
-         <div class="saving-balance-box sisa"><div class="k">SISA TABUNGAN</div><div class="v">${rp(saldo)}</div></div>
-       </div>
-
-       <div class="saving-formula">Sisa Tabungan <b>${esc(nama(a))}</b> = Tabungan Awal ${rp(r.total)} − Pengambilan ${rp(r.withdraw)} = <b>${rp(saldo)}</b></div>
-     </div>
-   </div>`;
- }).join(""):`<div class="empty">Belum ada data member/order yang sesuai.</div>`;
+async function loadBankRequests(){
+ const map=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+  const s=await safeQuery(query(collection(db,"tabungan_member"),where(field,"==",ownerUid)));if(!s)continue;
+  s.forEach(d=>{const x={id:d.id,...(d.data()||{})};if(norm(x.jenis||x.tipe||"")==="transfer_bank")map.set(d.id,x);});
+ }
+ bankRequests=[...map.values()];
 }
 
 async function load(){
@@ -552,7 +617,7 @@ async function load(){
  notice("Menghubungkan Firebase FIXZY...","ok");
 
  try{
-   await Promise.all([loadMembers(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers()]);
+   await Promise.all([loadMembers(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests()]);
 
    if(!members.length)members=fallbackMembersFromOrders();
 
