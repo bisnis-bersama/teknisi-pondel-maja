@@ -743,9 +743,11 @@ window.approveOrder=async id=>{
    if(shouldPostKas)tx.set(kasRef,{ownerUid,memberUid,bulan,nominal:kasNominal,sumber:"approval-order-member",orderMemberId:orderRef.id,sourcePenjualanId:id,createdAt:serverTimestamp()});
    if(Object.keys(saldoPatch).length>1)tx.set(saldoRef,saldoPatch,{merge:true});
 
+   // PENJUALAN hanya menjadi sumber/order approval flag.
+   // RINCIAN HASIL APPROVAL (produk, harga, qty, tabungan, UP, kas, tempo)
+   // disimpan ke ORDER_MEMBER, bukan menimpa items di penjualan.
    tx.update(ref,{
     status:"approved",approvalStatus:"approved",approvedAt:serverTimestamp(),approvedBy:uid,
-    approvedItems:itemsFinal,items:itemsFinal,approvedTotal:total,approvedDp:dp,approvedSisa:sisa,approvedPiutang:sisa,
     orderMemberId:orderRef.id,revisionRequired:false,revisionApprovedAt:serverTimestamp(),revisionApprovedBy:uid,
     updatedAt:serverTimestamp()
    });
