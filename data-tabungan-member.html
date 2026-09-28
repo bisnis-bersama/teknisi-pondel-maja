@@ -727,12 +727,39 @@ function orderTabunganValue(r){
  const n=num(explicit);
  return n>0?n:0;
 }
+function storedEmployeeSavings(e){
+  if(!e)return 0;
+  // Sumber saldo dasar per karyawan adalah field tabunganMember pada
+  // dokumen users. Field ini sudah menjadi angka tabungan milik employee
+  // yang dipakai tampilan/index FIXZY (contoh Dika Rp84.000, Gia Rp304.000).
+  // Jangan menghitung ulang seluruh order_member di sini karena order_member
+  // tidak selalu menyimpan assignment employee yang lengkap.
+  const vals=[
+    e.tabunganMember,
+    e.totalTabunganMember,
+    e.saldoTabunganMember,
+    e.saldoTabungan,
+    e.tabungan
+  ];
+  for(const v of vals){
+    const n=Number(v);
+    if(Number.isFinite(n)&&n>=0)return n;
+  }
+  return 0;
+}
+
 function currentEmployeeSavings(e){
   if(!e)return{total:0,withdraw:0};
-  let total=0;
-  orders.forEach(r=>{
-    if(orderMatchesEmployee(r,e))total+=orderTabunganValue(r);
-  });
+  // users.tabunganMember adalah sumber saldo tabungan employee.
+  // Per-order tetap dipakai sebagai fallback hanya jika field saldo employee
+  // memang belum tersedia pada dokumen users.
+  let total=storedEmployeeSavings(e);
+
+  if(total<=0){
+    orders.forEach(r=>{
+      if(orderMatchesEmployee(r,e))total+=orderTabunganValue(r);
+    });
+  }
 
   let withdraw=0;
   const ids=employeeKeys(e);
@@ -746,13 +773,19 @@ function currentEmployeeSavings(e){
   });
   return{total,withdraw};
 }
+
 function currentWallet(){
  const me=currentEmployee();
  const sv=currentEmployeeSavings(me);
  const tr=me?transferTotalsForEmployee(employeeUid(me)):{masuk:0,keluar:0,bersih:0};
  const bankOut=0;
+ // Saldo awal = tabungan milik employee.
+ // Mutasi transfer baru kemudian ditambahkan/dikurangkan.
  const base=Math.max(0,sv.total-sv.withdraw);
- return {me,base,withdraw:sv.withdraw,masuk:tr.masuk,keluar:tr.keluar,bankOut,saldo:Math.max(0,base+tr.bersih)};
+ return {
+   me,base,withdraw:sv.withdraw,masuk:tr.masuk,keluar:tr.keluar,
+   bankOut,saldo:Math.max(0,base+tr.bersih)
+ };
 }
 function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
 function render(){
