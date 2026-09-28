@@ -61,7 +61,7 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
    <div class="wallet-actions">
     <button class="waction" onclick="openBankForm()"><span class="ico">🏦</span>Transfer Bank</button>
     <button class="waction" onclick="transferEmployee()"><span class="ico">↔️</span>Kirim</button>
-    <button class="waction" onclick="goApproval()"><span class="ico">📱</span>Beli Pulsa</button>
+    <button class="waction" onclick="openPulseForm()"><span class="ico">📱</span>Beli Pulsa</button>
     <button class="waction" onclick="goProduct()"><span class="ico">🛍️</span>Beli Produk</button>
    </div>
   </div>
@@ -73,7 +73,7 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
    <button class="service" onclick="showMutasi('all')"><span class="sico">📋</span><b>Mutasi</b><small>Uang masuk & keluar</small></button>
    <button class="service" onclick="showMutasi('transfer')"><span class="sico">↔️</span><b>Riwayat Transfer</b><small>Antar karyawan</small></button>
    <button class="service" onclick="openBankForm()"><span class="sico">🏦</span><b>Transfer Bank</b><small>Approval Owner</small></button>
-   <button class="service" onclick="goApproval()"><span class="sico">📱</span><b>Pulsa & Data</b><small>Masuk approval</small></button>
+   <button class="service" onclick="openPulseForm()"><span class="sico">📱</span><b>Pulsa & Data</b><small>Masuk approval</small></button>
    <button class="service" onclick="goProduct()"><span class="sico">🛍️</span><b>Beli Produk</b><small>Input order member</small></button>
    <button class="service" onclick="document.getElementById('bankSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💳</span><b>Pengajuan Bank</b><small>Lihat formulir</small></button>
    <button class="service" onclick="document.getElementById('ringkasanSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💰</span><b>Ringkasan</b><small>Saldo & transaksi</small></button>
@@ -126,7 +126,7 @@ const $=id=>document.getElementById(id);
 const setText=(id,v)=>{const e=$(id);if(e)e.textContent=v};
 const rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),num=v=>Number(v)||0;
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],transfers=[],employees=[],bankRequests=[],ready=false,loading=false;
+let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],transfers=[],employees=[],bankRequests=[],pulseRequests=[],stockProducts=[],stockByKey=new Map(),ready=false,loading=false;
 
 function norm(v){return String(v??"").trim().toLowerCase()}
 function notice(t,c=""){setText("notice",t);const e=$("notice");if(e)e.className="notice "+c}
@@ -139,13 +139,61 @@ function toDate(v){if(v?.toDate)return v.toDate();if(v instanceof Date)return v;
 function orderDate(r){return toDate(r.createdAt)||toDate(r.approvedAt)||toDate(r.updatedAt)||toDate(r.tanggal)||toDate(r.date)||new Date()}
 function monthKey(r){const d=orderDate(r);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
 
+function isCashOrder(r){
+ const vals=[r.tipeOrder,r.tipeTransaksi,r.jenisHarga,r.paymentType,r.metodePembayaran,r.jenisPembayaran,r.caraBayar]
+   .map(v=>String(v??"").trim().toLowerCase());
+ return vals.some(v=>["member_cash","cash","tunai","cash/tunai","cash_tunai","member cash"].includes(v));
+}
+
+function basePriceOfItem(x,r={}){
+ const cash=isCashOrder(r);
+ const up=Number(x.upPengelolaPerPcs??x.upPengelola??r.upPengelolaPerPcs??r.upPengelola??0)||0;
+ const tab=Number(x.tabunganPerPcs??x.tabungan??r.tabunganPerPcs??r.tabungan??0)||0;
+ const direct=Number(x.hargaDasar);
+ if(Number.isFinite(direct)&&direct>0)return direct;
+ const specific=Number(cash?(x.hargaCash??x.modalSatuan):(x.hargaTempo??x.hargaJual));
+ if(Number.isFinite(specific)&&specific>0)return specific;
+ const stock=findStockForItem(x);
+ if(stock){
+   const stockHarga=Number(cash?(stock.hargaCash??stock.modalSatuan):(stock.hargaTempo??stock.hargaJual??stock.harga));
+   if(Number.isFinite(stockHarga)&&stockHarga>0)return stockHarga;
+ }
+ const composed=Number(x.harga);
+ if(Number.isFinite(composed)&&composed>0)return Math.max(0,composed-up-tab);
+ return 0;
+}
+
 function itemList(r){
- const a=Array.isArray(r.approvedItems)?r.approvedItems:(Array.isArray(r.items)?r.items:(Array.isArray(r.produkList)?r.produkList:[]));
- return a.map(x=>({
-   qty:Math.max(0,num(x.approvedQty??x.qty??x.jumlah??x.quantity)),
-   tabStored:x.tabunganPerPcs??x.tabunganMember??x.menabungMemberPerPcs??x.menabungMember,
-   upStored:x.upPengelolaPerPcs??x.upPengelolaPerPcs??x.upPerPcs
- }));
+ const a=Array.isArray(r.items)?r.items:Array.isArray(r.produkList)?r.produkList:[];
+ return a.map(x=>{
+  const qty=Math.max(0,Number(x.qty??x.jumlah??x.quantity??0)||0);
+  const up=Math.max(0,Number(x.upPengelolaPerPcs??x.upPengelola??r.upPengelolaPerPcs??r.upPengelola??0)||0);
+  const tabungan=Math.max(0,Number(x.tabunganPerPcs??x.tabungan??r.tabunganPerPcs??r.tabungan??0)||0);
+  const hargaAwal=basePriceOfItem(x,r);
+  const diskon=Math.max(0,Number(x.diskon??x.discount??0)||0);
+  const nilaiBarang=Math.max(0,hargaAwal*qty-diskon);
+  return{produkId:String(x.produkId||x.id||""),nama:String(x.nama||x.namaProduk||x.kode||x.kodeProduk||"-"),kode:String(x.kode||x.kodeProduk||""),qty,hargaAwal,diskon,nilaiBarang,upPengelolaPerPcs:up,tabunganPerPcs:tabungan,total:Math.max(0,nilaiBarang+up*qty+tabungan*qty)};
+ });
+}
+
+function kasOf(r){return Math.max(0,Number(r.kasBulanan??r.uangKasBulanan??r.kasBulananMember??r.uangKas??0)||0)}
+function paidOf(r){return Math.max(0,Number(r.totalDibayar??r.pembayaran??r.dp??0)||0)}
+function rekapOrderCalculation(r){
+ const items=itemList(r);
+ const nilaiBarang=items.reduce((a,x)=>a+x.nilaiBarang,0);
+ const up=items.reduce((a,x)=>a+x.upPengelolaPerPcs*x.qty,0);
+ const tabungan=items.reduce((a,x)=>a+x.tabunganPerPcs*x.qty,0);
+ const kas=kasOf(r);
+ const totalTagihan=Math.max(0,nilaiBarang+up+tabungan+kas);
+ const paid=paidOf(r);
+ const cash=isCashOrder(r);
+ const sisa=cash?0:Math.max(0,totalTagihan-paid);
+ return{items,nilaiBarang,up,tabungan,kas,totalTagihan,paid,sisa,cash};
+}
+
+function isOrderLunas(r){
+ const calc=rekapOrderCalculation(r);
+ return calc.cash || (calc.totalTagihan>0 && calc.sisa<=0);
 }
 
 function orderMemberKey(r){
@@ -180,6 +228,30 @@ function isiDropdownMember(){
  const list=[...members].sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
  el.innerHTML='<option value="">Semua Member</option>'+list.map(m=>`<option value="${esc(m.id)}">${esc(nama(m))}</option>`).join("");
  if(list.some(m=>String(m.id)===nilai))el.value=nilai;
+}
+
+async function loadStock(){
+ const map=new Map();
+ const qs=[
+   query(collection(db,"stok"),where("ownerUid","==",ownerUid)),
+   query(collection(db,"stok"),where("ownerId","==",ownerUid)),
+   query(collection(db,"stok"),where("uid","==",uid))
+ ];
+ for(const q of qs){
+  const s=await safeQuery(q);if(!s)continue;
+  s.forEach(d=>{if(!map.has(d.id))map.set(d.id,{id:d.id,...(d.data()||{})});});
+ }
+ stockProducts=[...map.values()];
+ stockByKey=new Map();
+ stockProducts.forEach(p=>{
+  const keys=[p.id,p.produkId,p.kode,p.kodeProduk,p.sku,p.nama,p.namaProduk].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
+  keys.forEach(k=>{if(!stockByKey.has(k))stockByKey.set(k,p);});
+ });
+}
+function findStockForItem(x){
+ const keys=[x.produkId,x.id,x.kode,x.kodeProduk,x.sku,x.nama,x.namaProduk].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
+ for(const k of keys){const p=stockByKey.get(k);if(p)return p;}
+ return null;
 }
 
 async function loadOrders(){
@@ -311,16 +383,6 @@ function getOrderUp(r,items,q,member){
  return q*Math.max(0,num(fallbackUp));
 }
 
-
-function isOrderLunas(r){
- const total=Math.max(0,num(r.approvedTotal??r.totalBayar??r.total??0));
- const paid=Math.max(0,num(r.totalDibayar??r.pembayaran??r.approvedDp??r.dp??r.uangMuka??0));
- const typ=norm(r.jenisHarga||r.tipeOrder||r.tipeTransaksi||r.metodePembayaran||r.paymentMethod||"");
- const st=norm(r.status||r.paymentStatus||r.statusPembayaran||"");
- if(st==="lunas"||/cash|tunai/.test(typ)||typ==="member_cash")return true;
- const sisa=Math.max(0,num(r.sisaBayar??r.sisaTagihan??r.sisa??(total-paid)));
- return total>0&&(paid>=total||sisa<=0);
-}
 
 function aggregate(){
  const byId=new Map(),byEmail=new Map(),byCode=new Map(),byName=new Map();
@@ -568,16 +630,13 @@ function orderMatchesEmployee(r,e){
  return (euid&&ids.includes(euid)) || (!!employeeEmail && orderEmails.includes(employeeEmail));
 }
 function orderTabunganValue(r){
- if(!isOrderLunas(r))return 0;
- const explicit=r.totalTabunganOrder??r.totalTabunganMember??r.totalTabungan??r.tabunganTotal??r.totalMenabungMember??r.tabungan;
- if(explicit!==undefined&&explicit!==null&&explicit!=="")return Math.max(0,num(explicit));
- const m=r.member||r.pelanggan||{};
- const fallback=num(r.tabunganPerPcs??r.tabunganMember??r.menabungMemberPerPcs??m.tabunganPerPcs??m.tabunganMember??4000)||4000;
- const items=itemList(r);
- if(items.length)return items.reduce((sum,x)=>sum+x.qty*(x.tabStored!==undefined&&x.tabStored!==null&&x.tabStored!==""?num(x.tabStored):fallback),0);
- const q=Math.max(0,num(r.totalQty??r.approvedQty??r.qty??r.jumlah??0));
- return q*fallback;
+ // HANYA order yang menurut perhitungan Rekap Order Member sudah LUNAS.
+ const calc=rekapOrderCalculation(r);
+ if(!(calc.cash || (calc.totalTagihan>0 && calc.sisa<=0)))return 0;
+ // Nilai tabungan diambil persis dari item/order record, bukan tarif baru.
+ return calc.tabungan;
 }
+
 function currentEmployeeSavings(e){
  if(!e)return{total:0,withdraw:0};
  let total=0;
@@ -618,9 +677,13 @@ function renderMutasi(filter=window.walletFilter||"all"){
  const body=$("mutasiList");if(!body)return;
  const me=currentEmployee(),euid=me?employeeUid(me):uid;
  const arr=[];
- transfers.filter(t=>String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid||String(t.toEmployeeUid||t.toKaryawanUid||"")===euid).forEach(t=>{
+ transfers.filter(t=>norm(t.jenis||t.tipe||"")!=="beli_pulsa"&& (String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid||String(t.toEmployeeUid||t.toKaryawanUid||"")===euid)).forEach(t=>{
   const out=String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid;
   arr.push({kind:"transfer",date:toDate(t.tanggal||t.createdAt),out,icon:"↔️",title:out?`Transfer ke ${t.toEmployeeName||"Karyawan"}`:`Transfer dari ${t.fromEmployeeName||"Karyawan"}`,meta:t.keterangan||"Transfer saldo karyawan",amount:transferAmount(t),status:"Berhasil"});
+ });
+ pulseRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{
+  const st=norm(x.status||"pending");
+  arr.push({kind:"pulse",date:toDate(x.createdAt||x.requestedAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"📱",title:`Beli Pulsa ${x.nomorHp||""}`.trim(),meta:x.keterangan||"Pulsa / Data",amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"});
  });
  bankRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{
   const st=norm(x.status||"pending");
@@ -648,6 +711,30 @@ function transferEmployee(){
 }
 window.transferEmployee=transferEmployee;
 function goApproval(){location.href="approval-order-member.html"}window.goApproval=goApproval;
+function openPulseForm(){
+ document.querySelectorAll(".pulse-card").forEach(x=>x.remove());
+ const sec=document.createElement("section");sec.className="section pulse-card";sec.innerHTML='<div class="section-title">📱 Beli Pulsa / Data</div><div class="bank-grid"><input id="pulsePhone" inputmode="numeric" placeholder="Nomor HP tujuan"><select id="pulseNominal"><option value="">Pilih nominal</option><option value="10000">Rp10.000</option><option value="15000">Rp15.000</option><option value="20000">Rp20.000</option><option value="25000">Rp25.000</option><option value="50000">Rp50.000</option><option value="100000">Rp100.000</option><option value="150000">Rp150.000</option><option value="200000">Rp200.000</option></select><input id="pulseNote" placeholder="Keterangan (opsional)"></div><button class="bank-submit" id="pulseSubmit">AJUKAN BELI PULSA</button><div class="bank-note">Pengajuan pulsa berstatus <b>Menunggu Approval Owner</b>. Saldo belum berkurang sebelum Owner menyetujui.</div>';
+ $("bankSection").parentNode.insertBefore(sec,$("bankSection"));
+ $("pulseSubmit").onclick=submitPulseRequest;
+ sec.scrollIntoView({behavior:"smooth",block:"center"});
+}
+window.openPulseForm=openPulseForm;
+async function submitPulseRequest(){
+ const me=currentEmployee(),w=currentWallet();
+ if(!me)return alert("Akun karyawan tidak ditemukan.");
+ const phone=String($("pulsePhone")?.value||"").replace(/\D/g,"");
+ const nominal=Math.max(0,num($("pulseNominal")?.value));
+ const note=String($("pulseNote")?.value||"").trim();
+ if(phone.length<8||nominal<=0)return alert("Nomor HP dan nominal pulsa wajib diisi.");
+ if(nominal>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);
+ const btn=$("pulseSubmit");if(btn){btn.disabled=true;btn.textContent="MENGIRIM...";}
+ try{
+  await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,jenis:"beli_pulsa",tipe:"beli_pulsa",status:"pending",employeeUid:uid,karyawanUid:uid,employeeName:employeeName(me),karyawanNama:employeeName(me),fromEmployeeUid:uid,fromEmployeeName:employeeName(me),toEmployeeUid:"PULSA_PENDING",toEmployeeName:"Pulsa / Data",nominal,nomorHp:phone,keterangan:note||`Beli pulsa ${phone}`,createdAt:serverTimestamp(),requestedAt:serverTimestamp(),createdByUid:uid});
+  await loadPulseRequests();render();alert("Pengajuan beli pulsa dikirim. Menunggu persetujuan Owner.");
+ }catch(e){console.error(e);alert("Pengajuan pulsa gagal: "+(e.message||e));}
+ finally{if(btn){btn.disabled=false;btn.textContent="AJUKAN BELI PULSA";}}
+}
+window.submitPulseRequest=submitPulseRequest;
 function goProduct(){location.href="input-order-member.html"}window.goProduct=goProduct;
 
 
@@ -667,6 +754,15 @@ async function submitBankTransfer(){
 }
 window.submitBankTransfer=submitBankTransfer;
 
+async function loadPulseRequests(){
+ const map=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+  const s=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));if(!s)continue;
+  s.forEach(d=>{const x={id:d.id,...(d.data()||{})};if(norm(x.jenis||x.tipe||"")==="beli_pulsa")map.set(d.id,x);});
+ }
+ pulseRequests=[...map.values()];
+}
+
 async function loadBankRequests(){
  const map=new Map();
  for(const field of ["ownerUid","ownerId"]){
@@ -684,7 +780,7 @@ async function load(){
  notice("Menghubungkan Firebase FIXZY...","ok");
 
  try{
-   await Promise.all([loadMembers(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests()]);
+   await Promise.all([loadMembers(),loadStock(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests(),loadPulseRequests()]);
 
    if(!members.length)members=fallbackMembersFromOrders();
 
