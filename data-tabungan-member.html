@@ -663,7 +663,7 @@ function orderEmployeeKeys(r){
    // Beberapa versi input menyimpan assignment di field created/approved/requested.
    r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid,
    // Fallback aman: hanya akan dipakai jika nilainya benar-benar sama dengan UID employee.
-   r?.createdByUid,r?.approvedByUid,r?.requestedByUid,
+   r?.createdByUid,r?.createdBy,r?.approvedByUid,r?.approvedBy,r?.requestedByUid,r?.requestedBy,
    e?.uid,e?.userUid,e?.userId,e?.karyawanUid,e?.employeeUid,e?.id,
    e?.employeeId,e?.karyawanId,e?.uidKaryawan,e?.uidEmployee
   ];
@@ -700,7 +700,7 @@ function orderMatchesEmployee(r,e){
 
   // 3) Data lama: createdBy/approvedBy/requestedBy hanya dianggap assignment
   //    bila UID tersebut memang UID employee yang sedang dicek.
-  const actorVals=[r?.createdByUid,r?.approvedByUid,r?.requestedByUid]
+  const actorVals=[r?.createdByUid,r?.createdBy,r?.approvedByUid,r?.approvedBy,r?.requestedByUid,r?.requestedBy]
     .map(v=>String(v??"").trim()).filter(Boolean);
   if(actorVals.length && actorVals.some(v=>ids.has(v)))return true;
 
@@ -766,32 +766,20 @@ function walletOrderStatus(r){
 }
 
 function walletTabunganPerOrder(r){
-  if(walletOrderStatus(r)!=="lunas") return 0;
+  // SATU SUMBER DENGAN REKAP ORDER MEMBER / DATA TAGIHAN.
+  // Jangan menghitung tabungan dari users.tabunganMember.
+  const calc=rekapOrderCalculation(r);
+  const lunas=calc.cash || (calc.totalTagihan>0 && calc.sisa<=0);
+  if(!lunas)return 0;
 
-  const explicit=r?.totalTabunganMember??r?.totalTabungan??r?.totalTabunganOrder;
-  if(explicit!==undefined&&explicit!==null&&explicit!==""){
-    return Math.max(0,num(explicit));
-  }
+  // Nilai tabungan = tabunganPerPcs x qty dari items order.
+  // Jika order menyimpan totalTabunganMember secara eksplisit, pakai sebagai fallback.
+  if(calc.tabungan>0)return Math.max(0,calc.tabungan);
 
-  const items=Array.isArray(r?.approvedItems)
-    ?r.approvedItems
-    :(Array.isArray(r?.items)?r.items:(Array.isArray(r?.produkList)?r.produkList:[]));
-
-  return items.reduce((sum,x)=>{
-    const qty=Math.max(0,num(x?.approvedQty??x?.qty??x?.jumlah??x?.quantity));
-    const tab=Math.max(0,num(
-      x?.tabunganPerPcs??
-      x?.tabunganMember??
-      x?.menabungMemberPerPcs??
-      x?.menabungMember
-    ));
-    const totalItem=x?.totalTabunganMember??x?.totalTabungan??x?.tabunganTotal;
-
-    if(totalItem!==undefined&&totalItem!==null&&totalItem!==""){
-      return sum+Math.max(0,num(totalItem));
-    }
-    return sum+(tab*qty);
-  },0);
+  const explicit=r?.totalTabunganMember??r?.totalTabunganOrder??r?.totalTabungan??r?.tabunganTotal;
+  return explicit!==undefined&&explicit!==null&&explicit!==""
+    ?Math.max(0,num(explicit))
+    :0;
 }
 
 function currentEmployeeSavings(e){
@@ -821,7 +809,7 @@ function render(){
  if(!ready)return;
  const w=currentWallet(),me=w.me;
  setText("walletName",me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda");
- setText("walletId",me?`UID ${employeeUid(me)} • Tabungan/pcs × qty • Hanya LUNAS`:"Hanya order LUNAS");
+ setText("walletId",me?`UID ${employeeUid(me)} • order_member.createdBy/assignment • Tabungan/pcs × qty • Hanya LUNAS`:"Hanya order LUNAS");
  setText("walletBalance",rp(w.saldo));
  setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar));
  renderMutasi();
