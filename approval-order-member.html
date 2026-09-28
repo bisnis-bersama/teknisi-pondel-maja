@@ -423,7 +423,7 @@ function renderOrder(o){
    <div class="items">${items.map((x,i)=>{
     const qty=Number(x.qty)||0,stock=Number(x.stokTersedia||x.stock||0)||0;
     const price=Number(x.harga)||0;
-    return `<div class="item" data-index="${i}" data-selected-product="${esc(x.produkId||"")}">
+    return `<div class="item" data-order="${esc(o.id)}" data-index="${i}" data-selected-product="${esc(x.produkId||"")}">
       <div class="item-top"><div><div class="item-name">${i+1}. ${esc(x.nama)}</div>
        <div class="stockline">Kode: ${esc(x.kode||"-")} • Harga dasar: ${rp(Number(x.hargaDasar||0))} • Tabungan: ${rp(Number(x.tabunganPerPcs||0))}/pcs • Pengelola: ${rp(Number(x.upPengelolaPerPcs||0))}/pcs</div></div>
        <div class="stockline">${stock?`Stok: ${stock} pcs`:""}</div></div>
@@ -938,19 +938,41 @@ window.rejectCicilan=async requestId=>{
  try{const ref=doc(db,"tabungan_member",requestId);await runTransaction(db,async tx=>{const ss=await tx.get(ref);if(!ss.exists())throw Error("Request tidak ditemukan.");const d=ss.data()||{};if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");if(String(d.status||"pending").toLowerCase()!=="pending")throw Error("Request sudah diproses.");tx.update(ref,{status:"rejected",approvedBy:uid,alasanApproval:alasan})});msg("Request cicilan ditolak. Tagihan tidak berubah.","ok");await loadCicilanRequests()}catch(e){console.error(e);msg("Gagal menolak cicilan: "+(e?.message||e),"err")}
 };
 
-function searchReplacementProducts(input){
- const item=input.closest(".item");if(!item)return;const id=item.dataset.order,r=rows.find(x=>x.id===id),box=item.querySelector(".product-results");if(!r||!box)return;
- const q=String(input.value||"").trim().toLowerCase();if(q.length<2){box.classList.remove("show");box.innerHTML="";return}
- const list=(sheetCache||stockCatalog||[]).filter(p=>String(p.ownerUid||p.ownerId||"")===ownerUid),hits=list.filter(p=>[p.nama,p.kode,p.supplier].join(" ").toLowerCase().includes(q));
- if(!hits.length){box.innerHTML='<div class="add-result" style="color:#64748b">Produk tidak ditemukan.</div>';box.classList.add("show");return}
- box.innerHTML=hits.slice(0,100).map((p,i)=>`<button type="button" class="add-result" data-replacement-result="${i}"><div class="pname">${esc(p.nama)}</div><div class="meta">${esc(p.kode||"-")} • Supplier: <b>${esc(p.supplier||"-")}</b> • Stok: ${Number(p.stock??p.stok??0)||0} pcs<br>Tunai: <b>${rp(p.modal)}</b> • Tempo: <b>${rp(p.jual)}</b></div></button>`).join("");
- box.classList.add("show");box.querySelectorAll("[data-replacement-result]").forEach(b=>b.onclick=()=>applyReplacementProduct(item,hits[Number(b.dataset.replacementResult)]));
+async function searchReplacementProducts(input){
+ const item=input.closest(".item");if(!item)return;
+ const order=item.closest(".order"),id=item.dataset.order||order?.dataset.id||"",r=rows.find(x=>x.id===id),box=item.querySelector(".product-results");if(!r||!box)return;
+ const q=String(input.value||"").trim().toLowerCase();
+ if(q.length<2){box.classList.remove("show");box.innerHTML="";return}
+ // Jangan filter ownerUid di sini. Produk katalog berasal dari Spreadsheet supplier
+ // dan tidak selalu memiliki field ownerUid/ownerId.
+ let list=Array.isArray(sheetCache)&&sheetCache.length?sheetCache:stockCatalog;
+ if(!Array.isArray(list)||!list.length){
+  try{
+   const links=getSpreadsheetLinks(),all=[];sheetLinks=links;
+   for(let i=0;i<links.length;i++)try{all.push(...await readSheet(links[i],i+1))}catch(e){console.warn("Read spreadsheet replacement",e)}
+   sheetCache=all;stockCatalog=all;list=all;
+  }catch(e){console.warn(e)}
+ }
+ const hits=(Array.isArray(list)?list:[]).filter(p=>[p?.nama,p?.namaProduk,p?.kode,p?.kodeProduk,p?.supplier].join(" ").toLowerCase().includes(q));
+ if(!hits.length){box.innerHTML='<div class="add-result" style="color:#64748b">Produk pengganti tidak ditemukan di katalog.</div>';box.classList.add("show");return}
+ box.innerHTML=hits.slice(0,100).map((p,i)=>`<button type="button" class="add-result" data-replacement-result="${i}"><div class="pname">${esc(stockName(p))}</div><div class="meta">${esc(stockCode(p)||"-")} • Supplier: <b>${esc(p.supplier||"-")}</b> • Stok: ${Number(p.stock??p.stok??0)||0} pcs<br>Tunai: <b>${rp(p.modal)}</b> • Tempo: <b>${rp(p.jual)}</b></div></button>`).join("");
+ box.classList.add("show");
+ box.querySelectorAll("[data-replacement-result]").forEach(b=>b.onclick=()=>applyReplacementProduct(item,hits[Number(b.dataset.replacementResult)]));
 }
 async function applyReplacementProduct(item,p){
- const id=item?.dataset.order,index=Number(item?.dataset.index);if(!item||!id||!Number.isInteger(index)||!p)return;const r=rows.find(x=>x.id===id),old=normalizeItems(r)[index];if(!r||!old)return;
+ const order=item?.closest(".order"),id=item?.dataset.order||order?.dataset.id||"",index=Number(item?.dataset.index);if(!item||!id||!Number.isInteger(index)||!p)return;
+ const r=rows.find(x=>x.id===id),old=normalizeItems(r)[index];if(!r||!old)return;
  const price=finalProductPrice(r,p,old),stock=Number(p.stock??p.stok??0)||0,qtyInput=item.querySelector(".approved"),qty=Math.max(0,Math.min(Number(old.qty)||1,Number(qtyInput?.value)||Number(old.qty)||1));if(qty>stock)return msg(`Stok ${stock} pcs, tidak cukup untuk produk pengganti ${stockName(p)}.`,"err");
- try{msg("Menyimpan produk pengganti...");const ref=doc(db,"penjualan",id);await runTransaction(db,async tx=>{const snap=await tx.get(ref);if(!snap.exists())throw Error("Pesanan tidak ditemukan.");const d=snap.data()||{};if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Pesanan bukan milik akun ini.");if(String(d.status||"menunggu_approval")!=="menunggu_approval")throw Error("Pesanan sudah tidak menunggu approval.");const sourceItems=Array.isArray(d.items)?d.items:(Array.isArray(d.produkList)?d.produkList:[]);if(!sourceItems[index])throw Error("Item pesanan tidak ditemukan.");const sourceOld=sourceItems[index],sourcePrice=finalProductPrice(d,p,sourceOld),q=Number(sourceOld.qty||old.qty||1);sourceItems[index]={...sourceOld,approvalItemId:sourceOld.approvalItemId||`REP-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,penggantiApproval:true,produkId:p.id,nama:stockName(p),namaProduk:stockName(p),kode:stockCode(p),kodeProduk:stockCode(p),supplier:p.supplier||"",qty:q,jumlah:q,harga:sourcePrice.final,hargaJual:sourcePrice.final,hargaDasar:sourcePrice.base,hargaTempo:Number(p.hargaTempo??p.jual??0)||0,hargaCash:Number(p.hargaCash??p.modal??0)||0,tabunganPerPcs:sourcePrice.tab,upPengelolaPerPcs:sourcePrice.up,tambahanTabungan:sourcePrice.tab*q,tambahanUpPengelola:sourcePrice.up*q,modalSatuan:Number(p.modal)||0,diskon:Number(sourceOld.diskon??0)||0,approvedQty:qty,stokTersedia:stock,sourceIndex:p.sourceIndex,sourceSpreadsheet:p.sourceSpreadsheet};tx.update(ref,{items:sourceItems,status:"menunggu_approval",approvalStatus:"menunggu_approval",updatedAt:serverTimestamp()})});item.dataset.selectedProduct=String(p.id||"");item.querySelector(".product-search").value=stockName(p);item.querySelector(".product-results").classList.remove("show");item.querySelector(".product-results").innerHTML="";item.querySelector(".price").value=price.final;qtyInput.max=Math.max(0,Number(old.qty)||0);if(Number(qtyInput.value)>stock)qtyInput.value=stock;item.querySelector(".item-name").textContent=stockName(p);item.querySelector(".replacement-info").innerHTML=`Harga dasar: ${rp(price.base)} + Tabungan: ${rp(price.tab)} /pcs + Pengelola: ${rp(price.up)} /pcs = <b>${rp(price.final)}/pcs</b> • <span class="stock-ok">Tersimpan</span>`;const local=rows.find(x=>x.id===id);if(local){const arr=Array.isArray(local.items)?local.items:[];if(arr[index])Object.assign(arr[index],{...old,...p,produkId:p.id,nama:stockName(p),namaProduk:stockName(p),kode:stockCode(p),kodeProduk:stockCode(p),supplier:p.supplier||"",harga:price.final,hargaJual:price.final,hargaDasar:price.base,hargaTempo:Number(p.hargaTempo??p.jual??0)||0,hargaCash:Number(p.hargaCash??p.modal??0)||0,tabunganPerPcs:price.tab,upPengelolaPerPcs:price.up,modalSatuan:Number(p.modal)||0,approvedQty:qty,stokTersedia:stock})}recalcOrder(id);checkStock(id);msg("Produk pengganti berhasil disimpan ke pesanan.","ok")
- }catch(e){console.error(e);msg("Gagal menyimpan produk pengganti: "+(e.message||e),"err")}
+ // Pilihan pengganti disimpan sementara di state approval. Tidak menulis ke
+ // collection penjualan. Saat APPROVE, hasil final ditulis ke order_member.
+ item.dataset.selectedProduct=String(p.id||p.produkId||"");
+ const local=rows.find(x=>x.id===id);
+ if(local){
+  const arr=Array.isArray(local.items)?local.items:[];
+  if(arr[index])Object.assign(arr[index],{...old,...p,produkId:p.id||p.produkId||old.produkId,nama:stockName(p),namaProduk:stockName(p),kode:stockCode(p),kodeProduk:stockCode(p),supplier:p.supplier||"",harga:price.final,hargaJual:price.final,hargaDasar:price.base,hargaTempo:Number(p.hargaTempo??p.jual??0)||0,hargaCash:Number(p.hargaCash??p.modal??0)||0,tabunganPerPcs:price.tab,upPengelolaPerPcs:price.up,modalSatuan:Number(p.modal)||0,approvedQty:qty,stokTersedia:stock});
+ }
+ item.querySelector(".product-search").value=stockName(p);item.querySelector(".product-results").classList.remove("show");item.querySelector(".product-results").innerHTML="";item.querySelector(".price").value=price.final;qtyInput.max=stock;if(Number(qtyInput.value)>stock)qtyInput.value=stock;item.querySelector(".item-name").textContent=stockName(p);item.querySelector(".replacement-info").innerHTML=`Harga dasar: ${rp(price.base)} + Tabungan: ${rp(price.tab)} /pcs + Pengelola: ${rp(price.up)}/pcs = <b>${rp(price.final)}/pcs</b> • <span class="stock-ok">Dipilih untuk approval</span>`;
+ recalcOrder(id);checkStock(id);msg("Produk pengganti dipilih. Belum disimpan ke penjualan; akan masuk ke order_member saat APPROVE.","ok");
 }
 
 let addProductOrderId="",addProductResultsed=null;
