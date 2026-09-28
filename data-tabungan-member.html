@@ -56,6 +56,8 @@ input,select{width:100%;padding:10px;border:2px solid #111827;border-radius:8px;
 .employee-box{margin-top:12px;border:2px solid #111827;border-radius:10px;padding:10px;background:#f8fafc}
 .employee-box .k{font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase}
 .employee-box .v{font-size:13px;font-weight:900;margin-top:4px}
+
+.transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.transfer-card{border:2px solid #111827;border-radius:12px;padding:12px;background:#fffbeb;margin-bottom:12px}.transfer-title{font-size:14px;font-weight:900;margin-bottom:10px}.transfer-balance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}.transfer-balance{border:2px solid #111827;border-radius:10px;padding:11px;background:#fff}.transfer-balance .k{font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase}.transfer-balance .v{font-size:18px;font-weight:900;margin-top:4px}.transfer-balance.in{background:#f0fdf4}.transfer-balance.out{background:#fef2f2}.transfer-balance.net{background:#eff6ff}.transfer-history{display:grid;gap:8px}.transfer-row{border:2px solid #111827;border-radius:10px;padding:10px;background:#fff;display:flex;justify-content:space-between;gap:10px;align-items:center}.transfer-row .who{font-size:11px;font-weight:900;line-height:1.45}.transfer-row .meta{font-size:9px;color:#64748b;margin-top:2px}.transfer-row .amount{font-size:15px;font-weight:900;white-space:nowrap}.transfer-row.incoming .amount{color:#15803d}.transfer-row.outgoing .amount{color:#dc2626}.employee-balance-list{display:grid;gap:8px}.employee-balance-row{border:2px solid #111827;border-radius:10px;padding:10px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;gap:10px}.employee-balance-row .name{font-size:12px;font-weight:900}.employee-balance-row .small{font-size:9px;color:#64748b;margin-top:2px}.employee-balance-row .amount{font-size:17px;font-weight:900}.transfer-error{font-size:10px;font-weight:900;color:#dc2626;margin-top:8px}.transfer-ok{font-size:10px;font-weight:900;color:#15803d;margin-top:8px}.transfer-card input{box-shadow:2px 2px 0 #111827}.transfer-card select{box-shadow:2px 2px 0 #111827}body.dark .transfer-card,body.dark .transfer-balance,body.dark .transfer-row,body.dark .employee-balance-row{background:#111827;border-color:#475569}body.dark .transfer-balance.in{background:#052e16}body.dark .transfer-balance.out{background:#450a0a}body.dark .transfer-balance.net{background:#172554}
 body.dark{background:#0b1220;color:#e5e7eb}
 body.dark .card,body.dark .metric,body.dark .member-panel{background:#111827;color:#e5e7eb;border-color:#475569}
 body.dark .title{border-color:#475569}
@@ -65,6 +67,7 @@ body.dark .saving-box,body.dark .saving-balance-box,body.dark .employee-box{bord
 body.dark .saving-formula{background:#0f172a;border-color:#64748b;color:#cbd5e1}
 @media(max-width:850px){.summary-grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.filters .actions{grid-column:1/-1}}
 @media(max-width:650px){
+.transfer-grid{grid-template-columns:1fr}.transfer-balance-grid{grid-template-columns:1fr}
 header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}
 .summary-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.acts .btn{padding:8px}
 .metric .value{font-size:18px}.card{padding:12px}.saving-balance-grid{grid-template-columns:1fr}
@@ -138,6 +141,25 @@ header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}
   </div>
 
   <div class="card">
+    <div class="title">TRANSFER SALDO TABUNGAN ANTAR KARYAWAN</div>
+    <div class="transfer-card">
+      <div class="transfer-title">BUAT TRANSFER</div>
+      <div class="transfer-grid">
+        <div><label>DARI KARYAWAN</label><select id="transferFrom"></select></div>
+        <div><label>KE KARYAWAN</label><select id="transferTo"></select></div>
+        <div><label>NOMINAL TRANSFER</label><input id="transferAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Contoh 30000"></div>
+        <div><label>KETERANGAN</label><input id="transferNote" type="text" maxlength="120" placeholder="Transfer saldo tabungan"></div>
+      </div>
+      <div style="margin-top:10px"><button class="btn primary" type="button" id="btnTransfer" onclick="simpanTransfer()">TRANSFER SALDO</button></div>
+      <div id="transferMessage"></div>
+    </div>
+    <div class="title" style="margin-top:14px">SALDO TABUNGAN PER KARYAWAN</div>
+    <div id="employeeBalanceList" class="employee-balance-list"><div class="empty">Memuat saldo karyawan...</div></div>
+    <div class="title" style="margin-top:14px">RIWAYAT TRANSFER</div>
+    <div id="transferHistory" class="transfer-history"><div class="empty">Belum ada transfer.</div></div>
+  </div>
+
+  <div class="card">
     <div class="title">SALDO TABUNGAN MEMBER</div>
     <div id="memberPanels" class="member-panels">
       <div class="empty">Memuat Firebase...</div>
@@ -148,7 +170,7 @@ header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import{getFirestore,collection,query,where,getDocs,getDoc,doc}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import{getFirestore,collection,query,where,getDocs,getDoc,doc,addDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const cfg={
   apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",
@@ -186,6 +208,8 @@ let members=[];
 let orders=[];
 let withdrawals=[];
 let expenses=[];
+let employees=[];
+let transfers=[];
 
 let ready=false;
 let loading=false;
@@ -348,6 +372,144 @@ async function safeQuery(q){
     return null;
   }
 }
+
+/*
+  ================================
+  EMPLOYEE / TRANSFER SALDO
+  ================================
+*/
+function employeeRole(x){
+  return norm(x?.role||x?.profileRole);
+}
+function employeeDisplayName(x){
+  return String(
+    x?.namaKaryawan||x?.employeeName||x?.karyawanNama||
+    x?.nama||x?.name||x?.displayName||x?.email||
+    ("UID "+String(x?.id||x?.uid||""))
+  ).trim();
+}
+function employeeUidRecord(x){return String(x?.id||x?.uid||"").trim();}
+
+async function loadEmployees(){
+  const map=new Map();
+  for(const field of ["ownerUid","ownerId"]){
+    const s=await safeQuery(query(collection(db,"users"),where(field,"==",ownerUid)));
+    if(!s)continue;
+    s.forEach(d=>{
+      const x={id:d.id,...(d.data()||{})};
+      if(["employee","karyawan"].includes(employeeRole(x))&&!map.has(d.id))map.set(d.id,x);
+    });
+  }
+  if(!isOwner&&uid&&!map.has(uid)){
+    const s=await safeQuery(getDoc(doc(db,"users",uid)));
+    if(s?.exists()){
+      const x={id:s.id,...(s.data()||{})};
+      if(["employee","karyawan"].includes(employeeRole(x)))map.set(uid,x);
+    }
+  }
+  employees=[...map.values()].sort((a,b)=>employeeDisplayName(a).localeCompare(employeeDisplayName(b),"id"));
+}
+
+async function loadTransfers(){
+  const map=new Map();
+  for(const field of ["ownerUid","ownerId"]){
+    const s=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));
+    if(!s)continue;
+    s.forEach(d=>{
+      const x={id:d.id,...(d.data()||{})};
+      if(norm(x.status||"approved")==="approved")map.set(d.id,x);
+    });
+  }
+  transfers=[...map.values()];
+}
+function transferAmount(x){return Math.max(0,num(x.nominal??x.amount??x.nilai??0));}
+function transferDate(x){return toDate(x.tanggal||x.createdAt||x.updatedAt)||new Date(0);}
+function transferTotalsForEmployee(employeeUid){
+  const id=String(employeeUid||"").trim();let masuk=0,keluar=0;
+  transfers.forEach(t=>{
+    const n=transferAmount(t);
+    if(String(t.toEmployeeUid||t.toKaryawanUid||"").trim()===id)masuk+=n;
+    if(String(t.fromEmployeeUid||t.fromKaryawanUid||"").trim()===id)keluar+=n;
+  });
+  return{masuk,keluar,bersih:masuk-keluar};
+}
+function baseEmployeeBalances(){
+  const map=new Map();
+  aggregate().forEach(r=>{
+    const euid=String(r.employeeUid||employeeUidOf(r.member)||"").trim();
+    if(!euid)return;
+    const saldo=Math.max(0,r.total-r.withdraw);
+    const old=map.get(euid)||{uid:euid,name:r.employeeName||employeeNameOf(r.member)||("UID "+euid),base:0};
+    old.base+=saldo;
+    if(!old.name||old.name.startsWith("UID "))old.name=r.employeeName||employeeNameOf(r.member)||old.name;
+    map.set(euid,old);
+  });
+  return map;
+}
+function employeeBalanceSnapshot(){
+  const base=baseEmployeeBalances();
+  employees.forEach(e=>{
+    const euid=employeeUidRecord(e);if(!euid)return;
+    if(!base.has(euid))base.set(euid,{uid:euid,name:employeeDisplayName(e),base:0});
+    else base.get(euid).name=employeeDisplayName(e);
+  });
+  return [...base.values()].map(x=>{const t=transferTotalsForEmployee(x.uid);return{...x,masuk:t.masuk,keluar:t.keluar,saldo:x.base+t.bersih};}).sort((a,b)=>a.name.localeCompare(b.name,"id"));
+}
+function setTransferMessage(text,type=""){
+  const e=$("transferMessage");if(!e)return;e.className=type==="ok"?"transfer-ok":"transfer-error";e.textContent=text;
+}
+function isiDropdownTransfer(){
+  const from=$("transferFrom"),to=$("transferTo");if(!from||!to)return;
+  const currentFrom=from.value,currentTo=to.value;
+  const list=employees;
+  if(isOwner){
+    from.innerHTML='<option value="">Pilih karyawan pengirim</option>'+list.map(e=>`<option value="${esc(employeeUidRecord(e))}">${esc(employeeDisplayName(e))}</option>`).join("");
+  }else{
+    const me=employees.find(e=>employeeUidRecord(e)===uid);
+    from.innerHTML=`<option value="${esc(uid)}">${esc(me?employeeDisplayName(me):profile.nama||profile.name||profile.email||"Karyawan")}</option>`;
+    from.disabled=true;
+  }
+  const selectedFrom=isOwner?currentFrom||from.value:uid;
+  to.innerHTML='<option value="">Pilih karyawan penerima</option>'+list.filter(e=>employeeUidRecord(e)!==selectedFrom).map(e=>`<option value="${esc(employeeUidRecord(e))}">${esc(employeeDisplayName(e))}</option>`).join("");
+  if([...from.options].some(o=>o.value===currentFrom))from.value=currentFrom;
+  if([...to.options].some(o=>o.value===currentTo))to.value=currentTo;
+}
+function renderEmployeeBalances(){
+  const body=$("employeeBalanceList");if(!body)return;
+  const rows=employeeBalanceSnapshot().filter(x=>isOwner||x.uid===uid);
+  if(!rows.length){body.innerHTML='<div class="empty">Belum ada data saldo karyawan.</div>';return;}
+  body.innerHTML=rows.map(x=>`<div class="employee-balance-row"><div><div class="name">${esc(x.name)}</div><div class="small">Tabungan dikelola ${rp(x.base)} • Masuk ${rp(x.masuk)} • Keluar ${rp(x.keluar)}</div></div><div class="amount">${rp(x.saldo)}</div></div>`).join("");
+}
+function renderTransferHistory(){
+  const body=$("transferHistory");if(!body)return;
+  const visible=transfers.filter(t=>isOwner||String(t.fromEmployeeUid||t.fromKaryawanUid||"")===uid||String(t.toEmployeeUid||t.toKaryawanUid||"")===uid).sort((a,b)=>transferDate(b)-transferDate(a));
+  if(!visible.length){body.innerHTML='<div class="empty">Belum ada riwayat transfer.</div>';return;}
+  body.innerHTML=visible.map(t=>{const from=String(t.fromEmployeeName||t.fromKaryawanName||t.fromName||t.fromEmployeeUid||"-");const to=String(t.toEmployeeName||t.toKaryawanName||t.toName||t.toEmployeeUid||"-");const nominal=transferAmount(t);const outgoing=String(t.fromEmployeeUid||t.fromKaryawanUid||"")===uid;const d=transferDate(t);const dateText=d.getTime()?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";return `<div class="transfer-row ${outgoing?"outgoing":"incoming"}"><div><div class="who">${outgoing?"↗":"↙"} ${esc(from)} → ${esc(to)}</div><div class="meta">${esc(dateText)} • ${esc(t.keterangan||"Transfer saldo tabungan")}</div></div><div class="amount">${outgoing?"-":"+"}${rp(nominal)}</div></div>`;}).join("");
+}
+async function simpanTransfer(){
+  if(!ownerUid||!uid)return;
+  const fromId=String($("transferFrom")?.value||"").trim(),toId=String($("transferTo")?.value||"").trim();
+  const nominal=Math.max(0,num($("transferAmount")?.value));
+  const keterangan=String($("transferNote")?.value||"").trim()||"Transfer saldo tabungan";
+  setTransferMessage("");
+  if(!fromId||!toId)return setTransferMessage("Pilih karyawan pengirim dan penerima.");
+  if(fromId===toId)return setTransferMessage("Karyawan pengirim dan penerima tidak boleh sama.");
+  if(!isOwner&&fromId!==uid)return setTransferMessage("Karyawan hanya boleh mentransfer dari saldo sendiri.");
+  const sender=employees.find(e=>employeeUidRecord(e)===fromId),receiver=employees.find(e=>employeeUidRecord(e)===toId);
+  if(!sender||!receiver)return setTransferMessage("Data karyawan pengirim/penerima tidak ditemukan.");
+  if(nominal<=0)return setTransferMessage("Nominal transfer harus lebih dari Rp0.");
+  const senderBalance=employeeBalanceSnapshot().find(x=>x.uid===fromId)?.saldo||0;
+  if(nominal>senderBalance)return setTransferMessage(`Saldo ${employeeDisplayName(sender)} tidak cukup. Saldo tersedia ${rp(senderBalance)}.`);
+  const btn=$("btnTransfer");if(btn){btn.disabled=true;btn.textContent="MENYIMPAN...";}
+  try{
+    await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,fromEmployeeUid:fromId,fromEmployeeName:employeeDisplayName(sender),toEmployeeUid:toId,toEmployeeName:employeeDisplayName(receiver),nominal,tanggal:serverTimestamp(),keterangan,createdByUid:uid,createdByName:employeeDisplayName(profile),status:"approved"});
+    setTransferMessage(`Transfer ${rp(nominal)} dari ${employeeDisplayName(sender)} ke ${employeeDisplayName(receiver)} berhasil.` ,"ok");
+    $("transferAmount").value="";$("transferNote").value="";
+    await loadTransfers();renderEmployeeBalances();renderTransferHistory();render();
+  }catch(e){console.error(e);setTransferMessage("Transfer gagal disimpan: "+(e?.message||e));}
+  finally{if(btn){btn.disabled=false;btn.textContent="TRANSFER SALDO";}}
+}
+window.simpanTransfer=simpanTransfer;
 
 /*
   ================================
@@ -1212,7 +1374,9 @@ async function load(){
       loadMembers(),
       loadOrders(),
       loadWithdrawals(),
-      loadAllExpenses()
+      loadAllExpenses(),
+      loadEmployees(),
+      loadTransfers()
     ]);
 
     /*
@@ -1224,9 +1388,12 @@ async function load(){
     }
 
     isiDropdownMember();
+    isiDropdownTransfer();
 
     ready=true;
     render();
+    renderEmployeeBalances();
+    renderTransferHistory();
 
     const mode=isOwner
       ?"Owner — seluruh member Owner"
@@ -1299,6 +1466,11 @@ $("search")?.addEventListener(
 $("statusFilter")?.addEventListener(
   "change",
   render
+);
+
+$("transferFrom")?.addEventListener(
+  "change",
+  isiDropdownTransfer
 );
 
 $("dark")?.addEventListener(
