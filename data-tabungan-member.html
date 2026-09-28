@@ -727,48 +727,80 @@ function orderTabunganValue(r){
  const n=num(explicit);
  return n>0?n:0;
 }
-function storedEmployeeSavings(e){
-  if(!e)return 0;
-  // Sumber saldo dasar per karyawan adalah field tabunganMember pada
-  // dokumen users. Field ini sudah menjadi angka tabungan milik employee
-  // yang dipakai tampilan/index FIXZY (contoh Dika Rp84.000, Gia Rp304.000).
-  // Jangan menghitung ulang seluruh order_member di sini karena order_member
-  // tidak selalu menyimpan assignment employee yang lengkap.
-  const vals=[
-    e.tabunganMember,
-    e.totalTabunganMember,
-    e.saldoTabunganMember,
-    e.saldoTabungan,
-    e.tabungan
-  ];
-  for(const v of vals){
-    const n=Number(v);
-    if(Number.isFinite(n)&&n>=0)return n;
+/*
+  SUMBER RESMI SALDO WALLET:
+  Izin Akses + Rekap Order Member + Data Tagihan.
+  Tabungan hanya dari order LUNAS:
+  totalTabunganMember / (tabunganPerPcs x qty).
+  Identitas karyawan berasal dari assignment employee pada order.
+*/
+function walletOrderStatus(r){
+  const p=r?._paymentSource||{};
+  const jenis=[
+    r?.jenisHarga,r?.tipeOrder,r?.tipeTransaksi,r?.paymentType,
+    r?.metodePembayaran,r?.jenisPembayaran,r?.caraBayar,
+    p?.jenisHarga,p?.tipeOrder,p?.tipeTransaksi,p?.paymentType
+  ].map(v=>norm(v));
+
+  if(jenis.some(v=>["cash","tunai","cash/tunai","cash_tunai","member_cash","member cash","member_cash_tunai"].includes(v))) return "lunas";
+
+  const states=[
+    r?.status,r?.approvalStatus,r?.statusPembayaran,r?.paymentStatus,
+    p?.status,p?.approvalStatus,p?.statusPembayaran,p?.paymentStatus
+  ].map(v=>norm(v));
+
+  if(states.some(v=>["lunas","paid","dibayar","selesai","terbayar"].includes(v))) return "lunas";
+
+  const total=Math.max(0,num(r?.totalBayar??r?.total??r?.approvedTotal));
+  const paid=Math.max(
+    0,
+    num(r?.totalDibayar??r?.pembayaran??r?.dp??r?.uangMuka),
+    num(p?.totalDibayar??p?.pembayaran??p?.dp??p?.uangMuka)
+  );
+  const rawSisa=r?.sisaBayar??r?.sisaTagihan??r?.sisa;
+  const sisa=rawSisa!==undefined&&rawSisa!==null&&rawSisa!==""
+    ?Math.max(0,num(rawSisa))
+    :Math.max(0,total-paid);
+
+  return total>0&&(sisa<=0||paid>=total) ? "lunas" : "tagihan";
+}
+
+function walletTabunganPerOrder(r){
+  if(walletOrderStatus(r)!=="lunas") return 0;
+
+  const explicit=r?.totalTabunganMember??r?.totalTabungan??r?.totalTabunganOrder;
+  if(explicit!==undefined&&explicit!==null&&explicit!==""){
+    return Math.max(0,num(explicit));
   }
-  return 0;
+
+  const items=Array.isArray(r?.approvedItems)
+    ?r.approvedItems
+    :(Array.isArray(r?.items)?r.items:(Array.isArray(r?.produkList)?r.produkList:[]));
+
+  return items.reduce((sum,x)=>{
+    const qty=Math.max(0,num(x?.approvedQty??x?.qty??x?.jumlah??x?.quantity));
+    const tab=Math.max(0,num(
+      x?.tabunganPerPcs??
+      x?.tabunganMember??
+      x?.menabungMemberPerPcs??
+      x?.menabungMember
+    ));
+    const totalItem=x?.totalTabunganMember??x?.totalTabungan??x?.tabunganTotal;
+
+    if(totalItem!==undefined&&totalItem!==null&&totalItem!==""){
+      return sum+Math.max(0,num(totalItem));
+    }
+    return sum+(tab*qty);
+  },0);
 }
 
 function currentEmployeeSavings(e){
   if(!e)return{total:0,withdraw:0};
 
-  // PENTING:
-  // users.tabunganMember adalah SALDO TABUNGAN TERKINI milik karyawan.
-  // Jangan kurangi lagi dengan collection pengambilan tabungan karena
-  // pengambilan yang sudah diproses telah tercermin pada saldo tersebut.
-  //
-  // Contoh sesuai data tampilan:
-  // Dika = Rp84.000
-  // Gia  = Rp304.000
-  //
-  // Per-order hanya fallback untuk employee lama yang belum mempunyai
-  // field tabunganMember.
-  let total=storedEmployeeSavings(e);
-
-  if(total<=0){
-    orders.forEach(r=>{
-      if(orderMatchesEmployee(r,e))total+=orderTabunganValue(r);
-    });
-  }
+  let total=0;
+  orders.forEach(r=>{
+    if(orderMatchesEmployee(r,e)) total+=walletTabunganPerOrder(r);
+  });
 
   return{total,withdraw:0};
 }
@@ -777,21 +809,11 @@ function currentWallet(){
  const me=currentEmployee();
  const sv=currentEmployeeSavings(me);
  const tr=me?transferTotalsForEmployee(employeeUid(me)):{masuk:0,keluar:0,bersih:0};
- const bankOut=0;
-
- // users.tabunganMember = saldo tabungan terkini.
- // Transfer antar karyawan adalah mutasi tambahan:
- // saldo = saldo tabungan terkini + transfer masuk - transfer keluar.
  const base=Math.max(0,sv.total);
 
  return {
-   me,
-   base,
-   withdraw:0,
-   masuk:tr.masuk,
-   keluar:tr.keluar,
-   bankOut,
-   saldo:Math.max(0,base+tr.bersih)
+   me,base,withdraw:0,masuk:tr.masuk,keluar:tr.keluar,
+   bankOut:0,saldo:Math.max(0,base+tr.bersih)
  };
 }
 function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
@@ -799,7 +821,7 @@ function render(){
  if(!ready)return;
  const w=currentWallet(),me=w.me;
  setText("walletName",me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda");
- setText("walletId",me?`UID ${employeeUid(me)} • Hanya dari order LUNAS`:"Hanya dari order LUNAS");
+ setText("walletId",me?`UID ${employeeUid(me)} • Tabungan/pcs × qty • Hanya LUNAS`:"Hanya order LUNAS");
  setText("walletBalance",rp(w.saldo));
  setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar));
  renderMutasi();
@@ -947,7 +969,22 @@ window.muatUlang=async()=>{
      if(s.exists()){
        profile=s.data()||{};
        const role=norm(profile.role||profile.profileRole);
-       ownerUid=(role==="owner"||profile.isOwner===true)
+       
+   // Izin Akses FIXZY: dataTabunganMember.
+   const rawPerm=profile.permissions;
+   const perms=(rawPerm&&typeof rawPerm==="object"&&!Array.isArray(rawPerm))
+     ?rawPerm
+     :(Array.isArray(rawPerm)?Object.fromEntries(rawPerm.map(k=>[k,true])):{});
+   const walletPermission =
+     role==="owner" || role==="admin" ||
+     perms.dataTabunganMember===true ||
+     perms.semua===true || perms.all===true;
+
+   if(["employee","karyawan","kasir","kurir","reseller"].includes(role) && !walletPermission){
+     throw Error("Akses FIXZY Wallet belum diberikan. Aktifkan izin dataTabunganMember di Izin Akses.");
+   }
+
+ownerUid=(role==="owner"||profile.isOwner===true)
          ?auth.currentUser.uid
          :String(profile.ownerUid||profile.ownerId||"").trim();
      }
