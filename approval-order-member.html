@@ -86,6 +86,13 @@ body.dark .employee-btn.active{background:#ffc107;color:#111827}
  <div id="cicilanList"></div>
 </div>
 
+
+<div class="card" id="bankTransferCard" style="display:none">
+ <div class="title">🏦 Approval Transfer Antar Bank</div>
+ <div class="notice">Transfer bank dari karyawan masuk ke sini. Saldo baru berkurang setelah Owner menyetujui.</div>
+ <div id="bankTransferList"></div>
+</div>
+
 <div id="list"></div>
 
 <div class="card" id="approvedHistoryCard" style="display:none">
@@ -739,6 +746,37 @@ function renderCicilanRequests(){
  }).join("");
 }
 
+
+let bankTransferRequests=[];
+async function loadBankTransferRequests(){
+ bankTransferRequests=[];if(!ownerUid)return;
+ const map=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+  try{const s=await getDocs(query(collection(db,"tabungan_member"),where(field,"==",ownerUid)));s.forEach(d=>{const x={id:d.id,...d.data()};if(String(x.jenis||x.tipe||"").toLowerCase()==="transfer_bank"&&String(x.status||"pending").toLowerCase()==="pending")map.set(d.id,x)})}catch(e){console.warn(e)}
+ }
+ bankTransferRequests=[...map.values()].sort((a,b)=>{const av=a.requestedAt?.toMillis?a.requestedAt.toMillis():new Date(a.requestedAt||a.createdAt||0).getTime();const bv=b.requestedAt?.toMillis?b.requestedAt.toMillis():new Date(b.requestedAt||b.createdAt||0).getTime();return bv-av});
+ renderBankTransferRequests();
+}
+function renderBankTransferRequests(){
+ const card=$("bankTransferCard"),box=$("bankTransferList");if(!card||!box)return;card.style.display=bankTransferRequests.length?"block":"none";
+ box.innerHTML=bankTransferRequests.map(r=>`<div class="order"><div class="order-head"><div><div class="order-title">Transfer Bank • ${esc(r.employeeName||r.karyawanNama||r.employeeUid||"-")}</div><div class="meta">${esc(r.bankName||"-")} • Rekening ${esc(r.bankAccount||"-")} • ${esc(r.accountName||"-")}</div></div><span class="badge">MENUNGGU APPROVAL</span></div><div class="order-body"><div class="summary">💰 Nominal: <b>${rp(num(r.nominal))}</b><br>📝 ${esc(r.keterangan||"Transfer antar bank")}</div><div class="actions"><button class="btn approve" onclick="approveBankTransfer('${esc(r.id)}')">✅ SETUJUI</button><button class="btn reject" onclick="rejectBankTransfer('${esc(r.id)}')">❌ TOLAK</button></div></div></div>`).join("");
+}
+window.approveBankTransfer=async id=>{
+ const r=bankTransferRequests.find(x=>x.id===id);if(!r)return;const nominal=Math.floor(num(r.nominal));if(nominal<=0)return msg("Nominal transfer tidak valid.","err");
+ if(!confirm(`Setujui transfer bank ${rp(nominal)} untuk ${r.employeeName||r.karyawanNama||"karyawan"}?`))return;
+ try{msg("Memproses approval transfer bank...");const reqRef=doc(db,"tabungan_member",id);const euid=String(r.employeeUid||r.karyawanUid||"");
+  const empRef=doc(db,"users",euid);
+  await runTransaction(db,async tx=>{
+   const rs=await tx.get(reqRef);if(!rs.exists())throw Error("Request tidak ditemukan.");const q=rs.data()||{};if(String(q.ownerUid||q.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");if(String(q.status||"pending")!=="pending")throw Error("Request sudah diproses.");
+   const orderSnap=await tx.get(empRef);if(!orderSnap.exists())throw Error("Akun karyawan tidak ditemukan.");
+   tx.update(reqRef,{status:"approved",approvedAt:serverTimestamp(),approvedBy:uid,bankProcessStatus:"menunggu_diproses_admin",updatedAt:serverTimestamp()});
+  });
+  await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,fromEmployeeUid:euid,fromEmployeeName:r.employeeName||r.karyawanNama||"",toEmployeeUid:"BANK",toEmployeeName:`${r.bankName||"Bank"} • ${r.bankAccount||""}`,nominal,tanggal:serverTimestamp(),keterangan:r.keterangan||"Transfer antar bank",createdByUid:uid,createdByName:profile.nama||profile.name||profile.email||"Owner",status:"approved",sourceRequestId:id,bankProcessStatus:"menunggu_diproses_admin"});
+  msg("Transfer bank disetujui Owner dan diteruskan ke proses admin.","ok");await loadBankTransferRequests();
+ }catch(e){console.error(e);msg("Gagal approval transfer bank: "+(e.message||e),"err")}
+};
+window.rejectBankTransfer=async id=>{const r=bankTransferRequests.find(x=>x.id===id);if(!r)return;const alasan=prompt("Alasan penolakan:","Data rekening belum sesuai");if(alasan===null)return;try{const ref=doc(db,"tabungan_member",id);await runTransaction(db,async tx=>{const s=await tx.get(ref);if(!s.exists())throw Error("Request tidak ditemukan.");const d=s.data()||{};if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");if(String(d.status||"pending")!=="pending")throw Error("Request sudah diproses.");tx.update(ref,{status:"rejected",approvedBy:uid,alasanApproval:alasan,updatedAt:serverTimestamp()})});msg("Transfer bank ditolak.","ok");await loadBankTransferRequests()}catch(e){msg("Gagal menolak transfer: "+(e.message||e),"err")}};
+
 async function loadCicilanRequests(){
  cicilanRequests=[];
  if(!ownerUid)return;
@@ -807,6 +845,7 @@ window.approveCicilan=async requestId=>{
   });
   msg("Pembayaran berhasil di-approve. Sisa tagihan diperbarui.","ok");
   await loadCicilanRequests();
+  await loadBankTransferRequests();
  }catch(e){console.error(e);msg("Gagal approval pembayaran: "+(e?.message||e),"err")}
 };
 
@@ -965,6 +1004,7 @@ async function handleLoggedInUser(u){
   await load();
   await loadEmployees();
   await loadCicilanRequests();
+  await loadBankTransferRequests();
   $("list").innerHTML='<div class="card empty">🔎 Pilih nama karyawan terlebih dahulu untuk menampilkan order.</div>';
   $("approvedHistoryCard").style.display="none";
   $("cicilanCard").style.display="none";
@@ -988,6 +1028,7 @@ onAuthStateChanged(auth,async u=>{
   await load();
   await loadEmployees();
   await loadCicilanRequests();
+  await loadBankTransferRequests();
   $("list").innerHTML='<div class="card empty">🔎 Pilih nama karyawan terlebih dahulu untuk menampilkan order.</div>';
   $("approvedHistoryCard").style.display="none";
   $("cicilanCard").style.display="none";
