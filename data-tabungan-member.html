@@ -308,15 +308,34 @@ async function loadOrders(){
 }
 async function loadWithdrawals(){
  const map=new Map();
- for(const field of ["ownerUid","ownerId","uid"]){
+ // Sumber lama: pengeluaran / pengeluaranMember
+ for(const collectionName of ["pengeluaran","pengeluaranMember"]){
+  for(const field of ["ownerUid","ownerId","uid"]){
    const value=field==="uid"?uid:ownerUid;if(!value)continue;
-   const s=await safeQuery(query(collection(db,"pengeluaran"),where(field,"==",value)));
+   const s=await safeQuery(query(collection(db,collectionName),where(field,"==",value)));
    if(!s)continue;
-   s.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}));
+   s.forEach(d=>map.set(collectionName+":"+d.id,{id:d.id,...(d.data()||{})}));
+  }
  }
- withdrawals=[...map.values()].filter(r=>norm(r.modul)==="member"&&norm(r.jenis)==="pengambilan tabungan member");
-}
+ const old=[...map.values()].filter(r=>norm(r.modul)==="member"&&norm(r.jenis)==="pengambilan tabungan member");
 
+ // Sumber baru/permintaan: tabungan_member. Hanya pengambilan yang SUDAH DISETUJUI
+ // yang mengurangi saldo. Pending/rejected tidak mengubah saldo.
+ const tm=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+  if(!ownerUid)continue;
+  const s=await safeQuery(query(collection(db,"tabungan_member"),where(field,"==",ownerUid)));
+  if(!s)continue;
+  s.forEach(d=>tm.set(d.id,{id:d.id,...(d.data()||{})}));
+ }
+ const approved=[...tm.values()].filter(r=>{
+   const st=norm(r.status||r.approvalStatus||"");
+   const jenis=norm(r.jenis||r.type||r.tipe||"");
+   const isWithdrawal=jenis.includes("ambil")||jenis.includes("pengambilan")||jenis.includes("withdraw")||jenis.includes("tarik");
+   return isWithdrawal && ["approved","disetujui","selesai","completed","success","berhasil","lunas"].includes(st);
+ });
+ withdrawals=[...old,...approved];
+}
 async function loadAllExpenses(){
  const map=new Map();
  for(const collectionName of ["pengeluaran","pengeluaranMember"]){
@@ -634,32 +653,66 @@ function fillTransferEmployees(){
  updateTransferInfo();
 }
 function orderEmployeeKeys(r){
- const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||{};
- const vals=[
-  // PRIORITAS field yang memang dipakai input/approval order member di ZIP.
-  r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,
-  r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,
-  r?.pemegangKaryawanUid,r?.pemegangUid,
-  e?.uid,e?.userUid,e?.userId,e?.karyawanUid,e?.employeeUid,e?.id
- ];
- return new Set(vals.map(v=>String(v??"").trim()).filter(Boolean));
+  const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||r?.assignedEmployee||r?.assignedKaryawan||{};
+  const vals=[
+   // Assignment eksplisit adalah sumber utama.
+   r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,
+   r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,
+   r?.pemegangKaryawanUid,r?.pemegangUid,r?.pemegangEmployeeUid,
+   r?.karyawan?.uid,r?.employee?.uid,
+   // Beberapa versi input menyimpan assignment di field created/approved/requested.
+   r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid,
+   // Fallback aman: hanya akan dipakai jika nilainya benar-benar sama dengan UID employee.
+   r?.createdByUid,r?.approvedByUid,r?.requestedByUid,
+   e?.uid,e?.userUid,e?.userId,e?.karyawanUid,e?.employeeUid,e?.id,
+   e?.employeeId,e?.karyawanId,e?.uidKaryawan,e?.uidEmployee
+  ];
+  return new Set(vals.map(v=>String(v??"").trim()).filter(Boolean));
 }
 function orderEmployeeNames(r){
- const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||{};
- return new Set([
-  r?.karyawanNama,r?.employeeName,r?.employeeNama,r?.approvalEmployeeName,r?.namaKaryawan,r?.namaEmployee,r?.pemegangNama,
-  e?.nama,e?.name,e?.displayName,e?.namaKaryawan
- ].map(v=>norm(v)).filter(Boolean));
+  const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||r?.assignedEmployee||r?.assignedKaryawan||{};
+  return new Set([
+   r?.karyawanNama,r?.employeeName,r?.employeeNama,r?.approvalEmployeeName,
+   r?.namaKaryawan,r?.namaEmployee,r?.pemegangNama,r?.assignedEmployeeName,
+   r?.assignedKaryawanName,r?.handledByName,r?.processedByName,
+   e?.nama,e?.name,e?.displayName,e?.namaKaryawan,e?.employeeName,e?.karyawanNama
+  ].map(v=>norm(v)).filter(Boolean));
 }
 function orderMatchesEmployee(r,e){
- if(!e)return false;
- const ids=employeeKeys(e), names=new Set([norm(employeeName(e))].filter(Boolean)), em=employeeEmail(e);
- const oks=orderEmployeeKeys(r), ons=orderEmployeeNames(r);
- for(const id of ids)if(oks.has(id))return true;
- for(const n of names)if(ons.has(n))return true;
- // Email hanya bila field tersebut memang milik employee/order assignment.
- const oe=norm(r?.employeeEmail||r?.karyawanEmail||r?.approvalEmployeeEmail||"");
- return !!em&&!!oe&&em===oe;
+  if(!e)return false;
+  const ids=employeeKeys(e);
+  const oks=orderEmployeeKeys(r);
+
+  // 1) Prioritas mutlak: assignment UID/ID yang cocok dengan employee.
+  for(const id of ids){
+    if(id && oks.has(id))return true;
+  }
+
+  // 2) Jika order menyimpan assignment ke employee lain, jangan gunakan fallback nama.
+  //    Ini mencegah tabungan karyawan lain ikut terhitung.
+  const explicitAssignmentVals=[
+    r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,
+    r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,
+    r?.pemegangKaryawanUid,r?.pemegangUid,r?.pemegangEmployeeUid,
+    r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid
+  ].map(v=>String(v??"").trim()).filter(Boolean);
+  if(explicitAssignmentVals.length)return false;
+
+  // 3) Data lama: createdBy/approvedBy/requestedBy hanya dianggap assignment
+  //    bila UID tersebut memang UID employee yang sedang dicek.
+  const actorVals=[r?.createdByUid,r?.approvedByUid,r?.requestedByUid]
+    .map(v=>String(v??"").trim()).filter(Boolean);
+  if(actorVals.length && actorVals.some(v=>ids.has(v)))return true;
+
+  // 4) Fallback legacy: nama/email hanya bila order tidak punya UID assignment/actor.
+  if(actorVals.length)return false;
+  const names=new Set([norm(employeeName(e))].filter(Boolean));
+  const ons=orderEmployeeNames(r);
+  for(const n of names)if(n&&ons.has(n))return true;
+
+  const em=employeeEmail(e);
+  const oe=norm(r?.employeeEmail||r?.karyawanEmail||r?.approvalEmployeeEmail||"");
+  return !!em&&!!oe&&em===oe;
 }
 function orderTabunganValue(r){
  // HARUS mengikuti perhitungan Rekap Order Member setelah sourcePenjualan
@@ -675,21 +728,24 @@ function orderTabunganValue(r){
  return n>0?n:0;
 }
 function currentEmployeeSavings(e){
- if(!e)return{total:0,withdraw:0};
- let total=0;
- orders.forEach(r=>{if(orderMatchesEmployee(r,e))total+=orderTabunganValue(r);});
- let withdraw=0;
- withdrawals.forEach(w=>{
-  const assigned=new Set([
-   w?.karyawanUid,w?.employeeUid,w?.employeeId,w?.karyawanId,w?.assignedEmployeeUid,
-   w?.assignedKaryawanUid,w?.pemegangUid,w?.pemegangKaryawanUid
-  ].map(v=>String(v??"").trim()).filter(Boolean));
-  const ids=employeeKeys(e);
-  if([...ids].some(id=>assigned.has(id)))withdraw+=num(w.nominal);
- });
- return{total,withdraw};
-}
+  if(!e)return{total:0,withdraw:0};
+  let total=0;
+  orders.forEach(r=>{
+    if(orderMatchesEmployee(r,e))total+=orderTabunganValue(r);
+  });
 
+  let withdraw=0;
+  const ids=employeeKeys(e);
+  withdrawals.forEach(w=>{
+    const assigned=new Set([
+      w?.karyawanUid,w?.employeeUid,w?.employeeId,w?.karyawanId,w?.assignedEmployeeUid,
+      w?.assignedKaryawanUid,w?.pemegangUid,w?.pemegangKaryawanUid,w?.requestedByUid,
+      w?.employee?.uid,w?.karyawan?.uid
+    ].map(v=>String(v??"").trim()).filter(Boolean));
+    if([...ids].some(id=>assigned.has(id)))withdraw+=num(w.nominal);
+  });
+  return{total,withdraw};
+}
 function currentWallet(){
  const me=currentEmployee();
  const sv=currentEmployeeSavings(me);
@@ -732,6 +788,13 @@ function renderMutasi(filter=window.walletFilter||"all"){
  body.innerHTML=list.map(x=>`<div class="mutasi-row ${x.pending?"pending":x.out?"out":"in"}"><div class="micon">${x.icon}</div><div class="minfo"><div class="mtitle">${esc(x.title)} <span class="status-pill">${esc(x.status)}</span></div><div class="mmeta">${esc(fmtDate(x.date))} • ${esc(x.meta)}</div></div><div class="mamount">${x.pending?"":""}${x.out?"-":"+"}${rp(x.amount)}</div></div>`).join("");
 }
 window.showMutasi=renderMutasi;
+
+// Kompatibilitas versi lama: beberapa halaman/versi sebelumnya memanggil
+// renderTransferHistory(). Riwayat transfer sekarang dirender oleh renderMutasi().
+function renderTransferHistory(){
+  return renderMutasi("transfer");
+}
+window.renderTransferHistory=renderTransferHistory;
 function openBankForm(){const s=$("bankSection");if(s)s.style.display=s.style.display==="none"?"block":"none";s?.scrollIntoView({behavior:"smooth",block:"center"})}
 window.openBankForm=openBankForm;
 function transferEmployee(){
@@ -859,11 +922,8 @@ window.resetFilter=()=>{
  render();
 };
 
-$("search")?.addEventListener("change",render);
-$("statusFilter")?.addEventListener("change",render);
-$("transferFrom")?.addEventListener("change",updateTransferInfo);
-$("transferTo")?.addEventListener("change",updateTransferInfo);
-$("btnTransfer")?.addEventListener("click",simpanTransfer);
+// Kontrol filter/admin lama sudah tidak dipakai pada UI FIXZY WALLET.
+// Jangan pasang listener ke fungsi/elemen lama karena dapat memicu ReferenceError.
 
 $("dark")?.addEventListener("click",()=>{
  document.body.classList.toggle("dark");
