@@ -16,7 +16,7 @@ main{max-width:1100px;margin:auto;padding:88px 12px 30px}.notice{font-size:11px;
 body.dark{background:#0b1220;color:#e5e7eb}body.dark .card,body.dark .metric,body.dark .member-panel{background:#111827;color:#e5e7eb;border-color:#475569}body.dark .title{border-color:#475569}body.dark label{color:#9ca3af}body.dark input,body.dark select{background:#0f172a;color:#fff;border-color:#475569}body.dark .saving-box,body.dark .saving-balance-box{border-color:#475569}body.dark .saving-formula{background:#0f172a;border-color:#64748b;color:#cbd5e1}
 @media(max-width:850px){.summary-grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.filters .actions{grid-column:1/-1}}
 @media(max-width:650px){header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}.summary-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.acts .btn{padding:8px}.metric .value{font-size:18px}.card{padding:12px}.saving-balance-grid{grid-template-columns:1fr}.member-owner{font-size:17px}.saving-total{font-size:25px}}
-</style>
+.transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.transfer-info{margin:12px 0;padding:10px;border:2px dashed #94a3b8;border-radius:9px;background:#f8fafc;font-size:12px;font-weight:800}.transfer-btn{background:#ffc107;color:#111827;margin-top:2px}.employee-balance-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.employee-balance-item{border:2px solid #111827;border-radius:10px;padding:12px;background:#f8fafc}.employee-balance-name{font-weight:900}.employee-balance-sub{font-size:10px;color:#64748b;margin-top:3px}.employee-balance-value{font-size:20px;font-weight:900;margin-top:7px}.transfer-history-item{border:2px solid #111827;border-radius:10px;padding:10px;margin-bottom:8px;background:#fff}.transfer-history-head{display:flex;justify-content:space-between;gap:8px;font-weight:900}.transfer-history-sub{font-size:10px;color:#64748b;margin-top:4px}@media(max-width:650px){.transfer-grid{grid-template-columns:1fr}.employee-balance-list{grid-template-columns:1fr}}</style>
 </head>
 <body>
 <header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="hi"><h1>Data Tabungan Member</h1><span id="email" class="email">-</span></div><div class="acts"><button class="btn refresh" type="button" onclick="muatUlang()">↻ Refresh</button><button id="dark" class="btn dark" type="button">🌙</button></div></div></header>
@@ -34,11 +34,24 @@ body.dark{background:#0b1220;color:#e5e7eb}body.dark .card,body.dark .metric,bod
 <div class="card"><div class="title">SALDO TABUNGAN MEMBER</div>
 <div id="memberPanels" class="member-panels"><div class="empty">Memuat Firebase...</div></div>
 </div>
+<div class="card" id="transferCard"><div class="title">TRANSFER SALDO TABUNGAN ANTAR KARYAWAN</div>
+<div class="transfer-grid">
+<div><label>DARI KARYAWAN</label><select id="transferFrom"></select></div>
+<div><label>KE KARYAWAN</label><select id="transferTo"></select></div>
+<div><label>NOMINAL TRANSFER</label><input id="transferAmount" type="number" min="1" step="1" placeholder="Masukkan nominal"></div>
+<div><label>KETERANGAN</label><input id="transferNote" type="text" maxlength="120" placeholder="Opsional"></div>
+</div>
+<div id="transferBalanceInfo" class="transfer-info">Memuat saldo karyawan...</div>
+<button class="btn transfer-btn" id="btnTransfer" type="button">TRANSFER SALDO</button></div>
+<div class="card"><div class="title">SALDO TABUNGAN PER KARYAWAN</div>
+<div id="employeeBalanceList" class="employee-balance-list"><div class="empty">Memuat...</div></div></div>
+<div class="card"><div class="title">RIWAYAT TRANSFER</div>
+<div id="transferHistory" class="transfer-history"><div class="empty">Memuat...</div></div></div>
 </main>
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import{getFirestore,collection,query,where,getDocs,getDoc,doc}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import{getFirestore,collection,query,where,getDocs,getDoc,doc,addDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
@@ -46,7 +59,7 @@ const $=id=>document.getElementById(id);
 const setText=(id,v)=>{const e=$(id);if(e)e.textContent=v};
 const rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),num=v=>Number(v)||0;
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],ready=false,loading=false;
+let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],transfers=[],employees=[],ready=false,loading=false;
 
 function norm(v){return String(v??"").trim().toLowerCase()}
 function notice(t,c=""){setText("notice",t);const e=$("notice");if(e)e.className="notice "+c}
@@ -347,13 +360,129 @@ function aggregate(){
  return [...byId.values()];
 }
 
+
+function accountRole(){return norm(profile.role||profile.profileRole||"")}
+function identityOf(x){
+ const m=x?.member||x?.pelanggan||{};
+ return {
+  ids:[x?.id,x?.uid,x?.userId,m?.id,m?.uid,m?.userId].map(v=>String(v??"").trim()).filter(Boolean),
+  emails:[x?.email,m?.email].map(norm).filter(Boolean),
+  codes:[x?.kodeMember,x?.kode,m?.kodeMember,m?.kode].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean),
+  names:[x?.nama,x?.namaMember,x?.namaKaryawan,x?.name,x?.displayName,m?.nama,m?.namaMember].map(norm).filter(Boolean)
+ };
+}
+function sameIdentity(a,b){
+ const A=identityOf(a),B=identityOf(b);
+ return A.ids.some(x=>B.ids.includes(x))||A.emails.some(x=>B.emails.includes(x))||
+        A.codes.some(x=>B.codes.includes(x))||A.names.some(x=>B.names.includes(x));
+}
+function employeeUid(e){return String(e?.id||e?.uid||"").trim()}
+function employeeName(e){return nama(e)||e?.email||employeeUid(e)}
+
+async function loadEmployees(){
+ const map=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+  if(!ownerUid)continue;
+  const snap=await safeQuery(query(collection(db,"users"),where(field,"==",ownerUid)));
+  if(!snap)continue;
+  snap.forEach(d=>{
+   const x={id:d.id,...(d.data()||{})},role=norm(x.role||x.profileRole);
+   if(["employee","karyawan"].includes(role)&&!map.has(d.id))map.set(d.id,x);
+  });
+ }
+ if(uid&&["employee","karyawan"].includes(accountRole())){
+  const me=await safeQuery(getDoc(doc(db,"users",uid)));
+  if(me?.exists())map.set(uid,{id:me.id,...(me.data()||{})});
+ }
+ employees=[...map.values()].sort((a,b)=>employeeName(a).localeCompare(employeeName(b),"id"));
+}
+async function loadTransfers(){
+ const map=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+  if(!ownerUid)continue;
+  const snap=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));
+  if(!snap)continue;
+  snap.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}));
+ }
+ transfers=[...map.values()].sort((a,b)=>{
+  const da=toDate(a.tanggal||a.createdAt)||new Date(0),db=toDate(b.tanggal||b.createdAt)||new Date(0);
+  return db-da;
+ });
+}
+function transferAmount(t){return Math.max(0,num(t.nominal??t.amount??t.jumlah))}
+function transferTotalsForEmployee(euid){
+ let masuk=0,keluar=0;
+ transfers.forEach(t=>{
+  const to=String(t.toEmployeeUid||t.toKaryawanUid||"").trim(),from=String(t.fromEmployeeUid||t.fromKaryawanUid||"").trim(),n=transferAmount(t);
+  if(to===euid)masuk+=n;if(from===euid)keluar+=n;
+ });
+ return{masuk,keluar,bersih:masuk-keluar};
+}
+function employeeBaseBalance(e){
+ const rec=aggregate().find(r=>sameIdentity(r.member,e));
+ return rec?Math.max(0,rec.total-rec.withdraw):0;
+}
+function employeeSnapshot(){
+ return employees.map(e=>{
+  const euid=employeeUid(e),base=employeeBaseBalance(e),tr=transferTotalsForEmployee(euid);
+  return {...e,uid:euid,name:employeeName(e),base,masuk:tr.masuk,keluar:tr.keluar,saldo:Math.max(0,base+tr.bersih)};
+ });
+}
+function currentEmployee(){
+ if(!["employee","karyawan"].includes(accountRole()))return null;
+ return employees.find(e=>employeeUid(e)===uid)||employees.find(e=>sameIdentity(e,profile))||null;
+}
+function visibleAggregateData(){
+ const data=aggregate(),me=currentEmployee();
+ return me?data.filter(r=>sameIdentity(r.member,me)):data;
+}
+function renderEmployeeBalances(){
+ const body=$("employeeBalanceList");if(!body)return;
+ const list=employeeSnapshot();
+ body.innerHTML=list.length?list.map(e=>`<div class="employee-balance-item"><div class="employee-balance-name">${esc(e.name)}</div><div class="employee-balance-sub">Tabungan awal ${rp(e.base)} • Masuk ${rp(e.masuk)} • Keluar ${rp(e.keluar)}</div><div class="employee-balance-value">${rp(e.saldo)}</div></div>`).join(""):'<div class="empty">Belum ada data karyawan.</div>';
+}
+function updateTransferInfo(){
+ const list=employeeSnapshot(),from=list.find(e=>e.uid===String($("transferFrom")?.value||"")),to=list.find(e=>e.uid===String($("transferTo")?.value||"")),box=$("transferBalanceInfo");
+ if(!box)return;
+ box.textContent=from?`Saldo ${from.name}: ${rp(from.saldo)}${to?` • Saldo ${to.name}: ${rp(to.saldo)}`:""}`:"Pilih karyawan sumber.";
+}
+function fillTransferEmployees(){
+ const from=$("transferFrom"),to=$("transferTo");if(!from||!to)return;
+ const list=employeeSnapshot(),me=currentEmployee(),sources=me?list.filter(e=>e.uid===uid):list;
+ from.innerHTML=sources.length?sources.map(e=>`<option value="${esc(e.uid)}">${esc(e.name)} — ${esc(rp(e.saldo))}</option>`).join(""):'<option value="">Tidak ada sumber</option>';
+ to.innerHTML=list.map(e=>`<option value="${esc(e.uid)}">${esc(e.name)}</option>`).join("");
+ const other=list.find(e=>e.uid!==uid);if(me&&other)to.value=other.uid;
+ updateTransferInfo();
+}
+async function simpanTransfer(){
+ const fromUid=String($("transferFrom")?.value||"").trim(),toUid=String($("transferTo")?.value||"").trim(),nominal=Math.max(0,num($("transferAmount")?.value)),note=String($("transferNote")?.value||"").trim();
+ if(!fromUid||!toUid)return alert("Karyawan sumber dan penerima wajib dipilih.");
+ if(fromUid===toUid)return alert("Karyawan sumber dan penerima tidak boleh sama.");
+ if(nominal<=0)return alert("Nominal transfer harus lebih dari 0.");
+ const list=employeeSnapshot(),from=list.find(e=>e.uid===fromUid),to=list.find(e=>e.uid===toUid);
+ if(!from||!to)return alert("Data karyawan tidak ditemukan.");
+ if(nominal>from.saldo)return alert(`Saldo ${from.name} tidak cukup. Saldo saat ini ${rp(from.saldo)}.`);
+ if(["employee","karyawan"].includes(accountRole())&&fromUid!==uid)return alert("Akun ini hanya boleh mentransfer saldo milik sendiri.");
+ const btn=$("btnTransfer");if(btn){btn.disabled=true;btn.textContent="MENYIMPAN...";}
+ try{
+  await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,fromEmployeeUid:fromUid,fromEmployeeName:from.name,toEmployeeUid:toUid,toEmployeeName:to.name,nominal,tanggal:serverTimestamp(),keterangan:note,createdByUid:uid,createdByName:nama(profile),status:"approved"});
+  $("transferAmount").value="";$("transferNote").value="";
+  await loadTransfers();renderEmployeeBalances();fillTransferEmployees();renderTransferHistory();render();notice("Transfer saldo berhasil disimpan.","ok");
+ }catch(e){console.error(e);alert("Transfer gagal: "+(e?.message||e));}
+ finally{if(btn){btn.disabled=false;btn.textContent="TRANSFER SALDO";}}
+}
+function renderTransferHistory(){
+ const body=$("transferHistory");if(!body)return;
+ body.innerHTML=transfers.length?transfers.map(t=>{const d=toDate(t.tanggal||t.createdAt);return `<div class="transfer-history-item"><div class="transfer-history-head"><span>${esc(t.fromEmployeeName||"-")} → ${esc(t.toEmployeeName||"-")}</span><span>${rp(transferAmount(t))}</span></div><div class="transfer-history-sub">${esc(d?d.toLocaleString("id-ID"):"-")}${t.keterangan?" • "+esc(t.keterangan):""}</div></div>`}).join(""):'<div class="empty">Belum ada riwayat transfer.</div>';
+}
+
 function render(){
  if(!ready)return;
 
  const search=String($("search")?.value||"").trim();
  const sf=norm($("statusFilter")?.value);
 
- const data=aggregate().filter(r=>{
+ const data=visibleAggregateData().filter(r=>{
    const a=r.member;
    return(!search||String(a.id||"")===search)&&(!sf||norm(a.status||"aktif")===sf);
  });
@@ -423,13 +552,16 @@ async function load(){
  notice("Menghubungkan Firebase FIXZY...","ok");
 
  try{
-   await Promise.all([loadMembers(),loadOrders(),loadWithdrawals(),loadAllExpenses()]);
+   await Promise.all([loadMembers(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers()]);
 
    if(!members.length)members=fallbackMembersFromOrders();
 
    isiDropdownMember();
    ready=true;
    render();
+   renderEmployeeBalances();
+   fillTransferEmployees();
+   renderTransferHistory();
 
    notice(`Firebase FIXZY terhubung • ${members.length} member • ${orders.length} order approved.`,"ok");
  }catch(e){
@@ -464,6 +596,9 @@ window.resetFilter=()=>{
 
 $("search")?.addEventListener("change",render);
 $("statusFilter")?.addEventListener("change",render);
+$("transferFrom")?.addEventListener("change",updateTransferInfo);
+$("transferTo")?.addEventListener("change",updateTransferInfo);
+$("btnTransfer")?.addEventListener("click",simpanTransfer);
 
 $("dark")?.addEventListener("click",()=>{
  document.body.classList.toggle("dark");
