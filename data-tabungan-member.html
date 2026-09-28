@@ -42,6 +42,7 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
 .mutasi-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}.mtab{border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;padding:9px 5px;font-size:10px;font-weight:900;cursor:pointer}.mtab.active{background:var(--fixzy-black);color:var(--fixzy-yellow);border-color:var(--fixzy-black)}.mutasi{display:grid;gap:8px}.mutasi-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #eef2f7}.mutasi-row:last-child{border-bottom:0}.micon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#fff6d6;border:1px solid #ffe08a;font-size:18px;flex:0 0 auto}.minfo{min-width:0;flex:1}.mtitle{font-size:11px;font-weight:900}.mmeta{font-size:9px;color:#64748b;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mamount{font-size:12px;font-weight:900;white-space:nowrap}.in .mamount{color:#15803d}.out .mamount{color:#dc2626}.pending .mamount{color:#d97706}.status-pill{font-size:8px;font-weight:900;border-radius:999px;padding:3px 6px;background:#fef3c7;color:#92400e;margin-left:4px}
 .bank-form{display:none;margin-top:12px;padding:12px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.bank-form.show{display:block}.bank-grid{display:grid;gap:9px}.bank-grid input{box-shadow:none!important;border:1px solid #cbd5e1!important}.bank-submit{width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:var(--fixzy-yellow);color:#111827;font-weight:900;cursor:pointer}.bank-note{font-size:9px;color:#64748b;line-height:1.5;margin-top:8px}
 .balance-mini{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:12px}.mini{padding:9px;border-radius:11px;background:#f8fafc}.mini b{display:block;font-size:11px;margin-top:3px}.mini span{font-size:8px;color:#64748b}.empty-wallet{text-align:center;padding:18px;color:#64748b;font-size:10px}.old-admin{display:none!important}
+.topup-grid{display:grid;gap:10px}.qris-box{background:#fffdf2;border:2px solid #ffc107;border-radius:15px;padding:12px;text-align:center}.qris-box img{width:100%;max-width:300px;max-height:320px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #e5e7eb}.qris-title{font-weight:900;font-size:13px;margin-bottom:8px}.qris-note{font-size:9px;color:#64748b;line-height:1.5;margin-top:7px}.topup-input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-weight:800}.topup-submit{width:100%;border:0;border-radius:12px;padding:12px;background:#ffc107;color:#111827;font-weight:900;cursor:pointer}.topup-request{border:1px solid #cbd5e1;border-radius:12px;padding:11px;background:#fff;margin-bottom:8px}.topup-request-head{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:11px}.topup-request-sub{font-size:9px;color:#64748b;margin-top:4px;line-height:1.5}.topup-approve-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.topup-approve,.topup-reject{border:0;border-radius:9px;padding:9px;font-weight:900;cursor:pointer}.topup-approve{background:#dcfce7;color:#166534}.topup-reject{background:#fee2e2;color:#991b1b}.topup-status{font-size:8px;font-weight:900;border-radius:999px;padding:4px 7px;background:#fef3c7;color:#92400e}
 @media(max-width:420px){.wallet-actions{gap:5px}.wallet-balance{font-size:32px}.waction{font-size:8px;min-height:73px}.service-grid{grid-template-columns:repeat(4,1fr)}.service .sico{width:40px;height:40px;font-size:19px}.service b{font-size:8px}.quick-grid{grid-template-columns:1fr}.balance-mini{grid-template-columns:1fr 1fr 1fr}}
 </style>
 
@@ -75,6 +76,8 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
    <button class="service" onclick="openBankForm()"><span class="sico">🏦</span><b>Transfer Bank</b><small>Approval Owner</small></button>
    <button class="service" onclick="openPulseForm()"><span class="sico">📱</span><b>Pulsa & Data</b><small>Masuk approval</small></button>
    <button class="service" onclick="goProduct()"><span class="sico">🛍️</span><b>Beli Produk</b><small>Input order member</small></button>
+   <button class="service" onclick="openTopupForm()"><span class="sico">➕</span><b>Top Up Saldo</b><small>Isi saldo via QRIS</small></button>
+   <button class="service" id="topupApprovalService" onclick="openTopupApproval()" style="display:none"><span class="sico">✅</span><b>Approval Top Up</b><small>Persetujuan Owner</small></button>
    <button class="service" onclick="document.getElementById('bankSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💳</span><b>Pengajuan Bank</b><small>Lihat formulir</small></button>
    <button class="service" onclick="document.getElementById('ringkasanSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💰</span><b>Ringkasan</b><small>Saldo & transaksi</small></button>
    <button class="service" onclick="document.getElementById('mutasiSection').scrollIntoView({behavior:'smooth'})"><span class="sico">🔎</span><b>Lihat Semua</b><small>Riwayat wallet</small></button>
@@ -95,6 +98,27 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
     <div class="bank-note">Transfer bank tidak langsung mengurangi saldo. Permintaan akan berstatus <b>Menunggu Persetujuan Owner</b>. Setelah disetujui Owner, transaksi masuk mutasi sebagai pengeluaran dan dilanjutkan admin ke bank.</div>
   </div>
  </section>
+ <section class="section" id="topupSection" style="display:none">
+   <div class="section-title">➕ Top Up / Isi Saldo</div>
+   <div class="topup-grid">
+     <div class="qris-box">
+       <div class="qris-title">📲 Scan QRIS FIXZY</div>
+       <img src="qris.jpg" alt="QRIS FIXZY" onerror="this.style.display='none';document.getElementById('qrisError').style.display='block'">
+       <div id="qrisError" class="qris-note" style="display:none">File <b>qris.jpg</b> belum ditemukan. Letakkan qris.jpg satu folder dengan halaman ini.</div>
+       <div class="qris-note">Transfer sesuai nominal yang diminta. Saldo belum bertambah sebelum Owner menyetujui request.</div>
+     </div>
+     <input class="topup-input" id="topupAmount" type="number" min="10000" step="1000" inputmode="numeric" placeholder="Nominal top up, contoh Rp100.000">
+     <input class="topup-input" id="topupNote" placeholder="Keterangan / waktu transfer (opsional)">
+     <button class="topup-submit" id="topupSubmit" onclick="submitTopup()">📨 KIRIM REQUEST TOP UP</button>
+     <div class="bank-note">Request disimpan sebagai <b>MENUNGGU PERSETUJUAN OWNER</b>. Setelah disetujui, nominal otomatis menjadi saldo wallet karyawan.</div>
+   </div>
+ </section>
+
+ <section class="section" id="topupApprovalSection" style="display:none">
+   <div class="section-title">✅ Approval Top Up Saldo</div>
+   <div id="topupApprovalList"><div class="empty-wallet">Memuat request top up...</div></div>
+ </section>
+
  <section class="section" id="mutasiSection">
    <div class="section-title">Riwayat & Mutasi</div>
    <div class="mutasi-tabs">
@@ -118,7 +142,7 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import{getFirestore,collection,query,where,getDocs,getDoc,doc,addDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import{getFirestore,collection,query,where,getDocs,getDoc,doc,addDoc,updateDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
@@ -126,7 +150,7 @@ const $=id=>document.getElementById(id);
 const setText=(id,v)=>{const e=$(id);if(e)e.textContent=v};
 const rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),num=v=>Number(v)||0;
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],transfers=[],employees=[],bankRequests=[],pulseRequests=[],stockProducts=[],stockByKey=new Map(),ready=false,loading=false;
+let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],transfers=[],employees=[],bankRequests=[],pulseRequests=[],topupRequests=[],stockProducts=[],stockByKey=new Map(),ready=false,loading=false;
 
 function norm(v){return String(v??"").trim().toLowerCase()}
 function notice(t,c=""){setText("notice",t);const e=$("notice");if(e)e.className="notice "+c}
@@ -921,6 +945,16 @@ function currentEmployeeSavings(e){
   return{total,withdraw:0};
 }
 
+function approvedTopupForEmployee(euid){
+ const id=String(euid||"").trim();
+ if(!id)return 0;
+ return topupRequests.reduce((sum,t)=>{
+   if(norm(t.status)!=="approved")return sum;
+   const tuid=String(t.employeeUid||t.karyawanUid||t.uid||"").trim();
+   return tuid===id ? sum+Math.max(0,num(t.amount??t.nominal??t.jumlah)) : sum;
+ },0);
+}
+
 function currentWallet(){
  if(isOwnerWallet()) return currentOwnerWallet();
 
@@ -930,16 +964,18 @@ function currentWallet(){
    ?transferTotalsForEmployee(employeeUid(me))
    :{masuk:0,keluar:0,bersih:0};
 
+ const topup=me?approvedTopupForEmployee(employeeUid(me)):0;
  const base=Math.max(0,sv.total);
 
  return {
    me,
    base,
    withdraw:0,
-   masuk:tr.masuk,
+   masuk:tr.masuk+topup,
    keluar:tr.keluar,
    bankOut:0,
-   saldo:Math.max(0,base+tr.bersih)
+   topup,
+   saldo:Math.max(0,base+topup+tr.bersih)
  };
 }
 function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
@@ -959,6 +995,13 @@ function render(){
  setText("miniKeluar",rp(w.keluar));
  const sendAction=$("sendAction");
  if(sendAction)sendAction.style.display=owner?"none":"";
+ const topupApprovalService=$("topupApprovalService");
+ if(topupApprovalService)topupApprovalService.style.display=owner?"block":"none";
+ const topupSection=$("topupSection");
+ if(topupSection&&owner)topupSection.style.display="none";
+ const topupApprovalSection=$("topupApprovalSection");
+ if(topupApprovalSection&&!owner)topupApprovalSection.style.display="none";
+ if(owner)renderTopupApproval();
  setText("ringkasanNote",owner
    ?"Saldo UP Pengelola dihitung dari order member berstatus LUNAS. Nilai mengikuti total UP Pengelola pada setiap order."
    :"Saldo wallet mengikuti tabungan dari order LUNAS. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.");
@@ -983,6 +1026,23 @@ function renderMutasi(filter=window.walletFilter||"all"){
   const st=norm(x.status||"pending");
   arr.push({kind:"bank",date:toDate(x.createdAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"🏦",title:`Transfer ${x.bankName||"Bank"}`,meta:`${x.bankAccount||""} • ${x.accountName||""}`,amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"});
  });
+ if(!isOwnerWallet()){
+   const euid=employeeUid(currentEmployee());
+   topupRequests.filter(t=>String(t.employeeUid||t.karyawanUid||"")===String(euid)).forEach(t=>{
+     const st=norm(t.status||"pending");
+     arr.push({
+       kind:"topup",
+       date:toDate(t.approvedAt||t.createdAt||t.requestedAt),
+       out:false,
+       pending:st!=="approved",
+       icon:"➕",
+       title:"Top Up Saldo QRIS",
+       meta:st==="approved"?"Disetujui Owner":st==="rejected"?"Ditolak":"Menunggu Persetujuan Owner",
+       amount:Math.max(0,num(t.amount??t.nominal??t.jumlah)),
+       status:st==="approved"?"Berhasil":st==="rejected"?"Ditolak":"Menunggu Approval"
+     });
+   });
+ }
  const list=arr.filter(x=>filter==="all"||x.kind===filter).sort((a,b)=>(b.date?.getTime()||0)-(a.date?.getTime()||0));
  if(!list.length){body.innerHTML='<div class="empty-wallet">Belum ada transaksi pada menu ini.</div>';return;}
  body.innerHTML=list.map(x=>`<div class="mutasi-row ${x.pending?"pending":x.out?"out":"in"}"><div class="micon">${x.icon}</div><div class="minfo"><div class="mtitle">${esc(x.title)} <span class="status-pill">${esc(x.status)}</span></div><div class="mmeta">${esc(fmtDate(x.date))} • ${esc(x.meta)}</div></div><div class="mamount">${x.pending?"":""}${x.out?"-":"+"}${rp(x.amount)}</div></div>`).join("");
@@ -997,6 +1057,74 @@ function renderTransferHistory(){
 window.renderTransferHistory=renderTransferHistory;
 function openBankForm(){const s=$("bankSection");if(s)s.style.display=s.style.display==="none"?"block":"none";s?.scrollIntoView({behavior:"smooth",block:"center"})}
 window.openBankForm=openBankForm;
+function openTopupForm(){
+ if(isOwnerWallet()){ openTopupApproval(); return; }
+ const sec=$("topupSection");
+ if(sec){sec.style.display="";sec.scrollIntoView({behavior:"smooth",block:"start"});}
+}
+function openTopupApproval(){
+ if(!isOwnerWallet())return alert("Approval top up hanya dapat dilakukan Owner.");
+ const sec=$("topupApprovalSection");
+ if(sec){sec.style.display="";sec.scrollIntoView({behavior:"smooth",block:"start"});}
+ renderTopupApproval();
+}
+async function submitTopup(){
+ if(isOwnerWallet())return alert("Owner tidak mengajukan top up karyawan dari halaman ini.");
+ const me=currentEmployee();
+ if(!me)return alert("Akun karyawan tidak ditemukan.");
+ const amount=Math.max(0,num($("topupAmount")?.value));
+ const note=String($("topupNote")?.value||"").trim();
+ if(amount<10000)return alert("Minimal top up Rp10.000.");
+ const pending=topupRequests.some(t=>String(t.employeeUid||t.karyawanUid||"")===String(employeeUid(me))&&norm(t.status)==="pending");
+ if(pending)return alert("Masih ada request top up yang menunggu persetujuan Owner.");
+ try{
+   await addDoc(collection(db,"saldoTopupRequests"),{
+     ownerUid,employeeUid:employeeUid(me),karyawanUid:employeeUid(me),
+     employeeName:employeeName(me),employeeEmail:me.email||profile.email||auth.currentUser?.email||"",
+     nominal:amount,amount,status:"pending",metode:"QRIS",qrisFile:"qris.jpg",
+     keterangan:note||"Top up saldo melalui QRIS",
+     requestedAt:serverTimestamp(),createdAt:serverTimestamp(),
+     createdByUid:uid,createdByName:nama(profile)
+   });
+   $("topupAmount").value="";$("topupNote").value="";
+   await loadTopupRequests();render();renderMutasi();
+   alert("Request top up berhasil dikirim. Tunggu persetujuan Owner.");
+ }catch(e){console.error(e);alert("Request top up gagal: "+(e?.message||e));}
+}
+function renderTopupApproval(){
+ const box=$("topupApprovalList");if(!box)return;
+ if(!isOwnerWallet()){box.innerHTML='<div class="empty-wallet">Khusus Owner.</div>';return;}
+ const list=topupRequests.filter(t=>norm(t.status)==="pending");
+ if(!list.length){box.innerHTML='<div class="empty-wallet">Tidak ada request top up yang menunggu persetujuan.</div>';return;}
+ box.innerHTML=list.map(t=>{
+   const amount=Math.max(0,num(t.amount??t.nominal??t.jumlah));
+   const date=toDate(t.createdAt||t.requestedAt);
+   const ds=date?date.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";
+   return `<div class="topup-request"><div class="topup-request-head"><span>${esc(t.employeeName||t.karyawanNama||"Karyawan")}</span><span>${rp(amount)}</span></div><div class="topup-request-sub">${esc(t.employeeEmail||"")} • ${esc(ds)}<br>${esc(t.keterangan||"Top up QRIS")} <span class="topup-status">MENUNGGU OWNER</span></div><div class="topup-approve-grid"><button class="topup-approve" onclick="approveTopup('${esc(t.id)}')">✓ SETUJUI</button><button class="topup-reject" onclick="rejectTopup('${esc(t.id)}')">✕ TOLAK</button></div></div>`;
+ }).join("");
+}
+async function approveTopup(id){
+ if(!isOwnerWallet())return alert("Hanya Owner yang dapat menyetujui.");
+ const t=topupRequests.find(x=>x.id===id);
+ if(!t||norm(t.status)!=="pending")return alert("Request sudah diproses.");
+ const amount=Math.max(0,num(t.amount??t.nominal??t.jumlah));if(amount<=0)return alert("Nominal request tidak valid.");
+ try{
+   await updateDoc(doc(db,"saldoTopupRequests",id),{status:"approved",approvedByUid:uid,approvedByName:nama(profile),approvedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+   await loadTopupRequests();renderTopupApproval();render();renderMutasi();
+   alert(`Top up ${rp(amount)} untuk ${t.employeeName||"karyawan"} disetujui.`);
+ }catch(e){console.error(e);alert("Persetujuan top up gagal: "+(e?.message||e));}
+}
+async function rejectTopup(id){
+ if(!isOwnerWallet())return alert("Hanya Owner yang dapat menolak.");
+ const t=topupRequests.find(x=>x.id===id);if(!t||norm(t.status)!=="pending")return alert("Request sudah diproses.");
+ const reason=prompt("Alasan penolakan (opsional):","Bukti transfer belum sesuai");
+ try{
+   await updateDoc(doc(db,"saldoTopupRequests",id),{status:"rejected",rejectedByUid:uid,rejectedByName:nama(profile),rejectedAt:serverTimestamp(),rejectionReason:String(reason||""),updatedAt:serverTimestamp()});
+   await loadTopupRequests();renderTopupApproval();render();renderMutasi();alert("Request top up ditolak.");
+ }catch(e){console.error(e);alert("Penolakan top up gagal: "+(e?.message||e));}
+}
+window.openTopupForm=openTopupForm;window.openTopupApproval=openTopupApproval;window.submitTopup=submitTopup;window.approveTopup=approveTopup;window.rejectTopup=rejectTopup;
+
 function transferEmployee(){
  const el=$("transferFrom");
  document.querySelectorAll(".transfer-card").forEach(x=>x.remove());
@@ -1073,6 +1201,21 @@ async function loadBankRequests(){
  bankRequests=[...map.values()];
 }
 
+async function loadTopupRequests(){
+ const map=new Map();
+ for(const field of ["ownerUid","ownerId"]){
+   if(!ownerUid)continue;
+   const snap=await safeQuery(query(collection(db,"saldoTopupRequests"),where(field,"==",ownerUid)));
+   if(!snap)continue;
+   snap.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}));
+ }
+ topupRequests=[...map.values()].sort((a,b)=>{
+   const ta=toDate(a.createdAt||a.requestedAt)?.getTime()||0;
+   const tb=toDate(b.createdAt||b.requestedAt)?.getTime()||0;
+   return tb-ta;
+ });
+}
+
 async function load(){
  if(!ownerUid||loading)return;
 
@@ -1081,7 +1224,7 @@ async function load(){
  notice("Menghubungkan Firebase FIXZY...","ok");
 
  try{
-   await Promise.all([loadMembers(),loadStock(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests(),loadPulseRequests()]);
+   await Promise.all([loadMembers(),loadStock(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests(),loadPulseRequests(),loadTopupRequests()]);
 
    if(!members.length)members=fallbackMembersFromOrders();
 
