@@ -111,7 +111,7 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
     <div class="mini"><span>MASUK</span><b id="miniMasuk">Rp 0</b></div>
     <div class="mini"><span>KELUAR</span><b id="miniKeluar">Rp 0</b></div>
    </div>
-   <div class="bank-note">Saldo awal berasal dari tabungan order yang sudah LUNAS. Order yang masih TAGIHAN tidak menambah saldo.</div>
+   <div class="bank-note">Saldo wallet mengikuti saldo tabungan karyawan pada akun. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.</div>
  </section>
 </main>
 
@@ -302,9 +302,9 @@ async function loadOrders(){
      }
    }catch(e){console.warn("Sinkron pembayaran order",x.id,e?.message||e);}
  }));
- // Rekap menampilkan semua order owner; status LUNAS/TAGIHAN ditentukan
- // dari perhitungan order, bukan dari filter member.
- orders=arr;
+ // WALLET hanya menggunakan order yang benar-benar LUNAS.
+ // Order TAGIHAN tidak boleh menambah saldo/tabungan wallet.
+ orders=arr.filter(r=>isOrderLunas(r));
 }
 async function loadWithdrawals(){
  const map=new Map();
@@ -750,9 +750,18 @@ function storedEmployeeSavings(e){
 
 function currentEmployeeSavings(e){
   if(!e)return{total:0,withdraw:0};
-  // users.tabunganMember adalah sumber saldo tabungan employee.
-  // Per-order tetap dipakai sebagai fallback hanya jika field saldo employee
-  // memang belum tersedia pada dokumen users.
+
+  // PENTING:
+  // users.tabunganMember adalah SALDO TABUNGAN TERKINI milik karyawan.
+  // Jangan kurangi lagi dengan collection pengambilan tabungan karena
+  // pengambilan yang sudah diproses telah tercermin pada saldo tersebut.
+  //
+  // Contoh sesuai data tampilan:
+  // Dika = Rp84.000
+  // Gia  = Rp304.000
+  //
+  // Per-order hanya fallback untuk employee lama yang belum mempunyai
+  // field tabunganMember.
   let total=storedEmployeeSavings(e);
 
   if(total<=0){
@@ -761,17 +770,7 @@ function currentEmployeeSavings(e){
     });
   }
 
-  let withdraw=0;
-  const ids=employeeKeys(e);
-  withdrawals.forEach(w=>{
-    const assigned=new Set([
-      w?.karyawanUid,w?.employeeUid,w?.employeeId,w?.karyawanId,w?.assignedEmployeeUid,
-      w?.assignedKaryawanUid,w?.pemegangUid,w?.pemegangKaryawanUid,w?.requestedByUid,
-      w?.employee?.uid,w?.karyawan?.uid
-    ].map(v=>String(v??"").trim()).filter(Boolean));
-    if([...ids].some(id=>assigned.has(id)))withdraw+=num(w.nominal);
-  });
-  return{total,withdraw};
+  return{total,withdraw:0};
 }
 
 function currentWallet(){
@@ -779,12 +778,20 @@ function currentWallet(){
  const sv=currentEmployeeSavings(me);
  const tr=me?transferTotalsForEmployee(employeeUid(me)):{masuk:0,keluar:0,bersih:0};
  const bankOut=0;
- // Saldo awal = tabungan milik employee.
- // Mutasi transfer baru kemudian ditambahkan/dikurangkan.
- const base=Math.max(0,sv.total-sv.withdraw);
+
+ // users.tabunganMember = saldo tabungan terkini.
+ // Transfer antar karyawan adalah mutasi tambahan:
+ // saldo = saldo tabungan terkini + transfer masuk - transfer keluar.
+ const base=Math.max(0,sv.total);
+
  return {
-   me,base,withdraw:sv.withdraw,masuk:tr.masuk,keluar:tr.keluar,
-   bankOut,saldo:Math.max(0,base+tr.bersih)
+   me,
+   base,
+   withdraw:0,
+   masuk:tr.masuk,
+   keluar:tr.keluar,
+   bankOut,
+   saldo:Math.max(0,base+tr.bersih)
  };
 }
 function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
@@ -792,9 +799,9 @@ function render(){
  if(!ready)return;
  const w=currentWallet(),me=w.me;
  setText("walletName",me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda");
- setText("walletId",me?`UID ${employeeUid(me)} • Tabungan dari order LUNAS`:"Tabungan dari order LUNAS");
+ setText("walletId",me?`UID ${employeeUid(me)} • Hanya dari order LUNAS`:"Hanya dari order LUNAS");
  setText("walletBalance",rp(w.saldo));
- setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar+w.withdraw));
+ setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar));
  renderMutasi();
 }
 function renderMutasi(filter=window.walletFilter||"all"){
