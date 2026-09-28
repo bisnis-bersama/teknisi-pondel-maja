@@ -53,14 +53,14 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
  <div id="notice" class="notice">Memuat akun...</div>
  <section class="wallet-hero">
   <div class="wallet">
-   <div class="wallet-top"><span>💳 TABUNGAN KARYAWAN</span><span>FIXZY</span></div>
-   <div class="wallet-balance-label">Saldo tersedia</div>
+   <div class="wallet-top"><span id="walletTopTitle">💳 TABUNGAN KARYAWAN</span><span>FIXZY</span></div>
+   <div class="wallet-balance-label" id="walletBalanceLabel">Saldo tersedia</div>
    <div class="wallet-balance" id="walletBalance">Rp 0</div>
    <div class="wallet-name" id="walletName">-</div>
    <div class="wallet-id" id="walletId">Saldo dari order LUNAS</div>
    <div class="wallet-actions">
     <button class="waction" onclick="openBankForm()"><span class="ico">🏦</span>Transfer Bank</button>
-    <button class="waction" onclick="transferEmployee()"><span class="ico">↔️</span>Kirim</button>
+    <button class="waction" id="sendAction" onclick="transferEmployee()"><span class="ico">↔️</span>Kirim</button>
     <button class="waction" onclick="openPulseForm()"><span class="ico">📱</span>Beli Pulsa</button>
     <button class="waction" onclick="goProduct()"><span class="ico">🛍️</span>Beli Produk</button>
    </div>
@@ -111,7 +111,7 @@ header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--f
     <div class="mini"><span>MASUK</span><b id="miniMasuk">Rp 0</b></div>
     <div class="mini"><span>KELUAR</span><b id="miniKeluar">Rp 0</b></div>
    </div>
-   <div class="bank-note">Saldo wallet mengikuti saldo tabungan karyawan pada akun. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.</div>
+   <div class="bank-note" id="ringkasanNote">Saldo wallet mengikuti saldo tabungan karyawan pada akun. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.</div>
  </section>
 </main>
 
@@ -634,6 +634,44 @@ function currentEmployee(){
  const me=employees.find(e=>employeeKeys(e).has(uid));
  return me||null;
 }
+function isOwnerWallet(){
+ const r=accountRole();
+ return r==="owner" || r==="admin";
+}
+
+function currentOwnerUp(){
+ if(!isOwnerWallet())return 0;
+
+ let total=0;
+ orders.forEach(r=>{
+   // orders sudah difilter hanya order LUNAS di loadOrders().
+   const items=itemList(r);
+   const qty=Math.max(
+     0,
+     num(r.totalQty??r.approvedQty??r.qty??r.jumlah) ||
+     items.reduce((a,x)=>a+x.qty,0)
+   );
+
+   const member=r.member||r.pelanggan||{};
+   total += Math.max(0,getOrderUp(r,items,qty,member));
+ });
+ return total;
+}
+
+function currentOwnerWallet(){
+ const up=currentOwnerUp();
+ return {
+   me:null,
+   base:up,
+   withdraw:0,
+   masuk:0,
+   keluar:0,
+   bankOut:0,
+   saldo:up
+ };
+}
+
+
 function renderEmployeeBalances(){
  const body=$("employeeBalanceList");if(!body)return;
  const list=employeeSnapshot();
@@ -884,6 +922,8 @@ function currentEmployeeSavings(e){
 }
 
 function currentWallet(){
+ if(isOwnerWallet()) return currentOwnerWallet();
+
  const me=currentEmployee();
  const sv=currentEmployeeSavings(me);
  const tr=me
@@ -905,11 +945,23 @@ function currentWallet(){
 function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
 function render(){
  if(!ready)return;
- const w=currentWallet(),me=w.me;
- setText("walletName",me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda");
- setText("walletId",me?`UID ${employeeUid(me)} • Order Member • Tabungan/pcs × qty • Hanya LUNAS`:"Order Member • Hanya LUNAS");
+ const w=currentWallet(),me=w.me,owner=isOwnerWallet();
+
+ setText("walletTopTitle",owner?"💰 UP PENGELOLA":"💳 TABUNGAN KARYAWAN");
+ setText("walletBalanceLabel",owner?"UP Pengelola tersedia":"Saldo tersedia");
+ setText("walletName",owner?(nama(profile)||profile.email||"Owner"):(me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda"));
+ setText("walletId",owner
+   ?"Dari order LUNAS • UP Pengelola"
+   :(me?`UID ${employeeUid(me)} • Order Member • Tabungan/pcs × qty • Hanya LUNAS`:"Order Member • Hanya LUNAS"));
  setText("walletBalance",rp(w.saldo));
- setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar));
+ setText("miniAwal",rp(w.base));
+ setText("miniMasuk",rp(w.masuk));
+ setText("miniKeluar",rp(w.keluar));
+ const sendAction=$("sendAction");
+ if(sendAction)sendAction.style.display=owner?"none":"";
+ setText("ringkasanNote",owner
+   ?"Saldo UP Pengelola dihitung dari order member berstatus LUNAS. Nilai mengikuti total UP Pengelola pada setiap order."
+   :"Saldo wallet mengikuti tabungan dari order LUNAS. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.");
  renderMutasi();
 }
 function renderMutasi(filter=window.walletFilter||"all"){
