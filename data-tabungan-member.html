@@ -560,8 +560,12 @@ function orderMatchesEmployee(r,e){
  const m=r.member||r.pelanggan||{};
  const euid=employeeUid(e);
  const ids=[r.memberUid,r.memberId,r.createdByMemberUid,r.uidMember,m.uid,m.userId].map(v=>String(v??"").trim()).filter(Boolean);
- const emails=[r.memberEmail,m.email,e?.email,profile?.email].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
- return (euid&&ids.includes(euid)) || (emails.length && emails.includes(String(e?.email||profile?.email||"").trim().toLowerCase()));
+ // Hanya email milik DATA ORDER yang boleh dibandingkan dengan email karyawan.
+ // Jangan memasukkan email karyawan/profile ke array order, karena itu membuat
+ // semua order seolah-olah cocok dan saldo menjadi terlalu besar.
+ const orderEmails=[r.memberEmail,m.email].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
+ const employeeEmail=String(e?.email??"").trim().toLowerCase();
+ return (euid&&ids.includes(euid)) || (!!employeeEmail && orderEmails.includes(employeeEmail));
 }
 function orderTabunganValue(r){
  if(!isOrderLunas(r))return 0;
