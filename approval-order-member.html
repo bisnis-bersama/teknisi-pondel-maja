@@ -45,7 +45,7 @@ body.dark{background:#0b1220;color:#e5e7eb}body.dark .card,body.dark .order,body
 <div id="notice" class="notice">Menunggu akun...</div>
 <div class="card"><div class="title">Klarifikasi Pesanan</div>
 <div class="filters">
-<div><label>CARI NOTA / KARYAWAN / KODE</label><input id="search" placeholder="Ketik pencarian..."></div>
+<div style="position:relative"><label>CARI MEMBER / KARYAWAN / NOTA / KODE</label><input id="search" autocomplete="off" placeholder="Ketik nama member / karyawan..."><div id="searchResults" class="product-results" style="position:absolute;left:0;right:0;top:100%;z-index:50"></div></div>
 <div><label>STATUS</label><div style="font-size:11px;font-weight:900;color:#15803d;padding:11px 0">Menunggu Approval</div></div>
 <div><label>CATATAN</label><div style="font-size:11px;color:#64748b;line-height:1.6;padding-top:7px">Periksa stok aktual. Hanya qty yang disetujui yang dipindahkan ke <b>order_member</b>.</div></div>
 </div></div>
@@ -139,6 +139,38 @@ function finalProductPrice(r,p,item){
 }
 function normalizeItems(r){let a=Array.isArray(r.items)?r.items:Array.isArray(r.produkList)?r.produkList:[];return a.map(x=>({...x,nama:itemName(x),produkId:x.produkId||x.id||"",kode:x.kode||x.kodeProduk||"",qty:Number(x.qty||x.jumlah||1),harga:Number(x.harga||x.hargaJual||0),diskon:Number(x.diskon??x.discount??0),modalSatuan:Number(x.modalSatuan??x.modal??0),approvedQty:Number(x.approvedQty??0),stokTersedia:Number(x.stokTersedia??0)}))}
 function member(r){return r.member||r.pelanggan||{}}
+function employeeName(r){
+ const e=r?.karyawan||r?.employee||{};
+ return String((typeof e==="object"&&(e.nama||e.name||e.namaKaryawan||e.employeeName||e.namaEmployee))||r?.karyawanNama||r?.employeeName||r?.namaKaryawan||"").trim();
+}
+function employeeUid(r){
+ const e=r?.karyawan||r?.employee||{};
+ if(e&&typeof e==="object"){const v=e.uid||e.userId||e.id;if(v)return String(v).trim();}
+ return String(r?.karyawanUid||r?.employeeUid||r?.approvalEmployeeUid||r?.createdBy||"").trim();
+}
+function employeeCode(r){
+ const e=r?.karyawan||r?.employee||{};
+ return String((typeof e==="object"&&(e.kode||e.kodeKaryawan||e.employeeCode))||r?.karyawanKode||r?.employeeCode||"").trim();
+}
+function searchText(r){
+ const m=member(r);
+ return [r?.nomorNota,r?.nota,r?.id,m?.nama,m?.name,m?.kode,m?.wa,employeeName(r),employeeCode(r),employeeUid(r)].join(" ").toLowerCase();
+}
+function buildSearchResults(){
+ const box=$("searchResults"),key=$("search").value.trim().toLowerCase();
+ if(!box)return;
+ const all=[...rows,...approvedRows],seen=new Set(),items=[];
+ all.forEach(r=>{
+  const m=member(r),mn=String(m?.nama||m?.name||"").trim(),en=employeeName(r),ec=employeeCode(r),nota=String(r?.nomorNota||r?.nota||"").trim();
+  [["member",mn,m?.kode],["karyawan",en,ec],["nota",nota,""]].forEach(([type,name,code])=>{
+   if(!name)return; const label=(name+" "+(code||"")).toLowerCase();
+   if(key&&!label.includes(key))return; const id=type+"|"+label; if(seen.has(id))return; seen.add(id); items.push({type,name,code});
+  });
+ });
+ if(!key){box.innerHTML="";box.style.display="none";return;}
+ box.innerHTML=items.slice(0,15).map(x=>`<div class="result-item" style="padding:9px 10px;cursor:pointer;background:#fff;border-bottom:1px solid #e5e7eb" data-search-value="${esc(x.name)}"><b>${esc(x.name)}</b>${x.code?` <small>• ${esc(x.code)}</small>`:""} <small style="float:right;color:#64748b">${x.type}</small></div>`).join("")||'<div class="result-item" style="padding:9px 10px;background:#fff;color:#64748b">Tidak ditemukan</div>';
+ box.style.display="block";
+}
 function status(r){return String(r.status||"menunggu_approval").toLowerCase()}
 function isCash(r){return String(r.jenisHarga||"").toLowerCase()==="cash"||String(r.tipeTransaksi||"").toLowerCase()==="member_cash"}
 async function loadStockCatalog(){stockCatalog=[];if(ownerUid)await loadSpreadsheetCatalog();}
@@ -460,14 +492,26 @@ window.rejectPulseTransfer=async requestId=>{
 
 function render(){
  const key=$("search").value.trim().toLowerCase();
- const list=rows.filter(r=>{
-  const st=status(r),m=member(r);
-  const okStatus=st==="menunggu_approval";
-  const text=[r.nomorNota,r.nota,m.nama,m.wa,m.kode].join(" ").toLowerCase();
-  return okStatus&&text.includes(key);
- });
- $("list").innerHTML=list.length?list.map(renderOrder).join(""):'<div class="card empty">Tidak ada pesanan member sesuai filter.</div>';
+ const list=rows.filter(r=>status(r)==="menunggu_approval"&&searchText(r).includes(key));
+ $("list").innerHTML=list.length?list.map(renderOrder).join(""):'<div class="card empty">Tidak ada pesanan member sesuai pencarian.</div>';
+ renderApprovedHistory();
+ buildSearchResults();
 }
+function renderApprovedHistory(){
+ const card=$("approvedHistoryCard"),box=$("approvedHistory");
+ if(!card||!box)return;
+ const key=$("search").value.trim().toLowerCase();
+ const list=approvedRows.filter(r=>searchText(r).includes(key));
+ if(!list.length){card.style.display=key?"block":"none";box.innerHTML=key?'<div class="empty">Tidak ada riwayat order sesuai pencarian.</div>':"";return;}
+ card.style.display="block";
+ box.innerHTML=list.map(r=>{
+  const m=member(r),items=Array.isArray(r.approvedItems)?r.approvedItems:normalizeItems(r);
+  const total=Number(r.approvedTotal??r.total??0)||0,dp=Number(r.approvedDp??r.dp??r.uangMuka??0)||0,sisa=Number(r.approvedSisa??r.sisa??0)||0,tempo=Number(r.tempoHari||0)||0,due=r.jatuhTempo||r.tanggalJatuhTempo||"-";
+  const itemHtml=items.map((x,i)=>`<div style="padding:7px 0;border-bottom:1px solid #e2e8f0"><b>${i+1}. ${esc(x.nama||x.namaProduk||"-")}</b><br><small>Kode: ${esc(x.kode||x.kodeProduk||"-")} • Qty: ${Number(x.approvedQty??x.qty??0)||0} pcs • Harga: ${rp(Number(x.harga??x.hargaJual??0)||0)}</small></div>`).join("");
+  return `<div class="order" style="margin-bottom:10px"><div class="order-head"><div><div class="order-title">${esc(r.nomorNota||r.id)}</div><div style="font-size:11px;color:#64748b;margin-top:3px">👨‍🔧 ${esc(employeeName(r)||"-")} • 👤 ${esc(m.nama||"-")} • Order Member: <b>${esc(r.orderMemberId||"-")}</b></div></div><span class="badge approved">APPROVED</span></div><div class="order-body"><div class="meta">${itemHtml}</div><div class="summary">💰 Total: <b>${rp(total)}</b><br>${isCash(r)?"💵 CASH / TUNAI — LUNAS":`💵 DP: <b>${rp(dp)}</b><br>📌 Sisa: <b>${rp(sisa)}</b><br>📅 Tempo: <b>${tempo} hari</b><br>📅 Jatuh tempo: <b>${esc(due)}`}</div><div class="actions"><button class="btn" style="background:#f59e0b;color:#111" onclick="returnOrderForRevision('${esc(r.id)}')">↩️ KEMBALIKAN KE PENDING / REVISI</button><button class="btn" style="background:#16a34a;color:#fff" onclick="sendApprovedHistoryWA('${esc(r.id)}')">📲 KIRIM WA</button></div></div></div>`;
+ }).join("");
+}
+
 function renderOrder(r){
  const m=member(r),items=normalizeItems(r),st=status(r),date=r.tanggal||today();
  const itemHtml=items.map((x,i)=>`<div class="item" data-order="${r.id}" data-index="${i}" data-selected-product="${esc(x.produkId||"")}">
@@ -794,6 +838,9 @@ window.sendWA=id=>{
  sendWAData(r,st==="approved"?"approved":"rejected");
 };
 $("search").oninput=render;
+$("search").addEventListener("focus",buildSearchResults);
+$("searchResults").addEventListener("mousedown",e=>{const item=e.target.closest("[data-search-value]");if(!item)return;e.preventDefault();$("search").value=item.dataset.searchValue||"";$("searchResults").style.display="none";render();});
+document.addEventListener("click",e=>{if(!e.target.closest("#search")&&!e.target.closest("#searchResults")){$("searchResults").style.display="none";}});
 $("list").addEventListener("input",e=>{
   const order=e.target.closest(".order");if(!order)return;
   if(e.target.classList.contains("product-search"))searchReplacementProducts(e.target);
