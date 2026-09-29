@@ -478,6 +478,38 @@ async function loadEmployees(){
  }
 }
 
+function employeePending(e){
+ const uidE=String(e?.uid||"").trim().toLowerCase();
+ const nameE=String(e?.nama||"").trim().toLowerCase();
+ const kodeE=String(e?.kode||"").trim().toLowerCase();
+ const match=(r)=>{
+  const uidR=employeeUid(r).toLowerCase();
+  const nameR=employeeName(r).toLowerCase();
+  const kodeR=String(r?.karyawan?.kode??r?.employee?.kode??r?.karyawanKode??r?.employeeCode??"").trim().toLowerCase();
+  return (uidE&&uidR===uidE)||(nameE&&nameR===nameE)||(!uidR&&kodeE&&kodeR===kodeE);
+ };
+ const pendingOrder=rows.some(r=>status(r)==="menunggu_approval"&&match(r));
+ const pendingCicilan=cicilanRequests.some(r=>String(r.status||"pending").toLowerCase()==="pending"&&match(r));
+ const pendingBank=bankTransferRequests.some(r=>String(r.status||"pending").toLowerCase()==="pending"&&match(r));
+ const pendingPulse=pulseTransferRequests.some(r=>String(r.status||"pending").toLowerCase()==="pending"&&match(r));
+ const pendingTopup=topupRequests.some(r=>String(r.status||"pending").toLowerCase()==="pending"&&match(r));
+ return pendingOrder||pendingCicilan||pendingBank||pendingPulse||pendingTopup;
+}
+
+function refreshEmployeePendingIndicators(){
+ const select=$("search");
+ if(!select)return;
+ [...select.options].forEach(opt=>{
+  if(!opt.value)return;
+  const e=employees.find(x=>String(x.uid||("name:"+String(x.nama||"").toLowerCase()))===String(opt.value));
+  if(!e)return;
+  const pending=employeePending(e);
+  const base=e.kode?`${e.nama} — ${e.kode}`:e.nama;
+  opt.textContent=pending?`🟢 ${base}`:base;
+  opt.dataset.pending=pending?"1":"0";
+ });
+}
+
 function selectedEmployee(){
  const select=$("search"),opt=select?.selectedOptions?.[0];
  if(!opt||!opt.value)return null;
@@ -768,6 +800,7 @@ async function loadBankTransferRequests(){
  }
  bankTransferRequests=[...map.values()].sort((a,b)=>{const av=a.requestedAt?.toMillis?a.requestedAt.toMillis():new Date(a.requestedAt||a.createdAt||0).getTime();const bv=b.requestedAt?.toMillis?b.requestedAt.toMillis():new Date(b.requestedAt||b.createdAt||0).getTime();return bv-av});
  renderBankTransferRequests();
+ refreshEmployeePendingIndicators();
 }
 function renderBankTransferRequests(){
  const card=$("bankTransferCard"),box=$("bankTransferList");if(!card||!box)return;card.style.display=bankTransferRequests.length?"block":"none";
@@ -797,6 +830,7 @@ async function loadPulseTransferRequests(){
  }
  pulseTransferRequests=[...map.values()].sort((a,b)=>{const av=a.requestedAt?.toMillis?a.requestedAt.toMillis():new Date(a.requestedAt||a.createdAt||0).getTime();const bv=b.requestedAt?.toMillis?b.requestedAt.toMillis():new Date(b.requestedAt||b.createdAt||0).getTime();return bv-av});
  renderPulseTransferRequests();
+ refreshEmployeePendingIndicators();
 }
 function renderPulseTransferRequests(){
  const card=$("pulseTransferCard"),box=$("pulseTransferList");if(!card||!box)return;card.style.display=pulseTransferRequests.length?"block":"none";
@@ -839,6 +873,7 @@ async function loadTopupRequests(){
   return bv-av;
  });
  renderTopupApproval();
+ refreshEmployeePendingIndicators();
 }
 function renderTopupApproval(){
  const card=$("topupApprovalCard"),box=$("topupApprovalList");
@@ -938,6 +973,7 @@ async function loadCicilanRequests(){
   return bv-av;
  });
  renderCicilanRequests();
+ refreshEmployeePendingIndicators();
 }
 
 window.approveCicilan=async requestId=>{
@@ -1134,6 +1170,7 @@ async function handleLoggedInUser(u){
   await loadBankTransferRequests();
   await loadPulseTransferRequests();
   await loadTopupRequests();
+  refreshEmployeePendingIndicators();
   $("list").innerHTML='<div class="card empty">🔎 Pilih nama karyawan terlebih dahulu untuk menampilkan order.</div>';
   $("approvedHistoryCard").style.display="none";
   $("cicilanCard").style.display="none";
@@ -1160,6 +1197,7 @@ onAuthStateChanged(auth,async u=>{
   await loadBankTransferRequests();
   await loadPulseTransferRequests();
   await loadTopupRequests();
+  refreshEmployeePendingIndicators();
   $("list").innerHTML='<div class="card empty">🔎 Pilih nama karyawan terlebih dahulu untuk menampilkan order.</div>';
   $("approvedHistoryCard").style.display="none";
   $("cicilanCard").style.display="none";
