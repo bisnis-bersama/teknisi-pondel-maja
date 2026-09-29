@@ -62,7 +62,7 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.
 import{getFirestore,collection,query,where,getDocs,getDoc,doc,runTransaction,serverTimestamp,addDoc,increment}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
-let uid="",ownerUid="",profile={},role="",rows=[],ready=false,stockCatalog=[],sheetLinks=[],sheetCache=null,cicilanRequests=[];
+let uid="",ownerUid="",profile={},role="",rows=[],ready=false,stockCatalog=[],sheetLinks=[],sheetCache=null,cicilanRequests=[],bankTransferRequests=[],pulseTransferRequests=[];
 const $=id=>document.getElementById(id),rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const waNum=v=>{let s=String(v||"").replace(/\D/g,"");if(s.startsWith("0"))s="62"+s.slice(1);else if(s.startsWith("8"))s="62"+s;else if(!s.startsWith("62"))s="62"+s;return s};
 const today=()=>new Date().toISOString().slice(0,10);
@@ -235,6 +235,146 @@ window.rejectCicilan=async requestId=>{
     });
     msg("Request cicilan ditolak. Tagihan tidak berubah.","ok");await loadCicilanRequests();
   }catch(e){console.error(e);msg("Gagal menolak cicilan: "+(e?.message||e),"err");}
+};
+
+
+async function loadTransferApprovalRequests(){
+  await Promise.all([loadBankTransferRequests(),loadPulseTransferRequests()]);
+}
+async function getTransferRequestsByType(type){
+  const map=new Map();
+  for(const field of ["ownerUid","ownerId"]){
+    try{
+      const ss=await getDocs(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));
+      ss.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
+    }catch(e){console.warn("Query transfer "+type+" "+field+" dilewati:",e?.message||e);}
+  }
+  return [...map.values()]
+    .filter(r=>String(r.ownerUid||r.ownerId||"").trim()===ownerUid)
+    .filter(r=>String(r.jenis||r.tipe||"").toLowerCase()===type)
+    .filter(r=>String(r.status||"pending").toLowerCase()==="pending")
+    .sort((a,b)=>{
+      const ta=a.createdAt?.toMillis?a.createdAt.toMillis():new Date(a.createdAt||a.tanggal||0).getTime();
+      const tb=b.createdAt?.toMillis?b.createdAt.toMillis():new Date(b.createdAt||b.tanggal||0).getTime();
+      return tb-ta;
+    });
+}
+async function loadBankTransferRequests(){
+  bankTransferRequests=await getTransferRequestsByType("transfer_bank");
+  renderBankTransferRequests();
+}
+function renderBankTransferRequests(){
+  const card=$("bankTransferCard"),box=$("bankTransferList");if(!card||!box)return;
+  card.style.display=bankTransferRequests.length?"block":"none";
+  if(!bankTransferRequests.length)return;
+  box.innerHTML=bankTransferRequests.map(r=>{
+    const employee=r.fromEmployeeName||r.employeeName||r.karyawanNama||r.namaKaryawan||r.createdByName||"Karyawan";
+    const bank=r.bankName||r.namaBank||r.bank||"-";
+    const account=r.bankAccount||r.nomorRekening||r.noRekening||r.rekening||"-";
+    const accountName=r.accountName||r.namaPemilik||r.namaRekening||"-";
+    const nominal=Number(r.nominal||r.amount||r.jumlah||0)||0;
+    const note=r.keterangan||r.catatan||"-";
+    const waktu=r.createdAt?.toDate?r.createdAt.toDate().toLocaleString("id-ID"):(r.createdAt?new Date(r.createdAt).toLocaleString("id-ID"):"-");
+    return `<div class="order" data-transfer-id="${esc(r.id)}" style="margin-top:10px">
+      <div class="order-head"><div><div class="order-title">🏦 ${esc(bank)}</div><div style="font-size:11px;color:#64748b;margin-top:3px">${esc(employee)} • ${esc(waktu)}</div></div><span class="badge">MENUNGGU APPROVAL</span></div>
+      <div class="order-body"><div class="summary">👤 Karyawan: <b>${esc(employee)}</b><br>🏦 Bank: <b>${esc(bank)}</b><br>💳 Rekening: <b>${esc(account)}</b><br>👤 Nama rekening: <b>${esc(accountName)}</b><br>💰 Nominal: <b>${rp(nominal)}</b><br>📝 Keterangan: <b>${esc(note)}</b></div>
+      <div class="actions"><button class="btn approve" onclick="approveBankTransfer('${esc(r.id)}')">✅ Setujui Transfer Bank</button><button class="btn reject" onclick="rejectBankTransfer('${esc(r.id)}')">❌ Tolak</button></div></div></div>`;
+  }).join("");
+}
+window.approveBankTransfer=async requestId=>{
+  const req=bankTransferRequests.find(x=>x.id===requestId);if(!req)return;
+  if(!confirm(`Setujui transfer bank ${rp(req.nominal||req.amount||req.jumlah)} ke ${req.bankName||req.namaBank||req.bank||"bank"}?`))return;
+  try{
+    msg("Memproses approval transfer bank...");
+    const ref=doc(db,"transferSaldoTabungan",requestId);
+    await runTransaction(db,async tx=>{
+      const rs=await tx.get(ref);if(!rs.exists())throw Error("Request transfer bank tidak ditemukan.");
+      const d=rs.data()||{};
+      if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");
+      if(String(d.jenis||d.tipe||"").toLowerCase()!=="transfer_bank")throw Error("Jenis request bukan transfer bank.");
+      if(String(d.status||"pending").toLowerCase()!=="pending")throw Error("Request sudah diproses.");
+      const employeeUid=String(d.fromEmployeeUid||d.employeeUid||d.karyawanUid||d.fromUid||"").trim();
+      let employeeName=d.fromEmployeeName||d.employeeName||d.karyawanNama||d.namaKaryawan||d.createdByName||"Karyawan";
+      if(employeeUid){
+        const us=await tx.get(doc(db,"users",employeeUid));
+        if(us.exists()){const u=us.data()||{};employeeName=u.nama||u.name||u.namaKaryawan||u.employeeName||employeeName;}
+      }
+      tx.update(ref,{status:"approved",fromEmployeeUid:employeeUid,fromEmployeeName:employeeName,toEmployeeUid:"BANK",toEmployeeName:`${d.bankName||d.namaBank||d.bank||"Bank"} • ${d.bankAccount||d.nomorRekening||d.noRekening||d.rekening||"-"}`,tanggal:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:uid,createdByName:profile.nama||profile.name||profile.email||"Owner",bankProcessStatus:"menunggu_diproses_admin",updatedAt:serverTimestamp()});
+    });
+    msg("Transfer bank berhasil disetujui dan diteruskan ke proses admin.","ok");await loadBankTransferRequests();
+  }catch(e){console.error(e);msg("Gagal approval transfer bank: "+(e?.message||e),"err");}
+};
+window.rejectBankTransfer=async requestId=>{
+  const req=bankTransferRequests.find(x=>x.id===requestId);if(!req)return;
+  const alasan=prompt("Alasan penolakan transfer bank:","Data rekening / nominal belum sesuai");if(alasan===null)return;
+  try{
+    const ref=doc(db,"transferSaldoTabungan",requestId);
+    await runTransaction(db,async tx=>{
+      const rs=await tx.get(ref);if(!rs.exists())throw Error("Request transfer bank tidak ditemukan.");
+      const d=rs.data()||{};if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");
+      if(String(d.status||"pending").toLowerCase()!=="pending")throw Error("Request sudah diproses.");
+      tx.update(ref,{status:"rejected",rejectedAt:serverTimestamp(),rejectedBy:uid,approvedBy:uid,alasanApproval:alasan,updatedAt:serverTimestamp()});
+    });
+    msg("Transfer bank ditolak. Saldo tidak diproses.","ok");await loadBankTransferRequests();
+  }catch(e){console.error(e);msg("Gagal menolak transfer bank: "+(e?.message||e),"err");}
+};
+async function loadPulseTransferRequests(){
+  pulseTransferRequests=await getTransferRequestsByType("beli_pulsa");
+  renderPulseTransferRequests();
+}
+function renderPulseTransferRequests(){
+  const card=$("pulseTransferCard"),box=$("pulseTransferList");if(!card||!box)return;
+  card.style.display=pulseTransferRequests.length?"block":"none";
+  if(!pulseTransferRequests.length)return;
+  box.innerHTML=pulseTransferRequests.map(r=>{
+    const employee=r.fromEmployeeName||r.employeeName||r.karyawanNama||r.namaKaryawan||r.createdByName||"Karyawan";
+    const phone=r.nomorHp||r.noHp||r.phone||r.nomorTelepon||r.targetNumber||"-";
+    const nominal=Number(r.nominal||r.amount||r.jumlah||0)||0;
+    const note=r.keterangan||r.catatan||r.produk||r.namaProduk||"Pulsa / Data";
+    const waktu=r.createdAt?.toDate?r.createdAt.toDate().toLocaleString("id-ID"):(r.createdAt?new Date(r.createdAt).toLocaleString("id-ID"):"-");
+    return `<div class="order" data-transfer-id="${esc(r.id)}" style="margin-top:10px">
+      <div class="order-head"><div><div class="order-title">📱 ${esc(note)}</div><div style="font-size:11px;color:#64748b;margin-top:3px">${esc(employee)} • ${esc(waktu)}</div></div><span class="badge">MENUNGGU APPROVAL</span></div>
+      <div class="order-body"><div class="summary">👤 Karyawan: <b>${esc(employee)}</b><br>📞 Nomor tujuan: <b>${esc(phone)}</b><br>💰 Nominal: <b>${rp(nominal)}</b><br>📝 Keterangan: <b>${esc(note)}</b></div>
+      <div class="actions"><button class="btn approve" onclick="approvePulseTransfer('${esc(r.id)}')">✅ Setujui Beli Pulsa</button><button class="btn reject" onclick="rejectPulseTransfer('${esc(r.id)}')">❌ Tolak</button></div></div></div>`;
+  }).join("");
+}
+window.approvePulseTransfer=async requestId=>{
+  const req=pulseTransferRequests.find(x=>x.id===requestId);if(!req)return;
+  const nominal=Number(req.nominal||req.amount||req.jumlah||0)||0;if(!nominal)return msg("Nominal pulsa/data tidak valid.","err");
+  if(!confirm(`Setujui pembelian pulsa/data ${rp(nominal)} untuk ${req.nomorHp||req.noHp||req.phone||req.nomorTelepon||req.targetNumber||"nomor tujuan"}?`))return;
+  try{
+    msg("Memproses approval beli pulsa/data...");
+    const ref=doc(db,"transferSaldoTabungan",requestId);
+    await runTransaction(db,async tx=>{
+      const rs=await tx.get(ref);if(!rs.exists())throw Error("Request pulsa tidak ditemukan.");
+      const d=rs.data()||{};
+      if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");
+      if(String(d.jenis||d.tipe||"").toLowerCase()!=="beli_pulsa")throw Error("Jenis request bukan beli pulsa.");
+      if(String(d.status||"pending").toLowerCase()!=="pending")throw Error("Request sudah diproses.");
+      const employeeUid=String(d.fromEmployeeUid||d.employeeUid||d.karyawanUid||d.fromUid||"").trim();
+      let employeeName=d.fromEmployeeName||d.employeeName||d.karyawanNama||d.namaKaryawan||d.createdByName||"Karyawan";
+      if(employeeUid){
+        const us=await tx.get(doc(db,"users",employeeUid));
+        if(us.exists()){const u=us.data()||{};employeeName=u.nama||u.name||u.namaKaryawan||u.employeeName||employeeName;}
+      }
+      tx.update(ref,{status:"approved",fromEmployeeUid:employeeUid,fromEmployeeName:employeeName,toEmployeeUid:"PULSA",toEmployeeName:"Pulsa / Data",tanggal:serverTimestamp(),approvedAt:serverTimestamp(),approvedBy:uid,createdByName:profile.nama||profile.name||profile.email||"Owner",pulseProcessStatus:"menunggu_diproses_admin",updatedAt:serverTimestamp()});
+    });
+    msg("Pembelian pulsa/data berhasil disetujui dan diteruskan ke proses admin.","ok");await loadPulseTransferRequests();
+  }catch(e){console.error(e);msg("Gagal approval pulsa: "+(e?.message||e),"err");}
+};
+window.rejectPulseTransfer=async requestId=>{
+  const req=pulseTransferRequests.find(x=>x.id===requestId);if(!req)return;
+  const alasan=prompt("Alasan penolakan beli pulsa/data:","Nominal atau nomor tujuan belum sesuai");if(alasan===null)return;
+  try{
+    const ref=doc(db,"transferSaldoTabungan",requestId);
+    await runTransaction(db,async tx=>{
+      const rs=await tx.get(ref);if(!rs.exists())throw Error("Request pulsa tidak ditemukan.");
+      const d=rs.data()||{};if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Request bukan milik Owner ini.");
+      if(String(d.status||"pending").toLowerCase()!=="pending")throw Error("Request sudah diproses.");
+      tx.update(ref,{status:"rejected",rejectedAt:serverTimestamp(),rejectedBy:uid,approvedBy:uid,alasanApproval:alasan,updatedAt:serverTimestamp()});
+    });
+    msg("Pembelian pulsa/data ditolak. Saldo tidak diproses.","ok");await loadPulseTransferRequests();
+  }catch(e){console.error(e);msg("Gagal menolak pulsa: "+(e?.message||e),"err");}
 };
 
 function render(){
@@ -583,7 +723,7 @@ $("list").addEventListener("change",e=>{
   
 });
 $("dark").onclick=()=>{document.body.classList.toggle("dark");$("dark").textContent=document.body.classList.contains("dark")?"☀️":"🌙"};
-onAuthStateChanged(auth,async u=>{if(!u){msg("Belum login.","err");return}try{uid=u.uid;const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw Error("Profil akun tidak ditemukan.");profile=s.data()||{};role=String(profile.role||"").toLowerCase();if(role!=="owner"){ready=false;$("email").textContent=u.email||"-";msg("Akses ditolak. Halaman Approval hanya untuk akun Owner.","err");$("list").innerHTML='<div class="card empty">Akun ini bukan Owner. Gunakan akun Owner untuk Approval.</div>';return}ownerUid=getOwner(profile);$("email").textContent=u.email||"-";ready=true;await load();await loadCicilanRequests();msg("Akun Owner aktif • siap memproses approval order dan cicilan.","ok")}catch(e){console.error(e);msg(e.message,"err")}});
+onAuthStateChanged(auth,async u=>{if(!u){msg("Belum login.","err");return}try{uid=u.uid;const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw Error("Profil akun tidak ditemukan.");profile=s.data()||{};role=String(profile.role||"").toLowerCase();if(role!=="owner"){ready=false;$("email").textContent=u.email||"-";msg("Akses ditolak. Halaman Approval hanya untuk akun Owner.","err");$("list").innerHTML='<div class="card empty">Akun ini bukan Owner. Gunakan akun Owner untuk Approval.</div>';return}ownerUid=getOwner(profile);$("email").textContent=u.email||"-";ready=true;await load();await loadCicilanRequests();await loadTransferApprovalRequests();msg("Akun Owner aktif • siap memproses approval order, cicilan, transfer bank, dan pulsa.","ok")}catch(e){console.error(e);msg(e.message,"err")}});
 </script>
 </body>
 </html>
