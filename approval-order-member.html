@@ -851,7 +851,39 @@ $("list").addEventListener("change",e=>{
   
 });
 $("dark").onclick=()=>{document.body.classList.toggle("dark");$("dark").textContent=document.body.classList.contains("dark")?"☀️":"🌙"};
-onAuthStateChanged(auth,async u=>{if(!u){msg("Belum login.","err");return}try{uid=u.uid;const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw Error("Profil akun tidak ditemukan.");profile=s.data()||{};role=String(profile.role||"").toLowerCase();if(role!=="owner"){ready=false;$("email").textContent=u.email||"-";msg("Akses ditolak. Halaman Approval hanya untuk akun Owner.","err");$("list").innerHTML='<div class="card empty">Akun ini bukan Owner. Gunakan akun Owner untuk Approval.</div>';return}ownerUid=getOwner(profile);$("email").textContent=u.email||"-";ready=true;await load();await loadCicilanRequests();await loadTransferApprovalRequests();msg("Akun Owner aktif • siap memproses approval order, cicilan, transfer bank, dan pulsa.","ok")}catch(e){console.error(e);msg(e.message,"err")}});
+let authHandledUid="";
+onAuthStateChanged(auth,async u=>{
+ if(!u){ready=false;authHandledUid="";msg("Belum login. Silakan kembali ke halaman login FIXZY.","err");return}
+ if(authHandledUid===u.uid && ready)return;
+ try{
+  uid=u.uid;
+  $("email").textContent=u.email||"-";
+  msg("Memuat akun Owner...","");
+  const s=await getDoc(doc(db,"users",uid));
+  if(!s.exists())throw Error("Profil akun tidak ditemukan di users/{uid}.");
+  profile=s.data()||{};
+  role=String(profile.role||"").trim().toLowerCase();
+  if(role!=="owner"){
+   ready=false;
+   msg("Akses ditolak. Halaman Approval hanya untuk akun Owner.","err");
+   $("list").innerHTML='<div class="card empty">Akun ini bukan Owner. Gunakan akun Owner untuk Approval.</div>';
+   return;
+  }
+  ownerUid=getOwner(profile);
+  if(!ownerUid)throw Error("Owner UID tidak ditemukan.");
+  ready=true;
+  authHandledUid=u.uid;
+  // Jangan menahan sesi/login hanya karena Spreadsheet atau data approval lambat.
+  msg("Akun Owner aktif • memuat data approval...","ok");
+  void load().catch(e=>{console.error("Load approval:",e);msg("Akun Owner aktif • data approval gagal dimuat: "+(e?.message||e),"err")});
+  void loadCicilanRequests().catch(e=>console.error("Load cicilan:",e));
+  void loadTransferApprovalRequests().catch(e=>console.error("Load transfer approval:",e));
+ }catch(e){
+  console.error(e);
+  ready=false;
+  msg("Gagal memuat akun: "+(e?.message||e),"err");
+ }
+});
 </script>
 </body>
 </html>
