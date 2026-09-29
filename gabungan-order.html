@@ -225,21 +225,23 @@ function waMessage(supplier){
       norm(supplier).toLowerCase()
     )
     .sort((a,b)=>
-      cleanProductName(a).localeCompare(
-        cleanProductName(b),
-        "id"
-      )
+      a.display.localeCompare(b.display,"id")
     );
 
   let t="*Order produk komunitas TEKNISI PONSEL MAJA*\n\n";
 
   p.forEach((x,i)=>{
-    const namaProduk=cleanProductName(x);
+    const nama=norm(x.display)||norm(x.nama)||"Produk";
+    const kode=norm(x.kode);
 
-    t+=`${i+1}. ${namaProduk}`;
+    t+=`${i+1}. ${nama}`;
 
-    if(x.kode){
-      t+=` (${x.kode})`;
+    // Kode hanya ditampilkan jika berbeda dari nama produk
+    if(
+      kode &&
+      kode.toLowerCase() !== nama.toLowerCase()
+    ){
+      t+=` (${kode})`;
     }
 
     t+=` — *${x.qty} pcs*\n`;
