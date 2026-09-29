@@ -194,16 +194,63 @@ function esc(s){
   return String(s??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 }
 
+function cleanProductName(x){
+  const parts = [
+    norm(x.brand),
+    norm(x.tipe),
+    norm(x.merk)
+  ].filter(Boolean);
+
+  const seen = new Set();
+  const unique = [];
+
+  for(const part of parts){
+    const key = part.toLowerCase().replace(/\s+/g," ").trim();
+
+    if(!seen.has(key)){
+      seen.add(key);
+      unique.push(part);
+    }
+  }
+
+  return unique.length
+    ? unique.join(" / ")
+    : (norm(x.nama) || "Produk");
+}
+
 function waMessage(supplier){
   const p=[...products]
-    .filter(x=>norm(x.supplier).toLowerCase()===norm(supplier).toLowerCase())
-    .sort((a,b)=>a.display.localeCompare(b.display,"id"));
+    .filter(x=>
+      norm(x.supplier).toLowerCase() ===
+      norm(supplier).toLowerCase()
+    )
+    .sort((a,b)=>
+      cleanProductName(a).localeCompare(
+        cleanProductName(b),
+        "id"
+      )
+    );
 
   let t="*Order produk komunitas TEKNISI PONSEL MAJA*\n\n";
+
   p.forEach((x,i)=>{
-    t+=`${i+1}. ${x.display}${x.kode?" ("+x.kode+")":""} — *${x.qty} pcs*\n`;
+    const namaProduk=cleanProductName(x);
+
+    t+=`${i+1}. ${namaProduk}`;
+
+    if(x.kode){
+      t+=` (${x.kode})`;
+    }
+
+    t+=` — *${x.qty} pcs*\n`;
   });
-  t+=`\n*TOTAL: ${p.reduce((a,x)=>a+x.qty,0)} pcs*\n\nMohon diproses sesuai orderan.\nTerima kasih.`;
+
+  const total=p.reduce((a,x)=>a+x.qty,0);
+
+  t+=`\n*TOTAL: ${total} pcs*`;
+  t+=`\n\nMohon diproses sesuai orderan.`;
+  t+=`\nTerima kasih.`;
+
   return t;
 }
 
