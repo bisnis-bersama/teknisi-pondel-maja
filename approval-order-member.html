@@ -55,6 +55,11 @@ body.dark{background:#0b1220;color:#e5e7eb}body.dark .card,body.dark .order,body
  <div id="cicilanList"><div class="empty">Memuat request cicilan...</div></div>
 </div>
 <div id="list"></div>
+<div class="card" id="approvedHistoryCard" style="display:none">
+ <div class="title">📚 Riwayat Order Sudah Di-Approve</div>
+ <div class="notice">Order yang sudah disetujui tetap tersimpan di sini. Jika ada kesalahan harga, quantity, tempo atau jatuh tempo, kembalikan ke <b>Menunggu Approval</b> untuk diperbaiki.</div>
+ <div id="approvedHistory"></div>
+</div>
 </main>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -62,7 +67,7 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.
 import{getFirestore,collection,query,where,getDocs,getDoc,doc,runTransaction,serverTimestamp,addDoc,increment}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
-let uid="",ownerUid="",profile={},role="",rows=[],ready=false,stockCatalog=[],sheetLinks=[],sheetCache=null,cicilanRequests=[],bankTransferRequests=[],pulseTransferRequests=[];
+let uid="",ownerUid="",profile={},role="",rows=[],approvedRows=[],ready=false,stockCatalog=[],sheetLinks=[],sheetCache=null,cicilanRequests=[],bankTransferRequests=[],pulseTransferRequests=[];
 const $=id=>document.getElementById(id),rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const waNum=v=>{let s=String(v||"").replace(/\D/g,"");if(s.startsWith("0"))s="62"+s.slice(1);else if(s.startsWith("8"))s="62"+s;else if(!s.startsWith("62"))s="62"+s;return s};
 const today=()=>new Date().toISOString().slice(0,10);
@@ -157,7 +162,83 @@ async function load(){
   const map=new Map();
   for(const q of qs){const s=await getDocs(q);s.forEach(d=>{const x={id:d.id,...d.data()},source=String(x.sumber||"").toLowerCase(),tipe=String(x.tipeTransaksi||"").toLowerCase();if(source==="order_spreadsheet"||tipe==="order_cash"||tipe==="order_tempo"||x.sumberSpreadsheet===true)if(!map.has(d.id))map.set(d.id,x)})}
   rows=[...map.values()];render();rows.forEach(r=>recalcOrder(r.id));
+  await loadApprovedHistory();
 }
+
+
+async function loadApprovedHistory(){
+  approvedRows=[];
+  if(!ownerUid)return;
+  const map=new Map();
+  for(const field of ["ownerUid","ownerId"]){
+    try{
+      const ss=await getDocs(query(collection(db,"penjualan"),where(field,"==",ownerUid),where("status","==","approved")));
+      ss.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
+    }catch(e){console.warn("Query riwayat approval "+field+" dilewati:",e?.message||e)}
+  }
+  approvedRows=[...map.values()].sort((a,b)=>{
+    const ta=a.approvedAt?.toMillis?a.approvedAt.toMillis():new Date(a.approvedAt||a.updatedAt||a.tanggal||0).getTime();
+    const tb=b.approvedAt?.toMillis?b.approvedAt.toMillis():new Date(b.approvedAt||b.updatedAt||b.tanggal||0).getTime();
+    return tb-ta;
+  });
+  renderApprovedHistory();
+}
+
+function renderApprovedHistory(){
+  const card=$("approvedHistoryCard"),box=$("approvedHistory");
+  if(!card||!box)return;
+  if(!approvedRows.length){card.style.display="none";box.innerHTML="";return;}
+  card.style.display="block";
+  box.innerHTML=approvedRows.map(r=>{
+    const m=member(r),items=Array.isArray(r.approvedItems)?r.approvedItems:normalizeItems(r);
+    const total=Number(r.approvedTotal??r.total??items.reduce((a,x)=>a+(Number(x.harga||x.hargaJual||0)*Number(x.approvedQty??x.qty??0)),0))||0;
+    const dp=Number(r.approvedDp??r.dp??r.uangMuka??0)||0;
+    const sisa=Number(r.approvedSisa??r.sisa??r.sisaBayar??0)||0;
+    const due=r.jatuhTempo||r.tanggalJatuhTempo||"-";
+    const tempo=Number(r.tempoHari||0)||0;
+    const itemHtml=items.map((x,i)=>{
+      const qty=Number(x.approvedQty??x.qty??x.jumlah??0)||0;
+      const harga=Number(x.harga??x.hargaJual??0)||0;
+      return `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0"><b>${i+1}. ${esc(x.nama||x.namaProduk||"-")}</b><br><small>Kode: ${esc(x.kode||x.kodeProduk||"-")} • Qty: ${qty} pcs • Harga: ${rp(harga)}</small></div>`;
+    }).join("");
+    return `<div class="order" style="margin-bottom:10px"><div class="order-head"><div><div class="order-title">${esc(r.nomorNota||r.id)}</div><div style="font-size:11px;color:#64748b;margin-top:3px">👤 ${esc(m.nama||"-")} • Order Member: <b>${esc(r.orderMemberId||"-")}</b></div></div><span class="badge approved">APPROVED</span></div><div class="order-body"><div class="meta">${itemHtml}</div><div class="summary">💰 Total: <b>${rp(total)}</b><br>${isCash(r)?"💵 CASH / TUNAI — LUNAS":`💵 DP: <b>${rp(dp)}</b><br>📌 Sisa: <b>${rp(sisa)}</b><br>📅 Tempo: <b>${tempo} hari</b><br>📅 Jatuh tempo: <b>${esc(due)}</b>`}</div><div class="actions"><button class="btn" style="background:#f59e0b;color:#111" onclick="returnOrderForRevision('${esc(r.id)}')">↩️ KEMBALIKAN KE PENDING / REVISI</button><button class="btn" style="background:#16a34a;color:#fff" onclick="sendApprovedHistoryWA('${esc(r.id)}')">📲 KIRIM WA</button></div></div></div>`;
+  }).join("");
+}
+
+window.returnOrderForRevision=async id=>{
+  const r=approvedRows.find(x=>x.id===id);
+  if(!r)return msg("Order approved tidak ditemukan.","err");
+  if(!r.orderMemberId)return msg("Order ini tidak memiliki orderMemberId. Tidak dapat direvisi otomatis.","err");
+  if(!confirm(`Kembalikan order ${r.nomorNota||id} ke Menunggu Approval untuk diperbaiki?\n\nOrder Member lama tidak dihapus.`))return;
+  try{
+    msg("Mengembalikan order untuk revisi...");
+    const ref=doc(db,"penjualan",id),orderRef=doc(db,"order_member",String(r.orderMemberId)),saldoRef=doc(db,"saldo_owner",ownerUid);
+    await runTransaction(db,async tx=>{
+      const ps=await tx.get(ref),os=await tx.get(orderRef),ss=await tx.get(saldoRef);
+      if(!ps.exists())throw Error("Data penjualan tidak ditemukan.");
+      if(!os.exists())throw Error("Data order_member lama tidak ditemukan.");
+      const p=ps.data()||{},o=os.data()||{};
+      if(String(p.ownerUid||p.ownerId||"")!==ownerUid)throw Error("Pesanan bukan milik Owner ini.");
+      if(String(o.ownerUid||o.ownerId||"")!==ownerUid)throw Error("Order Member bukan milik Owner ini.");
+      if(String(p.status||"").toLowerCase()!=="approved")throw Error("Order sudah bukan status approved.");
+      const revisionItems=Array.isArray(p.approvedItems)?p.approvedItems:(Array.isArray(p.items)?p.items:[]);
+      const oldUP=Number(o.totalUPPengelola||0)||0;
+      const oldKas=Number(o.kasBulanan||0)||0;
+      const saldoPatch={updatedAt:serverTimestamp()};
+      if(oldUP||oldKas){
+        if(!ss.exists())throw Error("saldo_owner tidak ditemukan. Pembalikan saldo dibatalkan.");
+        if(oldUP)saldoPatch.saldoPengelola=increment(-oldUP);
+        if(oldKas)saldoPatch.saldoKas=increment(-oldKas);
+      }
+      tx.update(ref,{status:"menunggu_approval",approvalStatus:"menunggu_approval",items:revisionItems,revisionRequired:true,revisionAt:serverTimestamp(),revisionBy:uid,revisionFromOrderMemberId:String(r.orderMemberId),updatedAt:serverTimestamp()});
+      tx.update(orderRef,{status:"revisi",revisionRequired:true,revisionAt:serverTimestamp(),revisionBy:uid,revisionSourcePenjualanId:id,revisionPreviousTotalUPPengelola:oldUP,revisionPreviousKasBulanan:oldKas,kasApprovalCycle:Math.max(1,Number(o.kasApprovalCycle??0)||0),totalUPPengelola:0,totalTabunganMember:0,kasBulanan:0,updatedAt:serverTimestamp()});
+      if(Object.keys(saldoPatch).length>1)tx.set(saldoRef,saldoPatch,{merge:true});
+    });
+    msg("Order dikembalikan ke Menunggu Approval. Sekarang bisa diperbaiki.","ok");
+    await load();
+  }catch(e){console.error(e);msg("Gagal mengembalikan order: "+(e?.message||e),"err")}
+};
+window.sendApprovedHistoryWA=id=>{const r=approvedRows.find(x=>x.id===id);if(!r)return;sendWAData(r,"approved")};
 
 
 async function loadCicilanRequests(){
