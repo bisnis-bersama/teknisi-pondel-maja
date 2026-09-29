@@ -297,13 +297,56 @@ function checkStock(id){
     $(`stock_${id}_${i}`).innerHTML=`<span class="${st>=x.qty?"stock-ok":"stock-no"}">Stok Spreadsheet: ${st} • ${st>=x.qty?"TERSEDIA":"KURANG"}</span>`;
   });
 }
-function getSpreadsheetLinks(){
- const raw=profile?.spreadsheetLinks??profile?.sheetLinks??profile?.linksSpreadsheet??profile?.urlSpreadsheet??[];
- if(Array.isArray(raw))return raw.map(x=>typeof x==="string"?x:(x?.url??x?.link??"")).filter(Boolean);
- if(typeof raw==="string")return raw.split(/[\n,]+/).map(x=>x.trim()).filter(Boolean);
- return [];
+async function getSpreadsheetLinks(){
+ const s=await getDoc(doc(db,"pengaturan_spreadsheet",ownerUid));
+ if(!s.exists())return [];
+ const d=s.data()||{};
+ let links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks.map(x=>typeof x==="string"?x:String(x?.url||"")).map(x=>x.trim()).filter(Boolean):[];
+ if(!links.length&&d.spreadsheetUrl)links=[String(d.spreadsheetUrl).trim()];
+ return [...new Set(links)];
 }
-async function readSheet(){return []}
+function cleanSheet(s){return String(s??"").trim().toLowerCase().replace(/[\s_\-()./]+/g,"")}
+function pickSheet(o,keys){for(const k of keys){const v=o[cleanSheet(k)];if(v!==undefined&&String(v).trim()!=="")return v}return ""}
+function sheetNum(v){
+ if(typeof v==="number")return Number.isFinite(v)?v:0;
+ let x=String(v??"").trim().replace(/[^\d,.-]/g,"");if(!x)return 0;
+ const dots=(x.match(/\./g)||[]).length,commas=(x.match(/,/g)||[]).length;
+ if(dots&&commas){const ld=x.lastIndexOf("."),lc=x.lastIndexOf(",");if(lc>ld){const dec=x.length-lc-1;x=dec<=2?x.replace(/\./g,"").replace(",","."):x.replace(/,/g,"").replace(/\./g,"")}else{const dec=x.length-ld-1;x=dec<=2?x.replace(/,/g,""):x.replace(/,/g,"").replace(/\./g,"")}}
+ else if(commas){const a=x.split(",");x=a.length===2&&a[1].length<=2?x.replace(",","."):x.replace(/,/g,"")}
+ else if(dots){const a=x.split(".");x=a.length===2&&a[1].length<=2?x:x.replace(/\./g,"")}
+ const n=parseFloat(x);return Number.isFinite(n)?n:0;
+}
+function parseCSV(text){
+ const out=[];let row=[],cell="",q=false;text=text.replace(/^\uFEFF/,"");
+ for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}else if(c===","&&!q){row.push(cell);cell=""}else if((c==="\n"||c==="\r")&&!q){if(c==="\r"&&n==="\n")i++;row.push(cell);cell="";if(row.some(v=>String(v).trim()))out.push(row);row=[]}else cell+=c}
+ if(cell!==""||row.length){row.push(cell);if(row.some(v=>String(v).trim()))out.push(row)}return out;
+}
+function normalizeSheet(rows,sourceIndex,sourceUrl){
+ if(!rows.length)throw Error("Spreadsheet kosong.");const h=rows[0].map(cleanSheet),data=[];
+ for(let i=1;i<rows.length;i++){const r=rows[i],o={};h.forEach((k,j)=>o[k]=r[j]??"");
+  const nama=pickSheet(o,["nama barang","nama produk","nama","produk","product","barang"]);if(!nama)continue;
+  const modalValue=pickSheet(o,["modal","harga modal","harga beli","harga modal produk","hpp","harga pokok"]),jualValue=pickSheet(o,["jual","harga jual","harga jual produk","harga penjualan"]),supplier=pickSheet(o,["supplier","suplier","nama supplier","nama suplier","vendor"]),stokValue=pickSheet(o,["stock","stok","sisa stok","sisa","jumlah stok"]),kode=pickSheet(o,["kode","sku","kode produk","id"])||String(r[0]??"").trim();
+  const modal=sheetNum(modalValue!==""?modalValue:(r[3]??"")),jual=sheetNum(jualValue!==""?jualValue:(r[4]??"")),stok=Math.max(0,sheetNum(stokValue!==""?stokValue:(r[6]??"")));
+  data.push({id:`sheet${sourceIndex}_${i}_${btoa(unescape(encodeURIComponent(String(sourceUrl)))).replace(/[^a-zA-Z0-9]/g,"").slice(0,10)}`,kode:String(kode||"").trim(),nama:String(nama).trim(),namaProduk:String(nama).trim(),kodeProduk:String(kode||"").trim(),supplier:String(supplier||`Supplier ${sourceIndex}`).trim(),modal,jual,stock:stok,stok,hargaCash:modal,hargaTempo:jual,hargaDasar:modal,hargaJual:jual,modalSatuan:modal,sourceIndex,sourceSpreadsheet:sourceUrl,ownerUid});
+ }return data;
+}
+function csvUrlFromSheet(url){
+ const u=new URL(url),host=u.hostname.toLowerCase();if(!host.includes("docs.google.com")||!u.pathname.includes("/spreadsheets/"))return url;
+ const gid=u.searchParams.get("gid")||(url.match(/[?#&]gid=([^&#]+)/i)||[])[1]||"0",pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);
+ if(pub)return`https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;
+ const id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);if(id)return`https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`;return url;
+}
+async function readSheet(url,index){
+ const res=await fetch(csvUrlFromSheet(url),{cache:"no-store"});if(!res.ok)throw Error("HTTP "+res.status);const text=await res.text();
+ if(!text||text.trim().length<2)throw Error("Data spreadsheet kosong.");if(/<html|<!doctype/i.test(text.slice(0,500)))throw Error("Bukan CSV. Pastikan Spreadsheet sudah Publish to web.");
+ return normalizeSheet(parseCSV(text),index,url);
+}
+async function loadSpreadsheetCatalog(){
+ stockCatalog=[];const links=await getSpreadsheetLinks(),map=new Map();
+ for(let i=0;i<links.length;i++)try{for(const p of await readSheet(links[i],i+1))map.set(`${p.supplier}|${p.kode}|${p.nama}`.toLowerCase(),p)}catch(e){console.warn("Spreadsheet",i+1,e)}
+ stockCatalog=[...map.values()];sheetCache=stockCatalog;sheetLinks=links;
+}
+
 
 async function loadOrders(){
  rows=[];
@@ -382,7 +425,7 @@ async function loadHistory(){
  }
  renderApprovedHistory();
 }
-async function load(){await loadOrders();await loadHistory()}
+async function load(){await loadSpreadsheetCatalog();await loadOrders();await loadHistory()}
 async function sendApprovedHistoryWA(id){const r=approvedRows.find(x=>x.id===id);if(r)sendWAData(r,"approved")}
 
 function renderOrder(r){
@@ -436,6 +479,33 @@ function refreshEmployeePendingIndicators(){
   opt.textContent=pending?`🟢 ${base}`:base;
   opt.dataset.pending=pending?"1":"0";
  });
+}
+
+async function loadEmployees(){
+ const sel=$("search");
+ if(!sel||!ownerUid)return;
+ sel.innerHTML='<option value="">Memuat karyawan...</option>';
+ try{
+  const map=new Map();
+  for(const field of ["ownerUid","ownerId"]){
+   try{
+    const snap=await getDocs(query(collection(db,"users"),where(field,"==",ownerUid)));
+    snap.forEach(d=>{
+     const x={uid:d.id,...d.data()};
+     const r=String(x.role||x.rol||x.jabatan||"").trim().toLowerCase();
+     if(!["employee","karyawan"].includes(r))return;
+     const nama=String(x.nama||x.name||x.displayName||x.namaKaryawan||x.employeeName||x.email||d.id).trim();
+     const kode=String(x.kode||x.kodeKaryawan||x.employeeCode||x.kodeEmployee||"").trim();
+     if(!map.has(d.id))map.set(d.id,{uid:d.id,nama,kode,email:String(x.email||"").trim(),...x});
+    });
+   }catch(e){console.warn("Query users "+field+":",e?.message||e)}
+  }
+  employees=[...map.values()].sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"));
+  sel.innerHTML='<option value="">Pilih nama karyawan...</option>'+employees.map(e=>`<option value="${esc(e.uid)}" data-name="${esc(e.nama||"")}" data-kode="${esc(e.kode||"")}">${esc(e.nama||e.email||e.uid)}${e.kode?` — ${esc(e.kode)}`:""}</option>`).join("");
+  refreshEmployeePendingIndicators();
+ }catch(e){
+  console.error(e);employees=[];sel.innerHTML='<option value="">Gagal memuat karyawan</option>';msg("Gagal memuat daftar karyawan: "+(e?.message||e),"err");
+ }
 }
 
 function selectedEmployee(){
