@@ -757,6 +757,30 @@ window.approveOrder=async id=>{
  }catch(e){console.error(e);msg("Gagal approval: "+(e?.message||e),"err")}
 };
 
+window.rejectOrder=async id=>{
+ const r=rows.find(x=>x.id===id);
+ if(!r)return msg("Order tidak ditemukan.","err");
+ const alasan=prompt("Alasan penolakan / stok kosong:","Stok tidak tersedia");
+ if(alasan===null)return;
+ try{
+  msg("Memproses penolakan order...");
+  await runTransaction(db,async tx=>{
+   const ref=doc(db,"penjualan",id);
+   const snap=await tx.get(ref);
+   if(!snap.exists())throw Error("Pesanan tidak ditemukan.");
+   const d=snap.data()||{};
+   if(String(d.ownerUid||d.ownerId||"")!==ownerUid)throw Error("Pesanan bukan milik akun ini.");
+   if(String(d.status||"menunggu_approval").toLowerCase()!=="menunggu_approval")throw Error("Pesanan sudah tidak menunggu approval.");
+   tx.update(ref,{status:"rejected",approvalStatus:"rejected",alasanApproval:String(alasan||""),rejectedAt:serverTimestamp(),rejectedBy:uid,approvedBy:uid,updatedAt:serverTimestamp()});
+  });
+  msg("Pesanan ditolak. Tidak ada stok yang dikurangi.","ok");
+  await load();
+ }catch(e){
+  console.error(e);
+  msg("Gagal menolak order: "+(e?.message||e),"err");
+ }
+};
+
 function renderCicilanRequests(){
  const card=$("cicilanCard"),box=$("cicilanList");
  if(!card||!box)return;
