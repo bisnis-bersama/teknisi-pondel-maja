@@ -572,7 +572,7 @@ function renderApprovedHistoryOrder(r){
  return `<div class="history-card">
  <div class="history-head"><div><div class="order-title">${esc(r.nomorNota||r.id)}</div><div style="font-size:11px;color:#64748b;margin-top:4px">👨‍🔧 Karyawan: <b>${esc(emp)}</b> • ${esc(m.nama||"-")} • ${esc(r.orderMemberId||"-")}</div></div><span class="badge approved">APPROVED</span></div>
  <div class="history-body">
- <div class="meta"><b>Member:</b> ${esc(m.nama||"-")}<br><b>Kode:</b> ${esc(m.kode||"-")}<br><b>WA:</b> ${esc(m.wa||"-")}<br><b>Order Member ID:</b> ${esc(r.orderMemberId||"-")}</div>
+ <div class="meta"><b>Member:</b> ${esc(m.nama||"-")}<br><b>Kode:</b> ${esc(m.kode||"-")}<br><b>WA:</b> ${esc(m.wa||"-")}<br><b>Order Member ID:</b> ${esc(r.orderMemberId||r.id||"-")}</div>
  <div class="items">${items.map((x,i)=>{const qty=Number(x.approvedQty??x.qty??x.jumlah??0)||0,harga=Number(x.harga??x.hargaJual??0)||0,jumlah=Number(x.total??harga*qty)||0;return `<div class="history-item"><b>${i+1}. ${esc(x.nama||x.namaProduk||"-")}</b><br>Kode: ${esc(x.kode||x.kodeProduk||"-")} • Qty: <b>${qty} pcs</b><br>Harga: ${rp(harga)}/pcs • Jumlah: <b>${rp(jumlah)}</b></div>`}).join("")}</div>
  <div class="summary">💰 Total: <b>${rp(total)}</b><br>${isCash(r)?"💵 CASH / TUNAI — LUNAS":`💵 DP: <b>${rp(dp)}</b><br>📌 Sisa: <b>${rp(sisa)}</b><br>📅 Tempo: <b>${tempo} hari</b><br>📅 Jatuh tempo: <b>${esc(due)}</b>`}</div>
  <div class="revert-info">⚠️ Jika terdapat kesalahan harga, quantity, tempo atau jatuh tempo, kembalikan order ini untuk revisi.</div>
@@ -585,11 +585,27 @@ function renderApprovedHistoryOrder(r){
 
 window.returnOrderForRevision=async id=>{
  const r=approvedRows.find(x=>x.id===id);if(!r)return msg("Order approved tidak ditemukan.","err");
- if(!r.orderMemberId)return msg("Order ini tidak memiliki orderMemberId. Tidak dapat direvisi otomatis.","err");
+
+ // approvedRows berasal dari koleksi order_member.
+ // Jadi:
+ // - r.id = ID dokumen order_member
+ // - r.sourcePenjualanId = ID dokumen penjualan asal
+ // Jangan memakai r.id sebagai ID penjualan.
+ const orderMemberId=String(r.orderMemberId||r.id||"").trim();
+ const sourcePenjualanId=String(r.sourcePenjualanId||r.penjualanId||r.sourceId||"").trim();
+
+ if(!orderMemberId)return msg("Order Member ID tidak ditemukan. Tidak dapat direvisi otomatis.","err");
+ if(!sourcePenjualanId)return msg("ID penjualan asal tidak ditemukan pada order Member ini. Tidak dapat direvisi otomatis.","err");
+
  if(!confirm(`Kembalikan order ${r.nomorNota||id} untuk revisi?\n\nOrder Member lama tidak dihapus.`))return;
  try{
   msg("Mengembalikan order untuk revisi...");
-  const ref=doc(db,"penjualan",id),orderRef=doc(db,"order_member",String(r.orderMemberId)),saldoRef=doc(db,"saldo_owner",ownerUid);
+
+  // orderRef memakai ID dokumen order_member,
+  // sedangkan ref memakai sourcePenjualanId dari dokumen penjualan.
+  const ref=doc(db,"penjualan",sourcePenjualanId);
+  const orderRef=doc(db,"order_member",orderMemberId);
+  const saldoRef=doc(db,"saldo_owner",ownerUid);
   await runTransaction(db,async tx=>{
    const ps=await tx.get(ref),os=await tx.get(orderRef),ss=await tx.get(saldoRef);
    if(!ps.exists())throw Error("Data penjualan tidak ditemukan.");if(!os.exists())throw Error("Data order_member lama tidak ditemukan.");
