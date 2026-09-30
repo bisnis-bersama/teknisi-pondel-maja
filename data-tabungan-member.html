@@ -17,1307 +17,149 @@ body.dark{background:#0b1220;color:#e5e7eb}body.dark .card,body.dark .metric,bod
 @media(max-width:850px){.summary-grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.filters .actions{grid-column:1/-1}}
 @media(max-width:650px){header{height:68px}.hi h1{font-size:16px}main{padding:80px 8px 24px}.summary-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.acts .btn{padding:8px}.metric .value{font-size:18px}.card{padding:12px}.saving-balance-grid{grid-template-columns:1fr}.member-owner{font-size:17px}.saving-total{font-size:25px}}
 .transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.transfer-info{margin:12px 0;padding:10px;border:2px dashed #94a3b8;border-radius:9px;background:#f8fafc;font-size:12px;font-weight:800}.transfer-btn{background:#ffc107;color:#111827;margin-top:2px}.employee-balance-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.employee-balance-item{border:2px solid #111827;border-radius:10px;padding:12px;background:#f8fafc}.employee-balance-name{font-weight:900}.employee-balance-sub{font-size:10px;color:#64748b;margin-top:3px}.employee-balance-value{font-size:20px;font-weight:900;margin-top:7px}.transfer-history-item{border:2px solid #111827;border-radius:10px;padding:10px;margin-bottom:8px;background:#fff}.transfer-history-head{display:flex;justify-content:space-between;gap:8px;font-weight:900}.transfer-history-sub{font-size:10px;color:#64748b;margin-top:4px}@media(max-width:650px){.transfer-grid{grid-template-columns:1fr}.employee-balance-list{grid-template-columns:1fr}}</style>
-
 <style>
-/* FIXZY E-WALLET — gaya e-wallet, warna FIXZY */
 :root{--fixzy-yellow:#ffc107;--fixzy-yellow2:#ffcf33;--fixzy-black:#080c12;--fixzy-dark:#111827;--fixzy-bg:#f1f4f8;--fixzy-border:#e2e8f0}
-body{background:var(--fixzy-bg)}
-header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--fixzy-yellow);box-shadow:0 2px 12px rgba(0,0,0,.18)}
+body{background:var(--fixzy-bg)}header{height:66px;background:var(--fixzy-black);border-bottom:3px solid var(--fixzy-yellow);box-shadow:0 2px 12px rgba(0,0,0,.18)}
 .head{max-width:540px;padding:0 14px;gap:10px}.logo{width:44px;height:44px;border-radius:12px}.hi h1{font-size:15px}.email{font-size:10px}.acts{margin-left:auto}.refresh{height:38px;border-color:#334155;font-size:12px;padding:8px 10px}.dark{height:38px;width:40px;border-color:#334155}
-.ew-main{max-width:540px!important;padding:78px 0 28px!important}
-.notice{padding:0 14px;margin:0 0 8px;font-size:10px}
-/* area utama seperti halaman depan e-wallet */
+.ew-main{max-width:540px!important;padding:78px 0 28px!important}.notice{padding:0 14px;margin:0 0 8px;font-size:10px}
 .wallet-hero{background:linear-gradient(145deg,#0a0f17 0%,#121923 62%,#1b2531 100%);color:#fff;padding:18px 14px 18px;margin-bottom:0;border-bottom:1px solid #283342;position:relative;overflow:hidden}
 .wallet-hero:after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;right:-75px;top:-90px;background:rgba(255,193,7,.12);box-shadow:0 0 0 24px rgba(255,193,7,.04)}
-.wallet{position:relative;z-index:1;background:transparent;color:#fff;border:0;border-radius:0;padding:0;margin:0;box-shadow:none}
-.wallet-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900;color:#dbe4ef}.wallet-top span:last-child{color:var(--fixzy-yellow)}
+.wallet{position:relative;z-index:1;background:transparent;color:#fff;border:0;border-radius:0;padding:0;margin:0;box-shadow:none}.wallet-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900;color:#dbe4ef}.wallet-top span:last-child{color:var(--fixzy-yellow)}
 .wallet-balance-label{font-size:11px;color:#aeb9c8;margin-top:18px}.wallet-balance{font-size:36px;font-weight:900;letter-spacing:-1.5px;margin-top:2px}.wallet-name{font-size:12px;color:#fff;margin-top:3px}.wallet-id{font-size:9px;color:#8f9baa;margin-top:3px}
-.wallet-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}
-.waction{border:0;border-radius:14px;padding:9px 4px 8px;background:rgba(255,255,255,.97);color:#101722;font-weight:900;font-size:9px;cursor:pointer;min-height:76px;box-shadow:0 4px 12px rgba(0,0,0,.12)}
-.waction .ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;margin:0 auto 5px;background:#fff6d6;color:#111;font-size:22px}.waction:active{transform:scale(.98)}
-.wallet-services{background:#fff;margin:0 12px 12px;border:1px solid var(--fixzy-border);border-radius:0 0 18px 18px;padding:15px 12px 12px;box-shadow:0 4px 16px rgba(15,23,42,.06)}
-.service-title{font-size:14px;font-weight:900;margin-bottom:12px}.service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px}.service{border:0;background:#fff;padding:3px 2px;text-align:center;cursor:pointer;color:#1f2937}.service .sico{width:44px;height:44px;margin:auto;border-radius:14px;display:grid;place-items:center;background:#fff6d6;border:1px solid #ffe08a;font-size:21px}.service b{display:block;font-size:9px;margin-top:5px}.service small{display:block;font-size:7px;color:#64748b;margin-top:2px;line-height:1.2}.service:active .sico{transform:scale(.96)}
-.section{background:#fff;border:1px solid var(--fixzy-border);border-radius:18px;padding:14px;margin:0 12px 12px;box-shadow:0 3px 14px rgba(15,23,42,.04)}
-.section-title{font-size:14px;font-weight:900;margin-bottom:12px}.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.quick{border:1px solid var(--fixzy-border);border-radius:14px;background:#fff;padding:11px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px}.quick .qico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#fff6d6;border:1px solid #ffe08a;font-size:20px}.quick b{font-size:11px}.quick small{display:block;color:#64748b;font-size:8px;margin-top:3px}
+.wallet-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}.waction{border:0;border-radius:14px;padding:9px 4px 8px;background:rgba(255,255,255,.97);color:#101722;font-weight:900;font-size:9px;cursor:pointer;min-height:76px;box-shadow:0 4px 12px rgba(0,0,0,.12)}.waction .ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;margin:0 auto 5px;background:#fff6d6;color:#111;font-size:22px}.waction:active{transform:scale(.98)}
+.wallet-services{background:#fff;margin:0 12px 12px;border:1px solid var(--fixzy-border);border-radius:0 0 18px 18px;padding:15px 12px 12px;box-shadow:0 4px 16px rgba(15,23,42,.06)}.service-title{font-size:14px;font-weight:900;margin-bottom:12px}.service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px}.service{border:0;background:#fff;padding:3px 2px;text-align:center;cursor:pointer;color:#1f2937}.service .sico{width:44px;height:44px;margin:auto;border-radius:14px;display:grid;place-items:center;background:#fff6d6;border:1px solid #ffe08a;font-size:21px}.service b{display:block;font-size:9px;margin-top:5px}.service small{display:block;font-size:7px;color:#64748b;margin-top:2px;line-height:1.2}.service:active .sico{transform:scale(.96)}
+.section{background:#fff;border:1px solid var(--fixzy-border);border-radius:18px;padding:14px;margin:0 12px 12px;box-shadow:0 3px 14px rgba(15,23,42,.04)}.section-title{font-size:14px;font-weight:900;margin-bottom:12px}.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.quick{border:1px solid var(--fixzy-border);border-radius:14px;background:#fff;padding:11px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px}.quick .qico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#fff6d6;border:1px solid #ffe08a;font-size:20px}.quick b{font-size:11px}.quick small{display:block;color:#64748b;font-size:8px;margin-top:3px}
 .mutasi-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}.mtab{border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;padding:9px 5px;font-size:10px;font-weight:900;cursor:pointer}.mtab.active{background:var(--fixzy-black);color:var(--fixzy-yellow);border-color:var(--fixzy-black)}.mutasi{display:grid;gap:8px}.mutasi-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #eef2f7}.mutasi-row:last-child{border-bottom:0}.micon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#fff6d6;border:1px solid #ffe08a;font-size:18px;flex:0 0 auto}.minfo{min-width:0;flex:1}.mtitle{font-size:11px;font-weight:900}.mmeta{font-size:9px;color:#64748b;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mamount{font-size:12px;font-weight:900;white-space:nowrap}.in .mamount{color:#15803d}.out .mamount{color:#dc2626}.pending .mamount{color:#d97706}.status-pill{font-size:8px;font-weight:900;border-radius:999px;padding:3px 6px;background:#fef3c7;color:#92400e;margin-left:4px}
 .bank-form{display:none;margin-top:12px;padding:12px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.bank-form.show{display:block}.bank-grid{display:grid;gap:9px}.bank-grid input{box-shadow:none!important;border:1px solid #cbd5e1!important}.bank-submit{width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:var(--fixzy-yellow);color:#111827;font-weight:900;cursor:pointer}.bank-note{font-size:9px;color:#64748b;line-height:1.5;margin-top:8px}
 .balance-mini{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:12px}.mini{padding:9px;border-radius:11px;background:#f8fafc}.mini b{display:block;font-size:11px;margin-top:3px}.mini span{font-size:8px;color:#64748b}.empty-wallet{text-align:center;padding:18px;color:#64748b;font-size:10px}.old-admin{display:none!important}
 .topup-grid{display:grid;gap:10px}.qris-box{background:#fffdf2;border:2px solid #ffc107;border-radius:15px;padding:12px;text-align:center}.qris-box img{width:100%;max-width:300px;max-height:320px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #e5e7eb}.qris-title{font-weight:900;font-size:13px;margin-bottom:8px}.qris-note{font-size:9px;color:#64748b;line-height:1.5;margin-top:7px}.topup-input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-weight:800}.topup-submit{width:100%;border:0;border-radius:12px;padding:12px;background:#ffc107;color:#111827;font-weight:900;cursor:pointer}.topup-request{border:1px solid #cbd5e1;border-radius:12px;padding:11px;background:#fff;margin-bottom:8px}.topup-request-head{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:11px}.topup-request-sub{font-size:9px;color:#64748b;margin-top:4px;line-height:1.5}.topup-approve-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.topup-approve,.topup-reject{border:0;border-radius:9px;padding:9px;font-weight:900;cursor:pointer}.topup-approve{background:#dcfce7;color:#166534}.topup-reject{background:#fee2e2;color:#991b1b}.topup-status{font-size:8px;font-weight:900;border-radius:999px;padding:4px 7px;background:#fef3c7;color:#92400e}
 @media(max-width:420px){.wallet-actions{gap:5px}.wallet-balance{font-size:32px}.waction{font-size:8px;min-height:73px}.service-grid{grid-template-columns:repeat(4,1fr)}.service .sico{width:40px;height:40px;font-size:19px}.service b{font-size:8px}.quick-grid{grid-template-columns:1fr}.balance-mini{grid-template-columns:1fr 1fr 1fr}}
+/* ===== FIXZY WALLET COMPACT UI ===== */
+.wallet-services{display:none!important}.ew-main{padding-bottom:88px!important}.wallet-hero{border-radius:0 0 20px 20px!important;margin:0 0 10px!important}.wallet-actions{margin-top:16px!important}.wallet-actions .waction{border-radius:14px!important}.wallet-mini-history{margin:0 12px 12px;background:#fff;border:1px solid var(--fixzy-border);border-radius:16px;padding:13px;box-shadow:0 3px 14px rgba(15,23,42,.04)}.wallet-mini-history-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.wallet-mini-history-title{font-size:13px;font-weight:900}.wallet-mini-history-link{border:0;background:none;color:#b77900;font-size:10px;font-weight:900;cursor:pointer;padding:4px}.wallet-mini-empty{font-size:10px;color:#64748b;padding:5px 0}.wallet-bottom{position:fixed;left:0;right:0;bottom:0;z-index:9998;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(4,1fr);height:66px;max-width:540px;margin:auto}.wallet-bottom button{border:0;background:transparent;font:inherit;color:#64748b;font-size:9px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.wallet-bottom button span{font-size:21px;line-height:1}.wallet-bottom button.active{color:#111827}.wallet-modal{display:none;position:fixed;inset:0;z-index:10020;background:rgba(15,23,42,.52);align-items:flex-end;justify-content:center}.wallet-modal.show{display:flex}.wallet-modal-box{width:min(540px,100%);max-height:82vh;background:#fff;border-radius:22px 22px 0 0;overflow:hidden;box-shadow:0 -10px 35px rgba(0,0,0,.18)}.wallet-modal-head{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:#fff;z-index:2}.wallet-modal-title{font-size:15px;font-weight:900}.wallet-modal-close{border:0;background:#f1f5f9;border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer}.wallet-modal-body{padding:12px 14px 22px;overflow:auto;max-height:calc(82vh - 64px)}.wallet-more{display:none;position:fixed;inset:0;z-index:10010;background:rgba(15,23,42,.42);align-items:flex-end;justify-content:center}.wallet-more.show{display:flex}.wallet-more-box{width:min(540px,100%);background:#fff;border-radius:22px 22px 0 0;padding:16px}.wallet-more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.wallet-more-btn{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:12px 6px;font-size:10px;font-weight:900;cursor:pointer}.wallet-more-btn span{display:block;font-size:20px;margin-bottom:5px}@media(max-width:380px){.wallet-actions .waction{font-size:9px}.wallet-actions .ico{font-size:17px}.wallet-more-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
-
 </head>
 <body>
 <header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="hi"><h1>FIXZY WALLET</h1><span id="email" class="email">-</span></div><div class="acts"><button class="btn refresh" type="button" onclick="muatUlang()">↻</button><button id="dark" class="btn dark" type="button">🌙</button></div></div></header>
-
 <main class="ew-main">
  <div id="notice" class="notice">Memuat akun...</div>
- <section class="wallet-hero">
-  <div class="wallet">
-   <div class="wallet-top"><span id="walletTopTitle">💳 TABUNGAN KARYAWAN</span><span>FIXZY</span></div>
-   <div class="wallet-balance-label" id="walletBalanceLabel">Saldo tersedia</div>
-   <div class="wallet-balance" id="walletBalance">Rp 0</div>
-   <div class="wallet-name" id="walletName">-</div>
-   <div class="wallet-id" id="walletId">Saldo dari order LUNAS</div>
-   <div class="wallet-actions">
-    <button class="waction" onclick="openBankForm()"><span class="ico">🏦</span>Transfer Bank</button>
-    <button class="waction" id="sendAction" onclick="transferEmployee()"><span class="ico">↔️</span>Kirim</button>
-    <button class="waction" onclick="openPulseForm()"><span class="ico">📱</span>Beli Pulsa</button>
-    <button class="waction" onclick="goProduct()"><span class="ico">🛍️</span>Beli Produk</button>
-   </div>
+ <section class="wallet-hero"><div class="wallet">
+  <div class="wallet-top"><span id="walletTopTitle">💳 TABUNGAN KARYAWAN</span><span>FIXZY</span></div>
+  <div class="wallet-balance-label" id="walletBalanceLabel">Saldo tersedia</div><div class="wallet-balance" id="walletBalance">Rp 0</div>
+  <div class="wallet-name" id="walletName">-</div><div class="wallet-id" id="walletId">Saldo dari order LUNAS</div>
+  <div class="wallet-actions">
+   <button class="waction" onclick="openBankForm()"><span class="ico">🏦</span>Transfer Bank</button>
+   <button class="waction" id="sendAction" onclick="transferEmployee()"><span class="ico">↔️</span>Kirim</button>
+   <button class="waction" onclick="openPulseForm()"><span class="ico">📱</span>Beli Pulsa</button>
+   <button class="waction" onclick="goProduct()"><span class="ico">🛍️</span>Beli Produk</button>
   </div>
- </section>
-
- <section class="wallet-services">
-  <div class="service-title">Layanan FIXZY</div>
-  <div class="service-grid">
-   <button class="service" onclick="showMutasi('all')"><span class="sico">📋</span><b>Mutasi</b><small>Uang masuk & keluar</small></button>
-   <button class="service" onclick="showMutasi('transfer')"><span class="sico">↔️</span><b>Riwayat Transfer</b><small>Antar karyawan</small></button>
-   <button class="service" onclick="openBankForm()"><span class="sico">🏦</span><b>Transfer Bank</b><small>Approval Owner</small></button>
-   <button class="service" onclick="openPulseForm()"><span class="sico">📱</span><b>Pulsa & Data</b><small>Masuk approval</small></button>
-   <button class="service" onclick="goProduct()"><span class="sico">🛍️</span><b>Beli Produk</b><small>Input order member</small></button>
-   <button class="service" onclick="openTopupForm()"><span class="sico">➕</span><b>Top Up Saldo</b><small>Isi saldo via QRIS</small></button>
-   <button class="service" id="topupApprovalService" onclick="openTopupApproval()" style="display:none"><span class="sico">✅</span><b>Approval Top Up</b><small>Persetujuan Owner</small></button>
-   <button class="service" onclick="document.getElementById('bankSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💳</span><b>Pengajuan Bank</b><small>Lihat formulir</small></button>
-   <button class="service" onclick="document.getElementById('ringkasanSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💰</span><b>Ringkasan</b><small>Saldo & transaksi</small></button>
-   <button class="service" onclick="document.getElementById('mutasiSection').scrollIntoView({behavior:'smooth'})"><span class="sico">🔎</span><b>Lihat Semua</b><small>Riwayat wallet</small></button>
-  </div>
- </section>
-
- <section class="section" id="bankSection" style="display:none">
-   <div class="section-title">🏦 Transfer ke Rekening Bank</div>
-   <div class="bank-form show">
-    <div class="bank-grid">
-      <input id="bankName" placeholder="Nama Bank (BCA / BRI / Mandiri...)" />
-      <input id="bankAccount" inputmode="numeric" placeholder="Nomor rekening" />
-      <input id="bankOwner" placeholder="Nama pemilik rekening" />
-      <input id="bankAmount" type="number" min="1" inputmode="numeric" placeholder="Nominal transfer" />
-      <input id="bankNote" placeholder="Keterangan (opsional)" />
-    </div>
-    <button class="bank-submit" id="bankSubmit" onclick="submitBankTransfer()">AJUKAN TRANSFER</button>
-    <div class="bank-note">Transfer bank tidak langsung mengurangi saldo. Permintaan akan berstatus <b>Menunggu Persetujuan Owner</b>. Setelah disetujui Owner, transaksi masuk mutasi sebagai pengeluaran dan dilanjutkan admin ke bank.</div>
-  </div>
- </section>
- <section class="section" id="topupSection" style="display:none">
-   <div class="section-title">➕ Top Up / Isi Saldo</div>
-   <div class="topup-grid">
-     <div class="qris-box">
-       <div class="qris-title">📲 Scan QRIS FIXZY</div>
-       <img src="qris.jpg" alt="QRIS FIXZY" onerror="this.style.display='none';document.getElementById('qrisError').style.display='block'">
-       <div id="qrisError" class="qris-note" style="display:none">File <b>qris.jpg</b> belum ditemukan. Letakkan qris.jpg satu folder dengan halaman ini.</div>
-       <div class="qris-note">Transfer sesuai nominal yang diminta. Saldo belum bertambah sebelum Owner menyetujui request.</div>
-     </div>
-     <input class="topup-input" id="topupAmount" type="number" min="10000" step="1000" inputmode="numeric" placeholder="Nominal top up, contoh Rp100.000">
-     <input class="topup-input" id="topupNote" placeholder="Keterangan / waktu transfer (opsional)">
-     <button class="topup-submit" id="topupSubmit" onclick="submitTopup()">📨 KIRIM REQUEST TOP UP</button>
-     <div class="bank-note">Request disimpan sebagai <b>MENUNGGU PERSETUJUAN OWNER</b>. Setelah disetujui, nominal otomatis menjadi saldo wallet karyawan.</div>
-   </div>
- </section>
-
- <section class="section" id="topupApprovalSection" style="display:none">
-   <div class="section-title">✅ Approval Top Up Saldo</div>
-   <div id="topupApprovalList"><div class="empty-wallet">Memuat request top up...</div></div>
- </section>
-
- <section class="section" id="mutasiSection">
-   <div class="section-title">Riwayat & Mutasi</div>
-   <div class="mutasi-tabs">
-    <button class="mtab active" id="tabAll" onclick="showMutasi('all')">Semua</button>
-    <button class="mtab" id="tabTransfer" onclick="showMutasi('transfer')">Transfer</button>
-    <button class="mtab" id="tabBank" onclick="showMutasi('bank')">Bank</button>
-   </div>
-   <div id="mutasiList" class="mutasi"><div class="empty-wallet">Memuat mutasi...</div></div>
- </section>
- <section class="section" id="ringkasanSection">
-   <div class="section-title">Ringkasan Saldo</div>
-   <div class="balance-mini">
-    <div class="mini"><span>SALDO AWAL</span><b id="miniAwal">Rp 0</b></div>
-    <div class="mini"><span>MASUK</span><b id="miniMasuk">Rp 0</b></div>
-    <div class="mini"><span>KELUAR</span><b id="miniKeluar">Rp 0</b></div>
-   </div>
-   <div class="bank-note" id="ringkasanNote">Saldo wallet mengikuti saldo tabungan karyawan pada akun. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.</div>
- </section>
+ </div></section>
+ <section class="wallet-services"><div class="service-title">Layanan FIXZY</div><div class="service-grid">
+  <button class="service" onclick="showMutasi('all')"><span class="sico">📋</span><b>Mutasi</b><small>Uang masuk & keluar</small></button>
+  <button class="service" onclick="showMutasi('transfer')"><span class="sico">↔️</span><b>Riwayat Transfer</b><small>Antar karyawan</small></button>
+  <button class="service" onclick="openBankForm()"><span class="sico">🏦</span><b>Transfer Bank</b><small>Approval Owner</small></button>
+  <button class="service" onclick="openPulseForm()"><span class="sico">📱</span><b>Pulsa & Data</b><small>Masuk approval</small></button>
+  <button class="service" onclick="goProduct()"><span class="sico">🛍️</span><b>Beli Produk</b><small>Input order member</small></button>
+  <button class="service" onclick="openTopupForm()"><span class="sico">➕</span><b>Top Up Saldo</b><small>Isi saldo via QRIS</small></button>
+  <button class="service" id="topupApprovalService" onclick="openTopupApproval()" style="display:none"><span class="sico">✅</span><b>Approval Top Up</b><small>Persetujuan Owner</small></button>
+  <button class="service" onclick="document.getElementById('bankSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💳</span><b>Pengajuan Bank</b><small>Lihat formulir</small></button>
+  <button class="service" onclick="document.getElementById('ringkasanSection').scrollIntoView({behavior:'smooth'})"><span class="sico">💰</span><b>Ringkasan</b><small>Saldo & transaksi</small></button>
+  <button class="service" onclick="document.getElementById('mutasiSection').scrollIntoView({behavior:'smooth'})"><span class="sico">🔎</span><b>Lihat Semua</b><small>Riwayat wallet</small></button>
+ </div></section>
+ <section class="wallet-mini-history"><div class="wallet-mini-history-head"><div class="wallet-mini-history-title">Transaksi Terakhir</div><button class="wallet-mini-history-link" onclick="openHistoryModal('all')">Lihat semua ›</button></div><div id="miniHistoryList"><div class="wallet-mini-empty">Memuat transaksi...</div></div></section>
+ <section class="section" id="bankSection" style="display:none"><div class="section-title">🏦 Transfer ke Rekening Bank</div><div class="bank-form show">
+  <div class="bank-grid"><input id="bankName" placeholder="Nama Bank (BCA / BRI / Mandiri...)"><input id="bankAccount" inputmode="numeric" placeholder="Nomor rekening"><input id="bankOwner" placeholder="Nama pemilik rekening"><input id="bankAmount" type="number" min="1" inputmode="numeric" placeholder="Nominal transfer"><input id="bankNote" placeholder="Keterangan (opsional)"></div>
+  <button class="bank-submit" id="bankSubmit" onclick="submitBankTransfer()">AJUKAN TRANSFER</button>
+  <div class="bank-note">Transfer bank tidak langsung mengurangi saldo. Permintaan akan berstatus <b>Menunggu Persetujuan Owner</b>. Setelah disetujui Owner, transaksi masuk mutasi sebagai pengeluaran dan dilanjutkan admin ke bank.</div>
+ </div></section>
+ <section class="section" id="topupSection" style="display:none"><div class="section-title">➕ Top Up / Isi Saldo</div><div class="topup-grid">
+  <div class="qris-box"><div class="qris-title">📲 Scan QRIS FIXZY</div><img src="qris.jpg" alt="QRIS FIXZY" onerror="this.style.display='none';document.getElementById('qrisError').style.display='block'"><div id="qrisError" class="qris-note" style="display:none">File <b>qris.jpg</b> belum ditemukan. Letakkan qris.jpg satu folder dengan halaman ini.</div><div class="qris-note">Transfer sesuai nominal yang diminta. Saldo belum bertambah sebelum Owner menyetujui request.</div></div>
+  <input class="topup-input" id="topupAmount" type="number" min="10000" step="1000" inputmode="numeric" placeholder="Nominal top up, contoh Rp100.000"><input class="topup-input" id="topupNote" placeholder="Keterangan / waktu transfer (opsional)">
+  <button class="topup-submit" id="topupSubmit" onclick="submitTopup()">📨 KIRIM REQUEST TOP UP</button><div class="bank-note">Request disimpan sebagai <b>MENUNGGU PERSETUJUAN OWNER</b>. Setelah disetujui, nominal otomatis menjadi saldo wallet karyawan.</div>
+ </div></section>
+ <section class="section" id="topupApprovalSection" style="display:none"><div class="section-title">✅ Approval Top Up Saldo</div><div id="topupApprovalList"><div class="empty-wallet">Memuat request top up...</div></div></section>
+ <section class="section" id="mutasiSection" style="display:none"><div class="section-title">Riwayat & Mutasi</div><div class="mutasi-tabs"><button class="mtab active" id="tabAll" onclick="showMutasi('all')">Semua</button><button class="mtab" id="tabTransfer" onclick="showMutasi('transfer')">Transfer</button><button class="mtab" id="tabBank" onclick="showMutasi('bank')">Bank</button></div><div id="mutasiList" class="mutasi"><div class="empty-wallet">Memuat mutasi...</div></div></section>
+ <section class="section" id="ringkasanSection" style="display:none"><div class="section-title">Ringkasan Saldo</div><div class="balance-mini"><div class="mini"><span>SALDO AWAL</span><b id="miniAwal">Rp 0</b></div><div class="mini"><span>MASUK</span><b id="miniMasuk">Rp 0</b></div><div class="mini"><span>KELUAR</span><b id="miniKeluar">Rp 0</b></div></div><div class="bank-note" id="ringkasanNote">Saldo wallet mengikuti saldo tabungan karyawan pada akun. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.</div></section>
 </main>
-
+<nav class="wallet-bottom" aria-label="Menu wallet"><button class="active" onclick="walletHome()"><span>⌂</span>Beranda</button><button onclick="openHistoryModal('all')"><span>🧾</span>Riwayat</button><button onclick="walletBalanceView()"><span>💰</span>Saldo</button><button onclick="openWalletMore()"><span>☰</span>Lainnya</button></nav><div class="wallet-modal" id="historyModal" onclick="if(event.target===this)closeHistoryModal()"><div class="wallet-modal-box"><div class="wallet-modal-head"><div class="wallet-modal-title">Riwayat Transaksi</div><button class="wallet-modal-close" onclick="closeHistoryModal()">×</button></div><div class="wallet-modal-body"><div class="mutasi-tabs"><button class="mtab active" onclick="openHistoryModal('all')">Semua</button><button class="mtab" onclick="openHistoryModal('transfer')">Transfer</button><button class="mtab" onclick="openHistoryModal('bank')">Bank</button></div><div id="modalMutasiList" class="mutasi"><div class="empty-wallet">Memuat mutasi...</div></div></div></div></div><div class="wallet-more" id="walletMore" onclick="if(event.target===this)closeWalletMore()"><div class="wallet-more-box"><div class="wallet-modal-head" style="padding:0 0 12px;border:0"><div class="wallet-modal-title">Menu Lainnya</div><button class="wallet-modal-close" onclick="closeWalletMore()">×</button></div><div class="wallet-more-grid"><button class="wallet-more-btn" onclick="closeWalletMore();openTopupForm()"><span>➕</span>Top Up Saldo</button><button class="wallet-more-btn" id="moreApproval" onclick="closeWalletMore();openTopupApproval()"><span>✅</span>Approval</button><button class="wallet-more-btn" onclick="closeWalletMore();openBankForm()"><span>🏦</span>Transfer Bank</button><button class="wallet-more-btn" onclick="closeWalletMore();openPulseForm()"><span>📱</span>Pulsa & Data</button><button class="wallet-more-btn" onclick="closeWalletMore();goProduct()"><span>🛍️</span>Beli Produk</button><button class="wallet-more-btn" onclick="closeWalletMore();walletBalanceView()"><span>📊</span>Ringkasan</button></div></div></div>
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import{getFirestore,collection,query,where,getDocs,getDoc,doc,addDoc,updateDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
-const $=id=>document.getElementById(id);
-const setText=(id,v)=>{const e=$(id);if(e)e.textContent=v};
-const rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),num=v=>Number(v)||0;
-const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function walletHome(){window.scrollTo({top:0,behavior:"smooth"})}function walletBalanceView(){walletHome();setTimeout(()=>document.querySelector(".wallet-hero")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}function openWalletMore(){$("walletMore")?.classList.add("show")}function closeWalletMore(){$("walletMore")?.classList.remove("show")}function closeHistoryModal(){$("historyModal")?.classList.remove("show")}function openHistoryModal(filter="all"){$("historyModal")?.classList.add("show");renderMutasi(filter)}
+const $=id=>document.getElementById(id),setText=(id,v)=>{const e=$(id);if(e)e.textContent=v},rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID"),num=v=>Number(v)||0,esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 let uid="",ownerUid="",profile={},members=[],orders=[],withdrawals=[],expenses=[],transfers=[],employees=[],bankRequests=[],pulseRequests=[],topupRequests=[],stockProducts=[],stockByKey=new Map(),ready=false,loading=false;
-
-function norm(v){return String(v??"").trim().toLowerCase()}
-function notice(t,c=""){setText("notice",t);const e=$("notice");if(e)e.className="notice "+c}
-function ownerOf(d){const r=norm(d.role||d.profileRole);if(r==="owner"||r==="admin")return String(d.ownerUid||d.ownerId||uid).trim()||uid;if(r==="superadmin"||r==="super_admin")return "";return String(d.ownerUid||d.ownerId||"").trim()}
-function nama(a){return String(a?.nama||a?.namaMember||a?.namaKaryawan||a?.name||a?.displayName||a?.email||"-")}
-function email(a){return String(a?.email||"")}
-function wa(a){return String(a?.noWA||a?.wa||a?.noWa||a?.noHp||a?.noWhatsapp||a?.nomorWA||a?.phone||"")}
-function kode(a){return String(a?.kodeMember||a?.kode||"")}
-function toDate(v){if(v?.toDate)return v.toDate();if(v instanceof Date)return v;const d=new Date(v);return isNaN(d)?null:d}
-function orderDate(r){return toDate(r.createdAt)||toDate(r.approvedAt)||toDate(r.updatedAt)||toDate(r.tanggal)||toDate(r.date)||new Date()}
-function monthKey(r){const d=orderDate(r);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
-
-function isCashOrder(r){
- const vals=[r.tipeOrder,r.tipeTransaksi,r.jenisHarga,r.paymentType,r.metodePembayaran,r.jenisPembayaran,r.caraBayar]
-   .map(v=>String(v??"").trim().toLowerCase());
- return vals.some(v=>["member_cash","cash","tunai","cash/tunai","cash_tunai","member cash"].includes(v));
-}
-
-function basePriceOfItem(x,r={}){
- const cash=isCashOrder(r);
- const up=Number(x.upPengelolaPerPcs??x.upPengelola??r.upPengelolaPerPcs??r.upPengelola??0)||0;
- const tab=Number(x.tabunganPerPcs??x.tabungan??r.tabunganPerPcs??r.tabungan??0)||0;
- const direct=Number(x.hargaDasar);
- if(Number.isFinite(direct)&&direct>0)return direct;
- const specific=Number(cash?(x.hargaCash??x.modalSatuan):(x.hargaTempo??x.hargaJual));
- if(Number.isFinite(specific)&&specific>0)return specific;
- const stock=findStockForItem(x);
- if(stock){
-   const stockHarga=Number(cash?(stock.hargaCash??stock.modalSatuan):(stock.hargaTempo??stock.hargaJual??stock.harga));
-   if(Number.isFinite(stockHarga)&&stockHarga>0)return stockHarga;
- }
- const composed=Number(x.harga);
- if(Number.isFinite(composed)&&composed>0)return Math.max(0,composed-up-tab);
- return 0;
-}
-
-function itemList(r){
- const a=Array.isArray(r.items)?r.items:Array.isArray(r.produkList)?r.produkList:[];
- return a.map(x=>{
-  const qty=Math.max(0,Number(x.qty??x.jumlah??x.quantity??0)||0);
-  const up=Math.max(0,Number(x.upPengelolaPerPcs??x.upPengelola??r.upPengelolaPerPcs??r.upPengelola??0)||0);
-  const tabungan=Math.max(0,Number(x.tabunganPerPcs??x.tabungan??r.tabunganPerPcs??r.tabungan??0)||0);
-  const hargaAwal=basePriceOfItem(x,r);
-  const diskon=Math.max(0,Number(x.diskon??x.discount??0)||0);
-  const nilaiBarang=Math.max(0,hargaAwal*qty-diskon);
-  return{produkId:String(x.produkId||x.id||""),nama:String(x.nama||x.namaProduk||x.kode||x.kodeProduk||"-"),kode:String(x.kode||x.kodeProduk||""),qty,hargaAwal,diskon,nilaiBarang,upPengelolaPerPcs:up,tabunganPerPcs:tabungan,total:Math.max(0,nilaiBarang+up*qty+tabungan*qty)};
- });
-}
-
-function kasOf(r){return Math.max(0,Number(r.kasBulanan??r.uangKasBulanan??r.kasBulananMember??r.uangKas??0)||0)}
-function paidOf(r){return Math.max(0,Number(r.totalDibayar??r.pembayaran??r.dp??0)||0)}
-function rekapOrderCalculation(r){
- const items=itemList(r);
- const nilaiBarang=items.reduce((a,x)=>a+x.nilaiBarang,0);
- const up=items.reduce((a,x)=>a+x.upPengelolaPerPcs*x.qty,0);
- const tabungan=items.reduce((a,x)=>a+x.tabunganPerPcs*x.qty,0);
- const kas=kasOf(r);
- const totalTagihan=Math.max(0,nilaiBarang+up+tabungan+kas);
- const paid=paidOf(r);
- const cash=isCashOrder(r);
- const sisa=cash?0:Math.max(0,totalTagihan-paid);
- return{items,nilaiBarang,up,tabungan,kas,totalTagihan,paid,sisa,cash};
-}
-
-function isOrderLunas(r){
- const calc=rekapOrderCalculation(r);
- return calc.cash || (calc.totalTagihan>0 && calc.sisa<=0);
-}
-
-function orderMemberKey(r){
- const m=r.member||r.pelanggan||{};
- return{
-   uid:String(r.memberUid||r.memberId||r.createdByMemberUid||r.uidMember||m.uid||m.userId||""),
-   email:String(r.memberEmail||m.email||""),
-   kode:String(m.kode||m.kodeMember||r.kodeMember||""),
-   nama:String(m.nama||m.namaMember||r.memberNama||"")
- };
-}
-
+function norm(v){return String(v??"").trim().toLowerCase()}function notice(t,c=""){setText("notice",t);const e=$("notice");if(e)e.className="notice "+c}function ownerOf(d){const r=norm(d.role||d.profileRole);if(r==="owner"||r==="admin")return String(d.ownerUid||d.ownerId||uid).trim()||uid;if(r==="superadmin"||r==="super_admin")return "";return String(d.ownerUid||d.ownerId||"").trim()}function nama(a){return String(a?.nama||a?.namaMember||a?.namaKaryawan||a?.name||a?.displayName||a?.email||"-")}function email(a){return String(a?.email||"")}function wa(a){return String(a?.noWA||a?.wa||a?.noWa||a?.noHp||a?.noWhatsapp||a?.nomorWA||a?.phone||"")}function kode(a){return String(a?.kodeMember||a?.kode||"")}function toDate(v){if(v?.toDate)return v.toDate();if(v instanceof Date)return v;const d=new Date(v);return isNaN(d)?null:d}function orderDate(r){return toDate(r.createdAt)||toDate(r.approvedAt)||toDate(r.updatedAt)||toDate(r.tanggal)||toDate(r.date)||new Date()}function monthKey(r){const d=orderDate(r);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function isCashOrder(r){const vals=[r.tipeOrder,r.tipeTransaksi,r.jenisHarga,r.paymentType,r.metodePembayaran,r.jenisPembayaran,r.caraBayar].map(v=>String(v??"").trim().toLowerCase());return vals.some(v=>["member_cash","cash","tunai","cash/tunai","cash_tunai","member cash"].includes(v))}
+function basePriceOfItem(x,r={}){const cash=isCashOrder(r),up=Number(x.upPengelolaPerPcs??x.upPengelola??r.upPengelolaPerPcs??r.upPengelola??0)||0,tab=Number(x.tabunganPerPcs??x.tabungan??r.tabunganPerPcs??r.tabungan??0)||0,direct=Number(x.hargaDasar);if(Number.isFinite(direct)&&direct>0)return direct;const specific=Number(cash?(x.hargaCash??x.modalSatuan):(x.hargaTempo??x.hargaJual));if(Number.isFinite(specific)&&specific>0)return specific;const stock=findStockForItem(x);if(stock){const stockHarga=Number(cash?(stock.hargaCash??stock.modalSatuan):(stock.hargaTempo??stock.hargaJual??stock.harga));if(Number.isFinite(stockHarga)&&stockHarga>0)return stockHarga}const composed=Number(x.harga);if(Number.isFinite(composed)&&composed>0)return Math.max(0,composed-up-tab);return 0}
+function itemList(r){const a=Array.isArray(r.items)?r.items:Array.isArray(r.produkList)?r.produkList:[];return a.map(x=>{const qty=Math.max(0,Number(x.qty??x.jumlah??x.quantity??0)||0),up=Math.max(0,Number(x.upPengelolaPerPcs??x.upPengelola??r.upPengelolaPerPcs??r.upPengelola??0)||0),tabungan=Math.max(0,Number(x.tabunganPerPcs??x.tabungan??r.tabunganPerPcs??r.tabungan??0)||0),hargaAwal=basePriceOfItem(x,r),diskon=Math.max(0,Number(x.diskon??x.discount??0)||0),nilaiBarang=Math.max(0,hargaAwal*qty-diskon);return{produkId:String(x.produkId||x.id||""),nama:String(x.nama||x.namaProduk||x.kode||x.kodeProduk||"-"),kode:String(x.kode||x.kodeProduk||""),qty,hargaAwal,diskon,nilaiBarang,upPengelolaPerPcs:up,tabunganPerPcs:tabungan,total:Math.max(0,nilaiBarang+up*qty+tabungan*qty)}})}
+function kasOf(r){return Math.max(0,Number(r.kasBulanan??r.uangKasBulanan??r.kasBulananMember??r.uangKas??0)||0)}function paidOf(r){return Math.max(0,Number(r.totalDibayar??r.pembayaran??r.dp??0)||0)}
+function rekapOrderCalculation(r){const items=itemList(r),nilaiBarang=items.reduce((a,x)=>a+x.nilaiBarang,0),up=items.reduce((a,x)=>a+x.upPengelolaPerPcs*x.qty,0),tabungan=items.reduce((a,x)=>a+x.tabunganPerPcs*x.qty,0),kas=kasOf(r),totalTagihan=Math.max(0,nilaiBarang+up+tabungan+kas),paid=paidOf(r),cash=isCashOrder(r),sisa=cash?0:Math.max(0,totalTagihan-paid);return{items,nilaiBarang,up,tabungan,kas,totalTagihan,paid,sisa,cash}}
+function isOrderLunas(r){const calc=rekapOrderCalculation(r);return calc.cash||(calc.totalTagihan>0&&calc.sisa<=0)}
+function orderMemberKey(r){const m=r.member||r.pelanggan||{};return{uid:String(r.memberUid||r.memberId||r.createdByMemberUid||r.uidMember||m.uid||m.userId||""),email:String(r.memberEmail||m.email||""),kode:String(m.kode||m.kodeMember||r.kodeMember||""),nama:String(m.nama||m.namaMember||r.memberNama||"")}}
 async function safeQuery(q){try{return await getDocs(q)}catch(e){console.warn("FIXZY query dilewati:",e?.message||e);return null}}
-
-async function loadMembers(){
- const map=new Map();
- for(const field of ["ownerUid","ownerId"]){
-   const s=await safeQuery(query(collection(db,"users"),where(field,"==",ownerUid)));
-   if(!s)continue;
-   s.forEach(d=>{
-     const x={id:d.id,...(d.data()||{})};
-     const r=norm(x.role||x.profileRole);
-     if(["employee","karyawan","reseller","member"].includes(r)&&!map.has(d.id))map.set(d.id,x)
-   });
- }
- members=[...map.values()];
-}
-
-function isiDropdownMember(){
- const el=$("search");if(!el)return;
- const nilai=el.value;
- const list=[...members].sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
- el.innerHTML='<option value="">Semua Member</option>'+list.map(m=>`<option value="${esc(m.id)}">${esc(nama(m))}</option>`).join("");
- if(list.some(m=>String(m.id)===nilai))el.value=nilai;
-}
-
-async function loadStock(){
- const map=new Map();
- const qs=[
-   query(collection(db,"stok"),where("ownerUid","==",ownerUid)),
-   query(collection(db,"stok"),where("ownerId","==",ownerUid)),
-   query(collection(db,"stok"),where("uid","==",uid))
- ];
- for(const q of qs){
-  const s=await safeQuery(q);if(!s)continue;
-  s.forEach(d=>{if(!map.has(d.id))map.set(d.id,{id:d.id,...(d.data()||{})});});
- }
- stockProducts=[...map.values()];
- stockByKey=new Map();
- stockProducts.forEach(p=>{
-  const keys=[p.id,p.produkId,p.kode,p.kodeProduk,p.sku,p.nama,p.namaProduk].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
-  keys.forEach(k=>{if(!stockByKey.has(k))stockByKey.set(k,p);});
- });
-}
-function findStockForItem(x){
- const keys=[x.produkId,x.id,x.kode,x.kodeProduk,x.sku,x.nama,x.namaProduk].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);
- for(const k of keys){const p=stockByKey.get(k);if(p)return p;}
- return null;
-}
-
-async function loadOrders(){
- // SUMBER PERHITUNGAN DISAMAKAN DENGAN rekap-order-member.html DI ZIP.
- // order_member tetap sumber utama, lalu sourcePenjualan disinkronkan
- // karena Rekap melakukan hal yang sama sebelum menghitung LUNAS.
- const map=new Map();
- const qs=[
-   query(collection(db,"order_member"),where("ownerUid","==",ownerUid)),
-   query(collection(db,"order_member"),where("ownerId","==",ownerUid))
- ];
- for(const q of qs){
-   const s=await safeQuery(q);if(!s)continue;
-   s.forEach(d=>{if(!map.has(d.id))map.set(d.id,{id:d.id,...(d.data()||{})})});
- }
- const arr=[...map.values()];
- await Promise.all(arr.map(async x=>{
-   const sid=String(x.sourcePenjualanId||"").trim();
-   if(!sid)return;
-   try{
-     const ps=await getDoc(doc(db,"penjualan",sid));
-     if(!ps.exists())return;
-     const p=ps.data()||{},own=String(p.ownerUid||p.ownerId||"").trim();
-     if(own&&own!==ownerUid)return;
-     x._paymentSource=p;
-     const sourceItems=Array.isArray(p.items)?p.items:(Array.isArray(p.produkList)?p.produkList:[]);
-     const orderItems=Array.isArray(x.items)?x.items:(Array.isArray(x.produkList)?x.produkList:[]);
-     if(sourceItems.length){
-       const byKey=new Map(sourceItems.map(si=>[String(si.produkId||si.id||si.kode||si.kodeProduk||si.nama||""),si]));
-       x.items=(orderItems.length?orderItems:sourceItems).map(oi=>{
-         const key=String(oi.produkId||oi.id||oi.kode||oi.kodeProduk||oi.nama||""),si=byKey.get(key)||{};
-         return{
-           ...si,...oi,
-           upPengelolaPerPcs:(Number(oi.upPengelolaPerPcs)>0?Number(oi.upPengelolaPerPcs):
-             Number(oi.upPengelola)>0?Number(oi.upPengelola):
-             Number(si.upPengelolaPerPcs)>0?Number(si.upPengelolaPerPcs):
-             Number(si.upPengelola)>0?Number(si.upPengelola):0),
-           tabunganPerPcs:(Number(oi.tabunganPerPcs)>0?Number(oi.tabunganPerPcs):
-             Number(oi.tabungan)>0?Number(oi.tabungan):
-             Number(si.tabunganPerPcs)>0?Number(si.tabunganPerPcs):
-             Number(si.tabungan)>0?Number(si.tabungan):0)
-         };
-       });
-     }
-     for(const k of ["upPengelolaPerPcs","upPengelola","tabunganPerPcs","tabungan","totalUPPengelola","totalUpPengelola","totalTabunganMember","totalTabungan","kasBulanan","uangKasBulanan"]){
-       const cur=Number(x[k]),srcVal=Number(p[k]);
-       if((!Number.isFinite(cur)||cur<=0)&&Number.isFinite(srcVal)&&srcVal>0)x[k]=p[k];
-     }
-   }catch(e){console.warn("Sinkron pembayaran order",x.id,e?.message||e);}
- }));
- // WALLET hanya menggunakan order yang benar-benar LUNAS.
- // Order TAGIHAN tidak boleh menambah saldo/tabungan wallet.
- orders=arr.filter(r=>isOrderLunas(r));
-}
-async function loadWithdrawals(){
- const map=new Map();
- // Sumber lama: pengeluaran / pengeluaranMember
- for(const collectionName of ["pengeluaran","pengeluaranMember"]){
-  for(const field of ["ownerUid","ownerId","uid"]){
-   const value=field==="uid"?uid:ownerUid;if(!value)continue;
-   const s=await safeQuery(query(collection(db,collectionName),where(field,"==",value)));
-   if(!s)continue;
-   s.forEach(d=>map.set(collectionName+":"+d.id,{id:d.id,...(d.data()||{})}));
-  }
- }
- const old=[...map.values()].filter(r=>norm(r.modul)==="member"&&norm(r.jenis)==="pengambilan tabungan member");
-
- // Sumber baru/permintaan: tabungan_member. Hanya pengambilan yang SUDAH DISETUJUI
- // yang mengurangi saldo. Pending/rejected tidak mengubah saldo.
- const tm=new Map();
- for(const field of ["ownerUid","ownerId"]){
-  if(!ownerUid)continue;
-  const s=await safeQuery(query(collection(db,"tabungan_member"),where(field,"==",ownerUid)));
-  if(!s)continue;
-  s.forEach(d=>tm.set(d.id,{id:d.id,...(d.data()||{})}));
- }
- const approved=[...tm.values()].filter(r=>{
-   const st=norm(r.status||r.approvalStatus||"");
-   const jenis=norm(r.jenis||r.type||r.tipe||"");
-   const isWithdrawal=jenis.includes("ambil")||jenis.includes("pengambilan")||jenis.includes("withdraw")||jenis.includes("tarik");
-   return isWithdrawal && ["approved","disetujui","selesai","completed","success","berhasil","lunas"].includes(st);
- });
- withdrawals=[...old,...approved];
-}
-async function loadAllExpenses(){
- const map=new Map();
- for(const collectionName of ["pengeluaran","pengeluaranMember"]){
-  for(const field of ["ownerUid","ownerId","uid"]){
-   const value=field==="uid"?uid:ownerUid;if(!value)continue;
-   const s=await safeQuery(query(collection(db,collectionName),where(field,"==",value)));
-   if(!s)continue;
-   s.forEach(d=>map.set(collectionName+":"+d.id,{id:d.id,...(d.data()||{})}));
-  }
- }
- expenses=[...map.values()];
-}
-
-function expenseTotals(){
- let kas=0,up=0;
- expenses.forEach(e=>{
-   const n=Math.max(0,num(e.nominal));
-   const source=norm(e.sumberDana||e.sumber||"");
-   const jenis=norm(e.jenisLabel||e.jenis||"");
-   if(source.includes("pengelola")||jenis.includes("pengelola"))up+=n;
-   else if(source.includes("kas")||source===""||jenis.includes("transport")||jenis.includes("acara")||jenis.includes("lain"))kas+=n;
- });
- return{kas,up};
-}
-
-function fallbackMembersFromOrders(){
- const map=new Map();
- orders.forEach(r=>{
-   const m=r.member||r.pelanggan||{};
-   const id=String(r.memberUid||r.memberId||m.uid||m.userId||"").trim();
-   const em=String(r.memberEmail||m.email||"").trim();
-   const kd=String(m.kodeMember||m.kode||r.kodeMember||"").trim();
-   const nm=String(m.nama||m.namaMember||r.memberNama||"").trim();
-   const key=(id||em||kd||nm).toLowerCase();if(!key)return;
-   if(!map.has(key))map.set(key,{id:id||key,...m,email:em||m.email||"",kodeMember:kd,nama:nm||"-",role:"member",status:m.status||"aktif"});
- });
- return [...map.values()];
-}
-
-function findRec(by,r){
- const k=orderMemberKey(r);
- return by.id.get(k.uid)||by.email.get(norm(k.email))||by.code.get(norm(k.kode))||by.name.get(norm(k.nama))||null
-}
-
-function withdrawalFor(r){
- const ids=[String(r.member?.id||"").trim(),String(r.member?.uid||"").trim(),norm(email(r.member)),norm(nama(r.member))].filter(Boolean);
- let total=0;
- withdrawals.forEach(w=>{
-   const idsW=[String(w.memberId||w.memberUid||"").trim(),norm(w.memberEmail||""),norm(w.memberNama||"")].filter(Boolean);
-   if(ids.some(x=>idsW.includes(x)))total+=num(w.nominal);
- });
- return total;
-}
-
-/*
- * UP PENGELOLA — SUMBER YANG DISAMAKAN DENGAN REKAP ORDER MEMBER
- *
- * Pada Rekap Order Member, nilai seperti:
- * Rp12.500, Rp9.000, Rp6.500, Rp5.000
- * adalah nilai UP per ORDER/baris.
- *
- * Karena itu field r.upPengelola tidak boleh dianggap sebagai tarif
- * per pcs dan tidak boleh dikalikan lagi dengan qty.
- *
- * Prioritas sumber:
- * 1. totalUPPengelola
- * 2. totalUpPengelola
- * 3. upPengelolaTotal
- * 4. totalUp
- * 5. totalPengelola
- * 6. upPengelola  <-- field yang dipakai Rekap Order Member
- *
- * Hanya jika semua total order tidak ada, baru hitung dari item.
- */
-function getOrderUp(r,items,q,member){
- const explicitTotal=
-   r.totalUPPengelola??
-   r.totalUpPengelola??
-   r.upPengelolaTotal??
-   r.totalUp??
-   r.totalPengelola??
-   r.upPengelola;
-
- const hasTotal=explicitTotal!==undefined&&explicitTotal!==null&&explicitTotal!=="";
-
- if(hasTotal)return Math.max(0,num(explicitTotal));
-
- const fallbackUp=
-   r.upPengelolaPerPcs??
-   r.upPerPcs??
-   member?.upPengelolaPerPcs??
-   member?.upPengelolaPerPcsMember??
-   member?.upPerPcs;
-
- if(items.length){
-   return items.reduce((sum,x)=>{
-     const p=x.upStored!==undefined&&x.upStored!==null&&x.upStored!==""?num(x.upStored):num(fallbackUp);
-     return sum+x.qty*p;
-   },0);
- }
-
- return q*Math.max(0,num(fallbackUp));
-}
-
-
-function aggregate(){
- const byId=new Map(),byEmail=new Map(),byCode=new Map(),byName=new Map();
-
- members.forEach(m=>{
-   const rec={member:m,qty:0,total:0,paid:0,up:0,upPcs:0,kas:0,kasMonths:new Set(),withdraw:0};
-   byId.set(m.id,rec);
-   if(email(m))byEmail.set(norm(email(m)),rec);
-   if(kode(m))byCode.set(norm(kode(m)),rec);
-   if(nama(m))byName.set(norm(nama(m)),rec);
- });
-
- orders.forEach(r=>{
-   let rec=findRec({id:byId,email:byEmail,code:byCode,name:byName},r);
-
-   if(!rec){
-     const m=r.member||r.pelanggan||{};
-     const temp={
-       id:String(r.memberUid||r.memberId||r.createdByMemberUid||r.uidMember||m.uid||m.userId||"").trim(),
-       ...m,
-       email:r.memberEmail||m.email||"",
-       kodeMember:m.kodeMember||m.kode||r.kodeMember||"",
-       nama:m.nama||m.namaMember||r.memberNama||"-",
-       role:"member",
-       status:m.status||"aktif"
-     };
-
-     if(temp.id){
-       rec={member:temp,qty:0,total:0,paid:0,up:0,upPcs:0,kas:0,kasMonths:new Set(),withdraw:0};
-       byId.set(temp.id,rec);
-       if(email(temp))byEmail.set(norm(email(temp)),rec);
-       if(kode(temp))byCode.set(norm(kode(temp)),rec);
-       byName.set(norm(nama(temp)),rec);
-     }
-   }
-
-   if(!rec)return;
-
-   const orderTotal=Math.max(0,num(r.approvedTotal??r.totalBayar??r.total??0));
-   const paidRecorded=Math.max(0,num(r.totalDibayar??r.pembayaran??r.approvedDp??r.dp??r.uangMuka??0));
-   const paymentType=norm(r.tipeOrder||r.tipeTransaksi||r.jenisTransaksi||r.metodePembayaran||r.paymentMethod||r.pembayaranJenis||"");
-   const cashOrder=/cash|tunai/.test(paymentType)||paymentType==="member_cash";
-
-   rec.paid+=Math.min(orderTotal,Math.max(0,cashOrder?orderTotal:paidRecorded));
-
-   const memberObj=r.member||r.pelanggan||{};
-   const fallbackTab=num(
-     r.tabunganPerPcs??
-     r.tabunganMember??
-     r.menabungMemberPerPcs??
-     memberObj.tabunganPerPcs??
-     memberObj.tabunganMember??
-     rec.member.tabunganPerPcs??
-     rec.member.tabunganMember??
-     4000
-   )||4000;
-
-   const items=itemList(r);
-   const qtyFromItems=items.reduce((a,x)=>a+x.qty,0);
-   const qtyStored=Math.max(0,num(r.totalQty??r.approvedQty??r.qty??r.jumlah??0));
-   const q=qtyFromItems>0?qtyFromItems:qtyStored;
-
-   /* TABUNGAN tetap seperti sebelumnya */
-   const explicitTab=
-     r.totalTabunganOrder??
-     r.totalTabunganMember??
-     r.totalTabungan??
-     r.tabunganTotal??
-     r.totalMenabungMember;
-
-   const hasExplicitTab=explicitTab!==undefined&&explicitTab!==null&&explicitTab!=="";
-   let orderTab=hasExplicitTab?Math.max(0,num(explicitTab)):0;
-
-   if(!hasExplicitTab){
-     if(items.length){
-       orderTab=items.reduce((sum,x)=>{
-         const tab=x.tabStored!==undefined&&x.tabStored!==null&&x.tabStored!==""?num(x.tabStored):fallbackTab;
-         return sum+x.qty*tab;
-       },0);
-     }else{
-       orderTab=q*fallbackTab;
-     }
-   }
-
-   /* UP sekarang benar-benar mengambil TOTAL UP order */
-   const orderUp=getOrderUp(r,items,q,rec.member);
-
-   rec.qty+=q;
-   rec.total+=orderTab;
-   rec.up+=orderUp;
-
-   if(q>0)rec.upPcs=orderUp/q;
-
-   /* Kas hanya sekali per member per bulan */
-   const kas=num(
-     r.kasBulanan??
-     r.uangKasBulanan??
-     r.kasBulananMember??
-     r.uangKas??
-     rec.member.kasBulanan??
-     rec.member.uangKasBulanan??
-     0
-   );
-
-   if(kas>0){
-     const mk=monthKey(r);
-     if(!rec.kasMonths.has(mk)){
-       rec.kasMonths.add(mk);
-       rec.kas+=kas;
-     }
-   }
- });
-
- for(const rec of byId.values())rec.withdraw=withdrawalFor(rec);
- return [...byId.values()];
-}
-
-
+async function loadMembers(){const map=new Map();for(const field of ["ownerUid","ownerId"]){const s=await safeQuery(query(collection(db,"users"),where(field,"==",ownerUid)));if(!s)continue;s.forEach(d=>{const x={id:d.id,...(d.data()||{})},r=norm(x.role||x.profileRole);if(["employee","karyawan","reseller","member"].includes(r)&&!map.has(d.id))map.set(d.id,x)})}members=[...map.values()]}
+function isiDropdownMember(){const el=$("search");if(!el)return;const nilai=el.value,list=[...members].sort((a,b)=>nama(a).localeCompare(nama(b),"id"));el.innerHTML='<option value="">Semua Member</option>'+list.map(m=>`<option value="${esc(m.id)}">${esc(nama(m))}</option>`).join("");if(list.some(m=>String(m.id)===nilai))el.value=nilai}
+async function loadStock(){const map=new Map(),qs=[query(collection(db,"stok"),where("ownerUid","==",ownerUid)),query(collection(db,"stok"),where("ownerId","==",ownerUid)),query(collection(db,"stok"),where("uid","==",uid))];for(const q of qs){const s=await safeQuery(q);if(!s)continue;s.forEach(d=>{if(!map.has(d.id))map.set(d.id,{id:d.id,...(d.data()||{})})})}stockProducts=[...map.values()];stockByKey=new Map();stockProducts.forEach(p=>{const keys=[p.id,p.produkId,p.kode,p.kodeProduk,p.sku,p.nama,p.namaProduk].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);keys.forEach(k=>{if(!stockByKey.has(k))stockByKey.set(k,p)})})}
+function findStockForItem(x){const keys=[x.produkId,x.id,x.kode,x.kodeProduk,x.sku,x.nama,x.namaProduk].map(v=>String(v??"").trim().toLowerCase()).filter(Boolean);for(const k of keys){const p=stockByKey.get(k);if(p)return p}return null}
+async function loadOrders(){const map=new Map(),qs=[query(collection(db,"order_member"),where("ownerUid","==",ownerUid)),query(collection(db,"order_member"),where("ownerId","==",ownerUid))];for(const q of qs){const s=await safeQuery(q);if(!s)continue;s.forEach(d=>{if(!map.has(d.id))map.set(d.id,{id:d.id,...(d.data()||{})})})}const arr=[...map.values()];await Promise.all(arr.map(async x=>{const sid=String(x.sourcePenjualanId||"").trim();if(!sid)return;try{const ps=await getDoc(doc(db,"penjualan",sid));if(!ps.exists())return;const p=ps.data()||{},own=String(p.ownerUid||p.ownerId||"").trim();if(own&&own!==ownerUid)return;x._paymentSource=p;const sourceItems=Array.isArray(p.items)?p.items:(Array.isArray(p.produkList)?p.produkList:[]),orderItems=Array.isArray(x.items)?x.items:(Array.isArray(x.produkList)?x.produkList:[]);if(sourceItems.length){const byKey=new Map(sourceItems.map(si=>[String(si.produkId||si.id||si.kode||si.kodeProduk||si.nama||""),si]));x.items=(orderItems.length?orderItems:sourceItems).map(oi=>{const key=String(oi.produkId||oi.id||oi.kode||oi.kodeProduk||oi.nama||""),si=byKey.get(key)||{};return{...si,...oi,upPengelolaPerPcs:(Number(oi.upPengelolaPerPcs)>0?Number(oi.upPengelolaPerPcs):Number(oi.upPengelola)>0?Number(oi.upPengelola):Number(si.upPengelolaPerPcs)>0?Number(si.upPengelolaPerPcs):Number(si.upPengelola)>0?Number(si.upPengelola):0),tabunganPerPcs:(Number(oi.tabunganPerPcs)>0?Number(oi.tabunganPerPcs):Number(oi.tabungan)>0?Number(oi.tabungan):Number(si.tabunganPerPcs)>0?Number(si.tabunganPerPcs):Number(si.tabungan)>0?Number(si.tabungan):0)}})}for(const k of ["upPengelolaPerPcs","upPengelola","tabunganPerPcs","tabungan","totalUPPengelola","totalUpPengelola","totalTabunganMember","totalTabungan","kasBulanan","uangKasBulanan"]){const cur=Number(x[k]),srcVal=Number(p[k]);if((!Number.isFinite(cur)||cur<=0)&&Number.isFinite(srcVal)&&srcVal>0)x[k]=p[k]}}catch(e){console.warn("Sinkron pembayaran order",x.id,e?.message||e)}}));orders=arr.filter(r=>isOrderLunas(r))}
+async function loadWithdrawals(){const map=new Map();for(const collectionName of ["pengeluaran","pengeluaranMember"]){for(const field of ["ownerUid","ownerId","uid"]){const value=field==="uid"?uid:ownerUid;if(!value)continue;const s=await safeQuery(query(collection(db,collectionName),where(field,"==",value)));if(!s)continue;s.forEach(d=>map.set(collectionName+":"+d.id,{id:d.id,...(d.data()||{})}))}}const old=[...map.values()].filter(r=>norm(r.modul)==="member"&&norm(r.jenis)==="pengambilan tabungan member"),tm=new Map();for(const field of ["ownerUid","ownerId"]){if(!ownerUid)continue;const s=await safeQuery(query(collection(db,"tabungan_member"),where(field,"==",ownerUid)));if(!s)continue;s.forEach(d=>tm.set(d.id,{id:d.id,...(d.data()||{})}))}const approved=[...tm.values()].filter(r=>{const st=norm(r.status||r.approvalStatus||""),jenis=norm(r.jenis||r.type||r.tipe||""),isWithdrawal=jenis.includes("ambil")||jenis.includes("pengambilan")||jenis.includes("withdraw")||jenis.includes("tarik");return isWithdrawal&&["approved","disetujui","selesai","completed","success","berhasil","lunas"].includes(st)});withdrawals=[...old,...approved]}
+async function loadAllExpenses(){const map=new Map();for(const collectionName of ["pengeluaran","pengeluaranMember"]){for(const field of ["ownerUid","ownerId","uid"]){const value=field==="uid"?uid:ownerUid;if(!value)continue;const s=await safeQuery(query(collection(db,collectionName),where(field,"==",value)));if(!s)continue;s.forEach(d=>map.set(collectionName+":"+d.id,{id:d.id,...(d.data()||{})}))}}expenses=[...map.values()]}
+function expenseTotals(){let kas=0,up=0;expenses.forEach(e=>{const n=Math.max(0,num(e.nominal)),source=norm(e.sumberDana||e.sumber||""),jenis=norm(e.jenisLabel||e.jenis||"");if(source.includes("pengelola")||jenis.includes("pengelola"))up+=n;else if(source.includes("kas")||source===""||jenis.includes("transport")||jenis.includes("acara")||jenis.includes("lain"))kas+=n});return{kas,up}}
+function fallbackMembersFromOrders(){const map=new Map();orders.forEach(r=>{const m=r.member||r.pelanggan||{},id=String(r.memberUid||r.memberId||m.uid||m.userId||"").trim(),em=String(r.memberEmail||m.email||"").trim(),kd=String(m.kodeMember||m.kode||r.kodeMember||"").trim(),nm=String(m.nama||m.namaMember||r.memberNama||"").trim(),key=(id||em||kd||nm).toLowerCase();if(!key)return;if(!map.has(key))map.set(key,{id:id||key,...m,email:em||m.email||"",kodeMember:kd,nama:nm||"-",role:"member",status:m.status||"aktif"})});return[...map.values()]}
+function findRec(by,r){const k=orderMemberKey(r);return by.id.get(k.uid)||by.email.get(norm(k.email))||by.code.get(norm(k.kode))||by.name.get(norm(k.nama))||null}
+function withdrawalFor(r){const ids=[String(r.member?.id||"").trim(),String(r.member?.uid||"").trim(),norm(email(r.member)),norm(nama(r.member))].filter(Boolean);let total=0;withdrawals.forEach(w=>{const idsW=[String(w.memberId||w.memberUid||"").trim(),norm(w.memberEmail||""),norm(w.memberNama||"")].filter(Boolean);if(ids.some(x=>idsW.includes(x)))total+=num(w.nominal)});return total}
+function getOrderUp(r,items,q,member){const explicitTotal=r.totalUPPengelola??r.totalUpPengelola??r.upPengelolaTotal??r.totalUp??r.totalPengelola??r.upPengelola;if(explicitTotal!==undefined&&explicitTotal!==null&&explicitTotal!=="")return Math.max(0,num(explicitTotal));const fallbackUp=r.upPengelolaPerPcs??r.upPerPcs??member?.upPengelolaPerPcs??member?.upPengelolaPerPcsMember??member?.upPerPcs;if(items.length)return items.reduce((sum,x)=>sum+(x.upStored!==undefined&&x.upStored!==null&&x.upStored!==""?num(x.upStored):num(fallbackUp))*x.qty,0);return q*Math.max(0,num(fallbackUp))}
+function aggregate(){const byId=new Map(),byEmail=new Map(),byCode=new Map(),byName=new Map();members.forEach(m=>{const rec={member:m,qty:0,total:0,paid:0,up:0,upPcs:0,kas:0,kasMonths:new Set(),withdraw:0};byId.set(m.id,rec);if(email(m))byEmail.set(norm(email(m)),rec);if(kode(m))byCode.set(norm(kode(m)),rec);if(nama(m))byName.set(norm(nama(m)),rec)});orders.forEach(r=>{let rec=findRec({id:byId,email:byEmail,code:byCode,name:byName},r);if(!rec){const m=r.member||r.pelanggan||{},temp={id:String(r.memberUid||r.memberId||r.createdByMemberUid||r.uidMember||m.uid||m.userId||"").trim(),...m,email:r.memberEmail||m.email||"",kodeMember:m.kodeMember||m.kode||r.kodeMember||"",nama:m.nama||m.namaMember||r.memberNama||"-",role:"member",status:m.status||"aktif"};if(temp.id){rec={member:temp,qty:0,total:0,paid:0,up:0,upPcs:0,kas:0,kasMonths:new Set(),withdraw:0};byId.set(temp.id,rec);if(email(temp))byEmail.set(norm(email(temp)),rec);if(kode(temp))byCode.set(norm(kode(temp)),rec);byName.set(norm(nama(temp)),rec)}}if(!rec)return;const orderTotal=Math.max(0,num(r.approvedTotal??r.totalBayar??r.total??0)),paidRecorded=Math.max(0,num(r.totalDibayar??r.pembayaran??r.approvedDp??r.dp??r.uangMuka??0)),paymentType=norm(r.tipeOrder||r.tipeTransaksi||r.jenisTransaksi||r.metodePembayaran||r.paymentMethod||r.pembayaranJenis||""),cashOrder=/cash|tunai/.test(paymentType)||paymentType==="member_cash";rec.paid+=Math.min(orderTotal,Math.max(0,cashOrder?orderTotal:paidRecorded));const memberObj=r.member||r.pelanggan||{},fallbackTab=num(r.tabunganPerPcs??r.tabunganMember??r.menabungMemberPerPcs??memberObj.tabunganPerPcs??memberObj.tabunganMember??rec.member.tabunganPerPcs??rec.member.tabunganMember??4000)||4000,items=itemList(r),qtyFromItems=items.reduce((a,x)=>a+x.qty,0),qtyStored=Math.max(0,num(r.totalQty??r.approvedQty??r.qty??r.jumlah??0)),q=qtyFromItems>0?qtyFromItems:qtyStored,explicitTab=r.totalTabunganOrder??r.totalTabunganMember??r.totalTabungan??r.tabunganTotal??r.totalMenabungMember,hasExplicitTab=explicitTab!==undefined&&explicitTab!==null&&explicitTab!=="",orderTab=hasExplicitTab?Math.max(0,num(explicitTab)):items.length?items.reduce((sum,x)=>sum+x.qty*(x.tabStored!==undefined&&x.tabStored!==null&&x.tabStored!==""?num(x.tabStored):fallbackTab),0):q*fallbackTab,orderUp=getOrderUp(r,items,q,rec.member);rec.qty+=q;rec.total+=orderTab;rec.up+=orderUp;if(q>0)rec.upPcs=orderUp/q;const kas=num(r.kasBulanan??r.uangKasBulanan??r.kasBulananMember??r.uangKas??rec.member.kasBulanan??rec.member.uangKasBulanan??0);if(kas>0){const mk=monthKey(r);if(!rec.kasMonths.has(mk)){rec.kasMonths.add(mk);rec.kas+=kas}}});for(const rec of byId.values())rec.withdraw=withdrawalFor(rec);return[...byId.values()]}
 function accountRole(){return norm(profile.role||profile.profileRole||"")}
-
-function employeeKeys(e){
- const x=e||{};
- const vals=[
-   x.id,x.uid,x.userId,x.userUid,x.employeeUid,x.karyawanUid,x.employeeId,x.karyawanId,
-   x.uidKaryawan,x.uidEmployee
- ];
- return new Set(vals.map(v=>String(v??"").trim()).filter(Boolean));
-}
-function employeeUid(e){
- const ks=employeeKeys(e);return [...ks][0]||"";
-}
-function employeeName(e){return String(e?.namaKaryawan||e?.employeeName||e?.karyawanNama||e?.nama||e?.name||e?.displayName||e?.email||employeeUid(e)).trim()}
-function employeeEmail(e){return norm(e?.email||e?.employeeEmail||e?.karyawanEmail||"")}
-
-async function loadEmployees(){
- const map=new Map();
- for(const field of ["ownerUid","ownerId"]){
-   if(!ownerUid)continue;
-   const snap=await safeQuery(query(collection(db,"users"),where(field,"==",ownerUid)));
-   if(!snap)continue;
-   snap.forEach(d=>{
-     const x={id:d.id,...(d.data()||{})},role=norm(x.role||x.profileRole);
-     if(["employee","karyawan"].includes(role)&&!map.has(d.id))map.set(d.id,x);
-   });
- }
- if(uid&&["employee","karyawan"].includes(accountRole())){
-   const me=await safeQuery(getDoc(doc(db,"users",uid)));
-   if(me?.exists())map.set(uid,{id:me.id,...(me.data()||{})});
- }
- employees=[...map.values()].sort((a,b)=>employeeName(a).localeCompare(employeeName(b),"id"));
-}
-async function loadTransfers(){
- const map=new Map();
- for(const field of ["ownerUid","ownerId"]){
-   if(!ownerUid)continue;
-   const snap=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));
-   if(!snap)continue;
-   snap.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}));
- }
- transfers=[...map.values()].sort((a,b)=>{
-  const da=toDate(a.tanggal||a.createdAt)||new Date(0),db=toDate(b.tanggal||b.createdAt)||new Date(0);
-  return db-da;
- });
-}
-function transferAmount(t){return Math.max(0,num(t.nominal??t.amount??t.jumlah))}
-function transferTotalsForEmployee(euid){
- let masuk=0,keluar=0;
- const ids=new Set(String(euid||"").trim()?[String(euid).trim()]:[]);
- transfers.forEach(t=>{
-  const status=norm(t.status||"approved");
-  if(status!=="approved"&&status!=="completed"&&status!=="selesai")return;
-  const to=String(t.toEmployeeUid||t.toKaryawanUid||"").trim();
-  const from=String(t.fromEmployeeUid||t.fromKaryawanUid||"").trim();
-  const n=transferAmount(t);
-  if(ids.has(to))masuk+=n;
-  if(ids.has(from))keluar+=n;
- });
- return{masuk,keluar,bersih:masuk-keluar};
-}
-function employeeBaseBalance(e){
- const sv=currentEmployeeSavings(e);
- return Math.max(0,sv.total-sv.withdraw);
-}
-function employeeSnapshot(){
- return employees.map(e=>{
-  const euid=employeeUid(e),base=employeeBaseBalance(e),tr=transferTotalsForEmployee(euid);
-  return {...e,uid:euid,name:employeeName(e),base,masuk:tr.masuk,keluar:tr.keluar,saldo:Math.max(0,base+tr.bersih)};
- });
-}
-function currentEmployee(){
- if(!["employee","karyawan"].includes(accountRole()))return null;
- const me=employees.find(e=>employeeKeys(e).has(uid));
- return me||null;
-}
-function isOwnerWallet(){
- const r=accountRole();
- return r==="owner" || r==="admin";
-}
-
-function currentOwnerUp(){
- if(!isOwnerWallet())return 0;
-
- let total=0;
- orders.forEach(r=>{
-   // orders sudah difilter hanya order LUNAS di loadOrders().
-   const items=itemList(r);
-   const qty=Math.max(
-     0,
-     num(r.totalQty??r.approvedQty??r.qty??r.jumlah) ||
-     items.reduce((a,x)=>a+x.qty,0)
-   );
-
-   const member=r.member||r.pelanggan||{};
-   total += Math.max(0,getOrderUp(r,items,qty,member));
- });
- return total;
-}
-
-function currentOwnerWallet(){
- const up=currentOwnerUp();
- return {
-   me:null,
-   base:up,
-   withdraw:0,
-   masuk:0,
-   keluar:0,
-   bankOut:0,
-   saldo:up
- };
-}
-
-
-function renderEmployeeBalances(){
- const body=$("employeeBalanceList");if(!body)return;
- const list=employeeSnapshot();
- body.innerHTML=list.length?list.map(e=>`<div class="employee-balance-item"><div class="employee-balance-name">${esc(e.name)}</div><div class="employee-balance-sub">Tabungan awal ${rp(e.base)} • Masuk ${rp(e.masuk)} • Keluar ${rp(e.keluar)}</div><div class="employee-balance-value">${rp(e.saldo)}</div></div>`).join(""):'<div class="empty">Belum ada data karyawan.</div>';
-}
-function updateTransferInfo(){
- const list=employeeSnapshot(),from=list.find(e=>e.uid===String($("transferFrom")?.value||"")),to=list.find(e=>e.uid===String($("transferTo")?.value||"")),box=$("transferBalanceInfo");
- if(!box)return;
- box.textContent=from?`Saldo ${from.name}: ${rp(from.saldo)}${to?` • Saldo ${to.name}: ${rp(to.saldo)}`:""}`:"Pilih karyawan sumber.";
-}
-function fillTransferEmployees(){
- const from=$("transferFrom"),to=$("transferTo");if(!from||!to)return;
- const list=employeeSnapshot(),me=currentEmployee(),meIds=employeeKeys(me||{}),sources=me?list.filter(e=>employeeKeys(e).has(uid)||meIds.has(e.uid)):list;
- from.innerHTML=sources.length?sources.map(e=>`<option value="${esc(e.uid)}">${esc(e.name)} — ${esc(rp(e.saldo))}</option>`).join(""):'<option value="">Tidak ada sumber</option>';
- to.innerHTML=list.map(e=>`<option value="${esc(e.uid)}">${esc(e.name)}</option>`).join("");
- const other=list.find(e=>e.uid!==uid);if(me&&other)to.value=other.uid;
- updateTransferInfo();
-}
-function orderEmployeeKeys(r){
-  const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||r?.assignedEmployee||r?.assignedKaryawan||{};
-  const vals=[
-   // Assignment eksplisit adalah sumber utama.
-   r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,
-   r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,
-   r?.pemegangKaryawanUid,r?.pemegangUid,r?.pemegangEmployeeUid,
-   r?.karyawan?.uid,r?.employee?.uid,
-   // Beberapa versi input menyimpan assignment di field created/approved/requested.
-   r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid,
-   // Fallback aman: hanya akan dipakai jika nilainya benar-benar sama dengan UID employee.
-   r?.createdByUid,r?.createdBy,r?.approvedByUid,r?.approvedBy,r?.requestedByUid,r?.requestedBy,
-   e?.uid,e?.userUid,e?.userId,e?.karyawanUid,e?.employeeUid,e?.id,
-   e?.employeeId,e?.karyawanId,e?.uidKaryawan,e?.uidEmployee
-  ];
-  return new Set(vals.map(v=>String(v??"").trim()).filter(Boolean));
-}
-function orderEmployeeNames(r){
-  const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||r?.assignedEmployee||r?.assignedKaryawan||{};
-  return new Set([
-   r?.karyawanNama,r?.employeeName,r?.employeeNama,r?.approvalEmployeeName,
-   r?.namaKaryawan,r?.namaEmployee,r?.pemegangNama,r?.assignedEmployeeName,
-   r?.assignedKaryawanName,r?.handledByName,r?.processedByName,
-   e?.nama,e?.name,e?.displayName,e?.namaKaryawan,e?.employeeName,e?.karyawanNama
-  ].map(v=>norm(v)).filter(Boolean));
-}
-function orderMatchesEmployee(r,e){
-  if(!e)return false;
-  const ids=employeeKeys(e);
-  const oks=orderEmployeeKeys(r);
-
-  // 1) Prioritas mutlak: assignment UID/ID yang cocok dengan employee.
-  for(const id of ids){
-    if(id && oks.has(id))return true;
-  }
-
-  // 2) Jika order menyimpan assignment ke employee lain, jangan gunakan fallback nama.
-  //    Ini mencegah tabungan karyawan lain ikut terhitung.
-  const explicitAssignmentVals=[
-    r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,
-    r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,
-    r?.pemegangKaryawanUid,r?.pemegangUid,r?.pemegangEmployeeUid,
-    r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid
-  ].map(v=>String(v??"").trim()).filter(Boolean);
-  if(explicitAssignmentVals.length)return false;
-
-  // 3) Data lama: createdBy/approvedBy/requestedBy hanya dianggap assignment
-  //    bila UID tersebut memang UID employee yang sedang dicek.
-  const actorVals=[r?.createdByUid,r?.createdBy,r?.approvedByUid,r?.approvedBy,r?.requestedByUid,r?.requestedBy]
-    .map(v=>String(v??"").trim()).filter(Boolean);
-  if(actorVals.length && actorVals.some(v=>ids.has(v)))return true;
-
-  // 4) Fallback legacy: nama/email hanya bila order tidak punya UID assignment/actor.
-  if(actorVals.length)return false;
-  const names=new Set([norm(employeeName(e))].filter(Boolean));
-  const ons=orderEmployeeNames(r);
-  for(const n of names)if(n&&ons.has(n))return true;
-
-  const em=employeeEmail(e);
-  const oe=norm(r?.employeeEmail||r?.karyawanEmail||r?.approvalEmployeeEmail||"");
-  return !!em&&!!oe&&em===oe;
-}
-function orderTabunganValue(r){
- // HARUS mengikuti perhitungan Rekap Order Member setelah sourcePenjualan
- // disinkronkan oleh loadOrders(). Jangan memakai memberUid.
- const calc=rekapOrderCalculation(r);
- if(!(calc.cash || (calc.totalTagihan>0&&calc.sisa<=0)))return 0;
- // Rekap menghitung tabungan dari item tabunganPerPcs x qty.
- // Jika data lama hanya menyimpan total tabungan di order, gunakan itu
- // sebagai fallback; bukan tarif default dan bukan harga order.
- if(calc.tabungan>0)return calc.tabungan;
- const explicit=r?.totalTabunganMember??r?.totalTabunganOrder??r?.totalTabungan??r?.tabunganTotal;
- const n=num(explicit);
- return n>0?n:0;
-}
-/*
-  SUMBER RESMI SALDO WALLET:
-  Izin Akses + Rekap Order Member + Data Tagihan.
-  Tabungan hanya dari order LUNAS:
-  totalTabunganMember / (tabunganPerPcs x qty).
-  Identitas karyawan berasal dari assignment employee pada order.
-*/
-/*
-  FIXZY WALLET v9
-  Sumber saldo: order_member + logika Rekap/Data Tagihan.
-  Hanya order LUNAS yang menghasilkan tabungan.
-  Identitas karyawan dicocokkan berlapis:
-    1. employeeUid / karyawanUid / assignment
-    2. createdBy jika cocok dengan UID employee
-    3. member UID/email/nama hanya sebagai fallback legacy
-  memberUid tidak otomatis dianggap employee UID; harus cocok dengan
-  identitas employee yang sedang dihitung.
-*/
-function walletOrderStatus(r){
-  const p=r?._paymentSource||{};
-  const states=[
-    r?.status,r?.approvalStatus,r?.statusPembayaran,r?.paymentStatus,
-    p?.status,p?.approvalStatus,p?.statusPembayaran,p?.paymentStatus
-  ].map(v=>norm(v));
-
-  if(states.some(v=>["lunas","paid","dibayar","terbayar","selesai"].includes(v))){
-    return "lunas";
-  }
-
-  const total=Math.max(0,num(
-    r?.totalBayar??r?.total??r?.approvedTotal??r?.pendapatan
-  ));
-  const paid=Math.max(0,num(
-    r?.totalDibayar??r?.pembayaran??r?.dp??r?.uangMuka
-  ));
-  const rawSisa=r?.sisaBayar??r?.sisaTagihan??r?.sisa;
-  const sisa=(rawSisa!==undefined&&rawSisa!==null&&rawSisa!=="")
-    ?Math.max(0,num(rawSisa))
-    :Math.max(0,total-paid);
-
-  return total>0&&(sisa<=0||paid>=total) ? "lunas" : "tagihan";
-}
-
-function walletEmployeeIdentitySet(e){
-  const set=new Set();
-  if(!e)return set;
-
-  const add=v=>{
-    const x=String(v??"").trim();
-    if(x)set.add(x.toLowerCase());
-  };
-
-  [
-    e.uid,e.id,e.userId,e.employeeUid,e.karyawanUid,e.karyawanId,
-    e.nama,e.namaKaryawan,e.name,e.email,e.wa,e.noWa,e.nowa
-  ].forEach(add);
-
-  return set;
-}
-
-function walletOrderBelongsToEmployee(r,e){
-  if(!r||!e)return false;
-
-  const ids=walletEmployeeIdentitySet(e);
-  const direct=[
-    r.employeeUid,r.karyawanUid,r.employeeId,r.karyawanId,
-    r.assignedEmployeeUid,r.assignedKaryawanUid,
-    r.pemegangUid,r.pemegangKaryawanUid,
-    r.createdBy,r.createdByUid,
-    r.employee?.uid,r.employee?.id,r.employee?.email,r.employee?.nama,
-    r.karyawan?.uid,r.karyawan?.id,r.karyawan?.email,r.karyawan?.nama,
-    r.assignment?.employeeUid,r.assignment?.karyawanUid,
-    r.assignment?.uid,r.assignment?.email,r.assignment?.nama
-  ];
-
-  if(direct.some(v=>{
-    const x=String(v??"").trim().toLowerCase();
-    return x && ids.has(x);
-  })) return true;
-
-  // Legacy fallback: beberapa order menyimpan identitas pada member map.
-  // Hanya diterima bila benar-benar cocok dengan identitas employee.
-  const m=r.member||{};
-  const memberVals=[
-    m.uid,m.employeeUid,m.karyawanUid,m.employeeId,m.karyawanId,
-    m.email,m.nama,m.name
-  ];
-
-  return memberVals.some(v=>{
-    const x=String(v??"").trim().toLowerCase();
-    return x && ids.has(x);
-  });
-}
-
-function walletTabunganPerOrder(r){
-  if(walletOrderStatus(r)!=="lunas") return 0;
-
-  // Jika Rekap menyimpan total tabungan resmi pada order, gunakan nilai ini.
-  const explicit=r?.totalTabunganMember??r?.totalTabunganOrder;
-  if(explicit!==undefined&&explicit!==null&&explicit!==""){
-    return Math.max(0,num(explicit));
-  }
-
-  const items=Array.isArray(r?.approvedItems)
-    ?r.approvedItems
-    :(Array.isArray(r?.items)
-      ?r.items
-      :(Array.isArray(r?.produkList)?r.produkList:[]));
-
-  // Rekap: tabungan per pcs x qty.
-  if(items.length){
-    return items.reduce((sum,x)=>{
-      const qty=Math.max(0,num(
-        x?.approvedQty??x?.qty??x?.jumlah??x?.quantity
-      ));
-      const tab=Math.max(0,num(
-        x?.tabunganPerPcs??
-        x?.tabunganMemberPerPcs??
-        x?.tabunganMember??
-        x?.menabungMemberPerPcs??
-        x?.menabungMember
-      ));
-
-      const itemTotal=x?.totalTabunganMember??x?.totalTabungan??x?.tabunganTotal;
-      if(itemTotal!==undefined&&itemTotal!==null&&itemTotal!==""){
-        return sum+Math.max(0,num(itemTotal));
-      }
-      return sum+(tab*qty);
-    },0);
-  }
-
-  // Data lama kadang menyimpan tabunganPerPcs dan qty di level order.
-  const qty=Math.max(0,num(
-    r?.qty??r?.qtyTotal??r?.jumlah??r?.pcs??r?.totalPcs
-  ));
-  const tab=Math.max(0,num(
-    r?.tabunganPerPcs??r?.tabunganMemberPerPcs??r?.tabunganMember
-  ));
-
-  return tab*qty;
-}
-
-function currentEmployeeSavings(e){
-  if(!e)return{total:0,withdraw:0};
-
-  let total=0;
-
-  orders.forEach(r=>{
-    if(walletOrderBelongsToEmployee(r,e)){
-      total+=walletTabunganPerOrder(r);
-    }
-  });
-
-  return{total,withdraw:0};
-}
-
-function approvedTopupForEmployee(euid){
- const id=String(euid||"").trim();
- if(!id)return 0;
- return topupRequests.reduce((sum,t)=>{
-   if(norm(t.status)!=="approved")return sum;
-   const tuid=String(t.employeeUid||t.karyawanUid||t.uid||"").trim();
-   return tuid===id ? sum+Math.max(0,num(t.amount??t.nominal??t.jumlah)) : sum;
- },0);
-}
-
-function currentWallet(){
- if(isOwnerWallet()) return currentOwnerWallet();
-
- const me=currentEmployee();
- const sv=currentEmployeeSavings(me);
- const tr=me
-   ?transferTotalsForEmployee(employeeUid(me))
-   :{masuk:0,keluar:0,bersih:0};
-
- const topup=me?approvedTopupForEmployee(employeeUid(me)):0;
- const base=Math.max(0,sv.total);
-
- return {
-   me,
-   base,
-   withdraw:0,
-   masuk:tr.masuk+topup,
-   keluar:tr.keluar,
-   bankOut:0,
-   topup,
-   saldo:Math.max(0,base+topup+tr.bersih)
- };
-}
+function employeeKeys(e){const x=e||{},vals=[x.id,x.uid,x.userId,x.userUid,x.employeeUid,x.karyawanUid,x.employeeId,x.karyawanId,x.uidKaryawan,x.uidEmployee];return new Set(vals.map(v=>String(v??"").trim()).filter(Boolean))}
+function employeeUid(e){const ks=employeeKeys(e);return[...ks][0]||""}function employeeName(e){return String(e?.namaKaryawan||e?.employeeName||e?.karyawanNama||e?.nama||e?.name||e?.displayName||e?.email||employeeUid(e)).trim()}function employeeEmail(e){return norm(e?.email||e?.employeeEmail||e?.karyawanEmail||"")}
+async function loadEmployees(){const map=new Map();for(const field of ["ownerUid","ownerId"]){if(!ownerUid)continue;const snap=await safeQuery(query(collection(db,"users"),where(field,"==",ownerUid)));if(!snap)continue;snap.forEach(d=>{const x={id:d.id,...(d.data()||{})},role=norm(x.role||x.profileRole);if(["employee","karyawan"].includes(role)&&!map.has(d.id))map.set(d.id,x)})}if(uid&&["employee","karyawan"].includes(accountRole())){const me=await safeQuery(getDoc(doc(db,"users",uid)));if(me?.exists())map.set(uid,{id:me.id,...(me.data()||{})})}employees=[...map.values()].sort((a,b)=>employeeName(a).localeCompare(employeeName(b),"id"))}
+async function loadTransfers(){const map=new Map();for(const field of ["ownerUid","ownerId"]){if(!ownerUid)continue;const snap=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));if(!snap)continue;snap.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}))}transfers=[...map.values()].sort((a,b)=>(toDate(b.tanggal||b.createdAt)||new Date(0))-(toDate(a.tanggal||a.createdAt)||new Date(0)))}
+function transferAmount(t){return Math.max(0,num(t.nominal??t.amount??t.jumlah))}function transferTotalsForEmployee(euid){let masuk=0,keluar=0;const ids=new Set(String(euid||"").trim()?[String(euid).trim()]:[]);transfers.forEach(t=>{const status=norm(t.status||"approved");if(status!=="approved"&&status!=="completed"&&status!=="selesai")return;const to=String(t.toEmployeeUid||t.toKaryawanUid||"").trim(),from=String(t.fromEmployeeUid||t.fromKaryawanUid||"").trim(),n=transferAmount(t);if(ids.has(to))masuk+=n;if(ids.has(from))keluar+=n});return{masuk,keluar,bersih:masuk-keluar}}
+function employeeBaseBalance(e){const sv=currentEmployeeSavings(e);return Math.max(0,sv.total-sv.withdraw)}function employeeSnapshot(){return employees.map(e=>{const euid=employeeUid(e),base=employeeBaseBalance(e),tr=transferTotalsForEmployee(euid);return{...e,uid:euid,name:employeeName(e),base,masuk:tr.masuk,keluar:tr.keluar,saldo:Math.max(0,base+tr.bersih)}})}function currentEmployee(){if(!["employee","karyawan"].includes(accountRole()))return null;return employees.find(e=>employeeKeys(e).has(uid))||null}function isOwnerWallet(){const r=accountRole();return r==="owner"||r==="admin"}
+function currentOwnerUp(){if(!isOwnerWallet())return 0;let total=0;orders.forEach(r=>{const items=itemList(r),qty=Math.max(0,num(r.totalQty??r.approvedQty??r.qty??r.jumlah)||items.reduce((a,x)=>a+x.qty,0)),member=r.member||r.pelanggan||{};total+=Math.max(0,getOrderUp(r,items,qty,member))});return total}
+function currentOwnerWallet(){const up=currentOwnerUp();return{me:null,base:up,withdraw:0,masuk:0,keluar:0,bankOut:0,saldo:up}}
+function renderEmployeeBalances(){const body=$("employeeBalanceList");if(!body)return;const list=employeeSnapshot();body.innerHTML=list.length?list.map(e=>`<div class="employee-balance-item"><div class="employee-balance-name">${esc(e.name)}</div><div class="employee-balance-sub">Tabungan awal ${rp(e.base)} • Masuk ${rp(e.masuk)} • Keluar ${rp(e.keluar)}</div><div class="employee-balance-value">${rp(e.saldo)}</div></div>`).join(""):'<div class="empty">Belum ada data karyawan.</div>'}
+function updateTransferInfo(){const list=employeeSnapshot(),from=list.find(e=>e.uid===String($("transferFrom")?.value||"")),to=list.find(e=>e.uid===String($("transferTo")?.value||"")),box=$("transferBalanceInfo");if(!box)return;box.textContent=from?`Saldo ${from.name}: ${rp(from.saldo)}${to?` • Saldo ${to.name}: ${rp(to.saldo)}`:""}`:"Pilih karyawan sumber."}
+function fillTransferEmployees(){const from=$("transferFrom"),to=$("transferTo");if(!from||!to)return;const list=employeeSnapshot(),me=currentEmployee(),meIds=employeeKeys(me||{}),sources=me?list.filter(e=>employeeKeys(e).has(uid)||meIds.has(e.uid)):list;from.innerHTML=sources.length?sources.map(e=>`<option value="${esc(e.uid)}">${esc(e.name)} — ${esc(rp(e.saldo))}</option>`).join(""):'<option value="">Tidak ada sumber</option>';to.innerHTML=list.map(e=>`<option value="${esc(e.uid)}">${esc(e.name)}</option>`).join("");const other=list.find(e=>e.uid!==uid);if(me&&other)to.value=other.uid;updateTransferInfo()}
+function orderEmployeeKeys(r){const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||r?.assignedEmployee||r?.assignedKaryawan||{};const vals=[r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,r?.pemegangKaryawanUid,r?.pemegangUid,r?.pemegangEmployeeUid,r?.karyawan?.uid,r?.employee?.uid,r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid,r?.createdByUid,r?.createdBy,r?.approvedByUid,r?.approvedBy,r?.requestedByUid,r?.requestedBy,e?.uid,e?.userUid,e?.userId,e?.karyawanUid,e?.employeeUid,e?.id,e?.employeeId,e?.karyawanId,e?.uidKaryawan,e?.uidEmployee];return new Set(vals.map(v=>String(v??"").trim()).filter(Boolean))}
+function orderEmployeeNames(r){const e=r?.employee||r?.karyawan||r?.employeeData||r?.karyawanData||r?.pemegang||r?.assignedEmployee||r?.assignedKaryawan||{};return new Set([r?.karyawanNama,r?.employeeName,r?.employeeNama,r?.approvalEmployeeName,r?.namaKaryawan,r?.namaEmployee,r?.pemegangNama,r?.assignedEmployeeName,r?.assignedKaryawanName,r?.handledByName,r?.processedByName,e?.nama,e?.name,e?.displayName,e?.namaKaryawan,e?.employeeName,e?.karyawanNama].map(v=>norm(v)).filter(Boolean))}
+function orderMatchesEmployee(r,e){if(!e)return false;const ids=employeeKeys(e),oks=orderEmployeeKeys(r);for(const id of ids)if(id&&oks.has(id))return true;const explicitAssignmentVals=[r?.karyawanUid,r?.employeeUid,r?.employeeId,r?.karyawanId,r?.approvalEmployeeUid,r?.uidKaryawan,r?.uidEmployee,r?.assignedKaryawanUid,r?.assignedEmployeeUid,r?.pemegangKaryawanUid,r?.pemegangUid,r?.pemegangEmployeeUid,r?.assignedToUid,r?.assignedUid,r?.handledByUid,r?.processedByUid].map(v=>String(v??"").trim()).filter(Boolean);if(explicitAssignmentVals.length)return false;const actorVals=[r?.createdByUid,r?.createdBy,r?.approvedByUid,r?.approvedBy,r?.requestedByUid,r?.requestedBy].map(v=>String(v??"").trim()).filter(Boolean);if(actorVals.length&&actorVals.some(v=>ids.has(v)))return true;if(actorVals.length)return false;const names=new Set([norm(employeeName(e))].filter(Boolean)),ons=orderEmployeeNames(r);for(const n of names)if(n&&ons.has(n))return true;const em=employeeEmail(e),oe=norm(r?.employeeEmail||r?.karyawanEmail||r?.approvalEmployeeEmail||"");return!!em&&!!oe&&em===oe}
+function orderTabunganValue(r){const calc=rekapOrderCalculation(r);if(!(calc.cash||(calc.totalTagihan>0&&calc.sisa<=0)))return 0;if(calc.tabungan>0)return calc.tabungan;const explicit=r?.totalTabunganMember??r?.totalTabunganOrder??r?.totalTabungan??r?.tabunganTotal,n=num(explicit);return n>0?n:0}
+function walletOrderStatus(r){const p=r?._paymentSource||{},states=[r?.status,r?.approvalStatus,r?.statusPembayaran,r?.paymentStatus,p?.status,p?.approvalStatus,p?.statusPembayaran,p?.paymentStatus].map(v=>norm(v));if(states.some(v=>["lunas","paid","dibayar","terbayar","selesai"].includes(v)))return"lunas";const total=Math.max(0,num(r?.totalBayar??r?.total??r?.approvedTotal??r?.pendapatan)),paid=Math.max(0,num(r?.totalDibayar??r?.pembayaran??r?.dp??r?.uangMuka)),rawSisa=r?.sisaBayar??r?.sisaTagihan??r?.sisa,sisa=rawSisa!==undefined&&rawSisa!==null&&rawSisa!==""?Math.max(0,num(rawSisa)):Math.max(0,total-paid);return total>0&&(sisa<=0||paid>=total)?"lunas":"tagihan"}
+function walletEmployeeIdentitySet(e){const set=new Set();if(!e)return set;const add=v=>{const x=String(v??"").trim();if(x)set.add(x.toLowerCase())};[e.uid,e.id,e.userId,e.employeeUid,e.karyawanUid,e.karyawanId,e.nama,e.namaKaryawan,e.name,e.email,e.wa,e.noWa,e.nowa].forEach(add);return set}
+function walletOrderBelongsToEmployee(r,e){if(!r||!e)return false;const ids=walletEmployeeIdentitySet(e),direct=[r.employeeUid,r.karyawanUid,r.employeeId,r.karyawanId,r.assignedEmployeeUid,r.assignedKaryawanUid,r.pemegangUid,r.pemegangKaryawanUid,r.createdBy,r.createdByUid,r.employee?.uid,r.employee?.id,r.employee?.email,r.employee?.nama,r.karyawan?.uid,r.karyawan?.id,r.karyawan?.email,r.karyawan?.nama,r.assignment?.employeeUid,r.assignment?.karyawanUid,r.assignment?.uid,r.assignment?.email,r.assignment?.nama];if(direct.some(v=>{const x=String(v??"").trim().toLowerCase();return x&&ids.has(x)}))return true;const m=r.member||{},memberVals=[m.uid,m.employeeUid,m.karyawanUid,m.employeeId,m.karyawanId,m.email,m.nama,m.name];return memberVals.some(v=>{const x=String(v??"").trim().toLowerCase();return x&&ids.has(x)})}
+function walletTabunganPerOrder(r){if(walletOrderStatus(r)!=="lunas")return 0;const explicit=r?.totalTabunganMember??r?.totalTabunganOrder;if(explicit!==undefined&&explicit!==null&&explicit!=="")return Math.max(0,num(explicit));const items=Array.isArray(r?.approvedItems)?r.approvedItems:(Array.isArray(r?.items)?r.items:(Array.isArray(r?.produkList)?r.produkList:[]));if(items.length)return items.reduce((sum,x)=>{const qty=Math.max(0,num(x?.approvedQty??x?.qty??x?.jumlah??x?.quantity)),tab=Math.max(0,num(x?.tabunganPerPcs??x?.tabunganMemberPerPcs??x?.tabunganMember??x?.menabungMemberPerPcs??x?.menabungMember)),itemTotal=x?.totalTabunganMember??x?.totalTabungan??x?.tabunganTotal;if(itemTotal!==undefined&&itemTotal!==null&&itemTotal!=="")return sum+Math.max(0,num(itemTotal));return sum+tab*qty},0);const qty=Math.max(0,num(r?.qty??r?.qtyTotal??r?.jumlah??r?.pcs??r?.totalPcs)),tab=Math.max(0,num(r?.tabunganPerPcs??r?.tabunganMemberPerPcs??r?.tabunganMember));return tab*qty}
+function currentEmployeeSavings(e){if(!e)return{total:0,withdraw:0};let total=0;orders.forEach(r=>{if(walletOrderBelongsToEmployee(r,e))total+=walletTabunganPerOrder(r)});return{total,withdraw:0}}
+function approvedTopupForEmployee(euid){const id=String(euid||"").trim();if(!id)return 0;return topupRequests.reduce((sum,t)=>{if(norm(t.status)!=="approved")return sum;const tuid=String(t.employeeUid||t.karyawanUid||t.uid||"").trim();return tuid===id?sum+Math.max(0,num(t.amount??t.nominal??t.jumlah)):sum},0)}
+function currentWallet(){if(isOwnerWallet())return currentOwnerWallet();const me=currentEmployee(),sv=currentEmployeeSavings(me),tr=me?transferTotalsForEmployee(employeeUid(me)):{masuk:0,keluar:0,bersih:0},topup=me?approvedTopupForEmployee(employeeUid(me)):0,base=Math.max(0,sv.total);return{me,base,withdraw:0,masuk:tr.masuk+topup,keluar:tr.keluar,bankOut:0,topup,saldo:Math.max(0,base+topup+tr.bersih)}}
 function fmtDate(v){const d=toDate(v);return d?d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-"}
-function render(){
- if(!ready)return;
- const w=currentWallet(),me=w.me,owner=isOwnerWallet();
-
- setText("walletTopTitle",owner?"💰 UP PENGELOLA":"💳 TABUNGAN KARYAWAN");
- setText("walletBalanceLabel",owner?"UP Pengelola tersedia":"Saldo tersedia");
- setText("walletName",owner?(nama(profile)||profile.email||"Owner"):(me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda"));
- setText("walletId",owner
-   ?"Dari order LUNAS • UP Pengelola"
-   :(me?`UID ${employeeUid(me)} • Order Member • Tabungan/pcs × qty • Hanya LUNAS`:"Order Member • Hanya LUNAS"));
- setText("walletBalance",rp(w.saldo));
- setText("miniAwal",rp(w.base));
- setText("miniMasuk",rp(w.masuk));
- setText("miniKeluar",rp(w.keluar));
- const sendAction=$("sendAction");
- if(sendAction)sendAction.style.display=owner?"none":"";
- const topupApprovalService=$("topupApprovalService");
- if(topupApprovalService)topupApprovalService.style.display=owner?"block":"none";
- const topupSection=$("topupSection");
- if(topupSection&&owner)topupSection.style.display="none";
- const topupApprovalSection=$("topupApprovalSection");
- if(topupApprovalSection&&!owner)topupApprovalSection.style.display="none";
- if(owner)renderTopupApproval();
- setText("ringkasanNote",owner
-   ?"Saldo UP Pengelola dihitung dari order member berstatus LUNAS. Nilai mengikuti total UP Pengelola pada setiap order."
-   :"Saldo wallet mengikuti tabungan dari order LUNAS. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.");
- renderMutasi();
-}
-function renderMutasi(filter=window.walletFilter||"all"){
- window.walletFilter=filter;
- ["tabAll","tabTransfer","tabBank"].forEach(id=>$(id)?.classList.remove("active"));
- $(filter==="all"?"tabAll":filter==="transfer"?"tabTransfer":"tabBank")?.classList.add("active");
- const body=$("mutasiList");if(!body)return;
- const me=currentEmployee(),euid=me?employeeUid(me):uid;
- const arr=[];
- transfers.filter(t=>norm(t.jenis||t.tipe||"")!=="beli_pulsa"&& (String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid||String(t.toEmployeeUid||t.toKaryawanUid||"")===euid)).forEach(t=>{
-  const out=String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid;
-  arr.push({kind:"transfer",date:toDate(t.tanggal||t.createdAt),out,icon:"↔️",title:out?`Transfer ke ${t.toEmployeeName||"Karyawan"}`:`Transfer dari ${t.fromEmployeeName||"Karyawan"}`,meta:t.keterangan||"Transfer saldo karyawan",amount:transferAmount(t),status:"Berhasil"});
- });
- pulseRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{
-  const st=norm(x.status||"pending");
-  arr.push({kind:"pulse",date:toDate(x.createdAt||x.requestedAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"📱",title:`Beli Pulsa ${x.nomorHp||""}`.trim(),meta:x.keterangan||"Pulsa / Data",amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"});
- });
- bankRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{
-  const st=norm(x.status||"pending");
-  arr.push({kind:"bank",date:toDate(x.createdAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"🏦",title:`Transfer ${x.bankName||"Bank"}`,meta:`${x.bankAccount||""} • ${x.accountName||""}`,amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"});
- });
- if(!isOwnerWallet()){
-   const euid=employeeUid(currentEmployee());
-   topupRequests.filter(t=>String(t.employeeUid||t.karyawanUid||"")===String(euid)).forEach(t=>{
-     const st=norm(t.status||"pending");
-     arr.push({
-       kind:"topup",
-       date:toDate(t.approvedAt||t.createdAt||t.requestedAt),
-       out:false,
-       pending:st!=="approved",
-       icon:"➕",
-       title:"Top Up Saldo QRIS",
-       meta:st==="approved"?"Disetujui Owner":st==="rejected"?"Ditolak":"Menunggu Persetujuan Owner",
-       amount:Math.max(0,num(t.amount??t.nominal??t.jumlah)),
-       status:st==="approved"?"Berhasil":st==="rejected"?"Ditolak":"Menunggu Approval"
-     });
-   });
- }
- const list=arr.filter(x=>filter==="all"||x.kind===filter).sort((a,b)=>(b.date?.getTime()||0)-(a.date?.getTime()||0));
- if(!list.length){body.innerHTML='<div class="empty-wallet">Belum ada transaksi pada menu ini.</div>';return;}
- body.innerHTML=list.map(x=>`<div class="mutasi-row ${x.pending?"pending":x.out?"out":"in"}"><div class="micon">${x.icon}</div><div class="minfo"><div class="mtitle">${esc(x.title)} <span class="status-pill">${esc(x.status)}</span></div><div class="mmeta">${esc(fmtDate(x.date))} • ${esc(x.meta)}</div></div><div class="mamount">${x.pending?"":""}${x.out?"-":"+"}${rp(x.amount)}</div></div>`).join("");
-}
-window.showMutasi=renderMutasi;
-
-// Kompatibilitas versi lama: beberapa halaman/versi sebelumnya memanggil
-// renderTransferHistory(). Riwayat transfer sekarang dirender oleh renderMutasi().
-function renderTransferHistory(){
-  return renderMutasi("transfer");
-}
-window.renderTransferHistory=renderTransferHistory;
-function openBankForm(){const s=$("bankSection");if(s)s.style.display=s.style.display==="none"?"block":"none";s?.scrollIntoView({behavior:"smooth",block:"center"})}
-window.openBankForm=openBankForm;
-function openTopupForm(){
- if(isOwnerWallet()){ openTopupApproval(); return; }
- const sec=$("topupSection");
- if(sec){sec.style.display="";sec.scrollIntoView({behavior:"smooth",block:"start"});}
-}
-function openTopupApproval(){
- if(!isOwnerWallet())return alert("Approval top up hanya dapat dilakukan Owner.");
- const sec=$("topupApprovalSection");
- if(sec){sec.style.display="";sec.scrollIntoView({behavior:"smooth",block:"start"});}
- renderTopupApproval();
-}
-async function submitTopup(){
- if(isOwnerWallet())return alert("Owner tidak mengajukan top up karyawan dari halaman ini.");
- const me=currentEmployee();
- if(!me)return alert("Akun karyawan tidak ditemukan.");
- const amount=Math.max(0,num($("topupAmount")?.value));
- const note=String($("topupNote")?.value||"").trim();
- if(amount<10000)return alert("Minimal top up Rp10.000.");
- const pending=topupRequests.some(t=>String(t.employeeUid||t.karyawanUid||"")===String(employeeUid(me))&&norm(t.status)==="pending");
- if(pending)return alert("Masih ada request top up yang menunggu persetujuan Owner.");
- try{
-   await addDoc(collection(db,"saldoTopupRequests"),{
-     ownerUid,employeeUid:employeeUid(me),karyawanUid:employeeUid(me),
-     employeeName:employeeName(me),employeeEmail:me.email||profile.email||auth.currentUser?.email||"",
-     nominal:amount,amount,status:"pending",metode:"QRIS",qrisFile:"qris.jpg",
-     keterangan:note||"Top up saldo melalui QRIS",
-     requestedAt:serverTimestamp(),createdAt:serverTimestamp(),
-     createdByUid:uid,createdByName:nama(profile)
-   });
-   $("topupAmount").value="";$("topupNote").value="";
-   await loadTopupRequests();render();renderMutasi();
-   alert("Request top up berhasil dikirim. Tunggu persetujuan Owner.");
- }catch(e){console.error(e);alert("Request top up gagal: "+(e?.message||e));}
-}
-function renderTopupApproval(){
- const box=$("topupApprovalList");if(!box)return;
- if(!isOwnerWallet()){box.innerHTML='<div class="empty-wallet">Khusus Owner.</div>';return;}
- const list=topupRequests.filter(t=>norm(t.status)==="pending");
- if(!list.length){box.innerHTML='<div class="empty-wallet">Tidak ada request top up yang menunggu persetujuan.</div>';return;}
- box.innerHTML=list.map(t=>{
-   const amount=Math.max(0,num(t.amount??t.nominal??t.jumlah));
-   const date=toDate(t.createdAt||t.requestedAt);
-   const ds=date?date.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";
-   return `<div class="topup-request"><div class="topup-request-head"><span>${esc(t.employeeName||t.karyawanNama||"Karyawan")}</span><span>${rp(amount)}</span></div><div class="topup-request-sub">${esc(t.employeeEmail||"")} • ${esc(ds)}<br>${esc(t.keterangan||"Top up QRIS")} <span class="topup-status">MENUNGGU OWNER</span></div><div class="topup-approve-grid"><button class="topup-approve" onclick="approveTopup('${esc(t.id)}')">✓ SETUJUI</button><button class="topup-reject" onclick="rejectTopup('${esc(t.id)}')">✕ TOLAK</button></div></div>`;
- }).join("");
-}
-async function approveTopup(id){
- if(!isOwnerWallet())return alert("Hanya Owner yang dapat menyetujui.");
- const t=topupRequests.find(x=>x.id===id);
- if(!t||norm(t.status)!=="pending")return alert("Request sudah diproses.");
- const amount=Math.max(0,num(t.amount??t.nominal??t.jumlah));if(amount<=0)return alert("Nominal request tidak valid.");
- try{
-   await updateDoc(doc(db,"saldoTopupRequests",id),{status:"approved",approvedByUid:uid,approvedByName:nama(profile),approvedAt:serverTimestamp(),updatedAt:serverTimestamp()});
-   await loadTopupRequests();renderTopupApproval();render();renderMutasi();
-   alert(`Top up ${rp(amount)} untuk ${t.employeeName||"karyawan"} disetujui.`);
- }catch(e){console.error(e);alert("Persetujuan top up gagal: "+(e?.message||e));}
-}
-async function rejectTopup(id){
- if(!isOwnerWallet())return alert("Hanya Owner yang dapat menolak.");
- const t=topupRequests.find(x=>x.id===id);if(!t||norm(t.status)!=="pending")return alert("Request sudah diproses.");
- const reason=prompt("Alasan penolakan (opsional):","Bukti transfer belum sesuai");
- try{
-   await updateDoc(doc(db,"saldoTopupRequests",id),{status:"rejected",rejectedByUid:uid,rejectedByName:nama(profile),rejectedAt:serverTimestamp(),rejectionReason:String(reason||""),updatedAt:serverTimestamp()});
-   await loadTopupRequests();renderTopupApproval();render();renderMutasi();alert("Request top up ditolak.");
- }catch(e){console.error(e);alert("Penolakan top up gagal: "+(e?.message||e));}
-}
+function render(){if(!ready)return;const w=currentWallet(),me=w.me,owner=isOwnerWallet();setText("walletTopTitle",owner?"💰 UP PENGELOLA":"💳 TABUNGAN KARYAWAN");setText("walletBalanceLabel",owner?"UP Pengelola tersedia":"Saldo tersedia");setText("walletName",owner?(nama(profile)||profile.email||"Owner"):(me?employeeName(me):nama(profile)||profile.email||"Tabungan Anda"));setText("walletId",owner?"Dari order LUNAS • UP Pengelola":(me?`UID ${employeeUid(me)} • Order Member • Tabungan/pcs × qty • Hanya LUNAS`:"Order Member • Hanya LUNAS"));setText("walletBalance",rp(w.saldo));setText("miniAwal",rp(w.base));setText("miniMasuk",rp(w.masuk));setText("miniKeluar",rp(w.keluar));const sendAction=$("sendAction");if(sendAction)sendAction.style.display=owner?"none":"";const topupApprovalService=$("topupApprovalService");if(topupApprovalService)topupApprovalService.style.display=owner?"block":"none";const topupSection=$("topupSection");if(topupSection&&owner)topupSection.style.display="none";const topupApprovalSection=$("topupApprovalSection");if(topupApprovalSection&&!owner)topupApprovalSection.style.display="none";if(owner)renderTopupApproval();setText("ringkasanNote",owner?"Saldo UP Pengelola dihitung dari order member berstatus LUNAS. Nilai mengikuti total UP Pengelola pada setiap order.":"Saldo wallet mengikuti tabungan dari order LUNAS. Transfer antar karyawan menambah atau mengurangi saldo secara otomatis.");renderMutasi()}
+function renderMutasi(filter=window.walletFilter||"all"){window.walletFilter=filter;["tabAll","tabTransfer","tabBank"].forEach(id=>$(id)?.classList.remove("active"));$(filter==="all"?"tabAll":filter==="transfer"?"tabTransfer":"tabBank")?.classList.add("active");const body=$("mutasiList");if(!body)return;const me=currentEmployee(),euid=me?employeeUid(me):uid,arr=[];transfers.filter(t=>norm(t.jenis||t.tipe||"")!=="beli_pulsa"&&(String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid||String(t.toEmployeeUid||t.toKaryawanUid||"")===euid)).forEach(t=>{const out=String(t.fromEmployeeUid||t.fromKaryawanUid||"")===euid;arr.push({kind:"transfer",date:toDate(t.tanggal||t.createdAt),out,icon:"↔️",title:out?`Transfer ke ${t.toEmployeeName||"Karyawan"}`:`Transfer dari ${t.fromEmployeeName||"Karyawan"}`,meta:t.keterangan||"Transfer saldo karyawan",amount:transferAmount(t),status:"Berhasil"})});pulseRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{const st=norm(x.status||"pending");arr.push({kind:"pulse",date:toDate(x.createdAt||x.requestedAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"📱",title:`Beli Pulsa ${x.nomorHp||""}`.trim(),meta:x.keterangan||"Pulsa / Data",amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"})});bankRequests.filter(x=>String(x.employeeUid||x.karyawanUid||"")===euid).forEach(x=>{const st=norm(x.status||"pending");arr.push({kind:"bank",date:toDate(x.createdAt||x.tanggal),out:st==="approved",pending:st!=="approved",icon:"🏦",title:`Transfer ${x.bankName||"Bank"}`,meta:`${x.bankAccount||""} • ${x.accountName||""}`,amount:num(x.nominal),status:st==="pending"?"Menunggu Approval":st==="rejected"?"Ditolak":st==="approved"?"Disetujui Owner":"Diproses"})});if(!isOwnerWallet()){const euid=employeeUid(currentEmployee());topupRequests.filter(t=>String(t.employeeUid||t.karyawanUid||"")===String(euid)).forEach(t=>{const st=norm(t.status||"pending");arr.push({kind:"topup",date:toDate(t.approvedAt||t.createdAt||t.requestedAt),out:false,pending:st!=="approved",icon:"➕",title:"Top Up Saldo QRIS",meta:st==="approved"?"Disetujui Owner":st==="rejected"?"Ditolak":"Menunggu Persetujuan Owner",amount:Math.max(0,num(t.amount??t.nominal??t.jumlah)),status:st==="approved"?"Berhasil":st==="rejected"?"Ditolak":"Menunggu Approval"})})}const list=arr.filter(x=>filter==="all"||x.kind===filter).sort((a,b)=>(b.date?.getTime()||0)-(a.date?.getTime()||0));if(!list.length){body.innerHTML='<div class="empty-wallet">Belum ada transaksi pada menu ini.</div>';return}body.innerHTML=list.map(x=>`<div class="mutasi-row ${x.pending?"pending":x.out?"out":"in"}"><div class="micon">${x.icon}</div><div class="minfo"><div class="mtitle">${esc(x.title)} <span class="status-pill">${esc(x.status)}</span></div><div class="mmeta">${esc(fmtDate(x.date))} • ${esc(x.meta)}</div></div><div class="mamount">${x.out?"-":"+"}${rp(x.amount)}</div></div>`).join("");const modal=$("modalMutasiList");if(modal)modal.innerHTML=body.innerHTML;const mini=$("miniHistoryList");if(mini)mini.innerHTML=list.slice(0,3).map(x=>`<div class="mutasi-row ${x.pending?"pending":x.out?"out":"in"}"><div class="micon">${x.icon}</div><div class="minfo"><div class="mtitle">${esc(x.title)}</div><div class="mmeta">${esc(fmtDate(x.date))}</div></div><div class="mamount">${x.out?"-":"+"}${rp(x.amount)}</div></div>`).join("")||'<div class="wallet-mini-empty">Belum ada transaksi.</div>'}
+window.showMutasi=renderMutasi;function renderTransferHistory(){return renderMutasi("transfer")}window.renderTransferHistory=renderTransferHistory;
+function openBankForm(){const s=$("bankSection");if(s)s.style.display=s.style.display==="none"?"block":"none";s?.scrollIntoView({behavior:"smooth",block:"center"})}window.openBankForm=openBankForm;
+function openTopupForm(){if(isOwnerWallet()){openTopupApproval();return}const sec=$("topupSection");if(sec){sec.style.display="";sec.scrollIntoView({behavior:"smooth",block:"start"})}}
+function openTopupApproval(){if(!isOwnerWallet())return alert("Approval top up hanya dapat dilakukan Owner.");const sec=$("topupApprovalSection");if(sec){sec.style.display="";sec.scrollIntoView({behavior:"smooth",block:"start"})}renderTopupApproval()}
+async function submitTopup(){if(isOwnerWallet())return alert("Owner tidak mengajukan top up karyawan dari halaman ini.");const me=currentEmployee();if(!me)return alert("Akun karyawan tidak ditemukan.");const amount=Math.max(0,num($("topupAmount")?.value)),note=String($("topupNote")?.value||"").trim();if(amount<10000)return alert("Minimal top up Rp10.000.");const pending=topupRequests.some(t=>String(t.employeeUid||t.karyawanUid||"")===String(employeeUid(me))&&norm(t.status)==="pending");if(pending)return alert("Masih ada request top up yang menunggu persetujuan Owner.");try{await addDoc(collection(db,"saldoTopupRequests"),{ownerUid,employeeUid:employeeUid(me),karyawanUid:employeeUid(me),employeeName:employeeName(me),employeeEmail:me.email||profile.email||auth.currentUser?.email||"",nominal:amount,amount,status:"pending",metode:"QRIS",qrisFile:"qris.jpg",keterangan:note||"Top up saldo melalui QRIS",requestedAt:serverTimestamp(),createdAt:serverTimestamp(),createdByUid:uid,createdByName:nama(profile)});$("topupAmount").value="";$("topupNote").value="";await loadTopupRequests();render();renderMutasi();alert("Request top up berhasil dikirim. Tunggu persetujuan Owner.")}catch(e){console.error(e);alert("Request top up gagal: "+(e?.message||e))}}
+function renderTopupApproval(){const box=$("topupApprovalList");if(!box)return;if(!isOwnerWallet()){box.innerHTML='<div class="empty-wallet">Khusus Owner.</div>';return}const list=topupRequests.filter(t=>norm(t.status)==="pending");if(!list.length){box.innerHTML='<div class="empty-wallet">Tidak ada request top up yang menunggu persetujuan.</div>';return}box.innerHTML=list.map(t=>{const amount=Math.max(0,num(t.amount??t.nominal??t.jumlah)),date=toDate(t.createdAt||t.requestedAt),ds=date?date.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";return`<div class="topup-request"><div class="topup-request-head"><span>${esc(t.employeeName||t.karyawanNama||"Karyawan")}</span><span>${rp(amount)}</span></div><div class="topup-request-sub">${esc(t.employeeEmail||"")} • ${esc(ds)}<br>${esc(t.keterangan||"Top up QRIS")} <span class="topup-status">MENUNGGU OWNER</span></div><div class="topup-approve-grid"><button class="topup-approve" onclick="approveTopup('${esc(t.id)}')">✓ SETUJUI</button><button class="topup-reject" onclick="rejectTopup('${esc(t.id)}')">✕ TOLAK</button></div></div>`}).join("")}
+async function approveTopup(id){if(!isOwnerWallet())return alert("Hanya Owner yang dapat menyetujui.");const t=topupRequests.find(x=>x.id===id);if(!t||norm(t.status)!=="pending")return alert("Request sudah diproses.");const amount=Math.max(0,num(t.amount??t.nominal??t.jumlah));if(amount<=0)return alert("Nominal request tidak valid.");try{await updateDoc(doc(db,"saldoTopupRequests",id),{status:"approved",approvedByUid:uid,approvedByName:nama(profile),approvedAt:serverTimestamp(),updatedAt:serverTimestamp()});await loadTopupRequests();renderTopupApproval();render();renderMutasi();alert(`Top up ${rp(amount)} untuk ${t.employeeName||"karyawan"} disetujui.`)}catch(e){console.error(e);alert("Persetujuan top up gagal: "+(e?.message||e))}}
+async function rejectTopup(id){if(!isOwnerWallet())return alert("Hanya Owner yang dapat menolak.");const t=topupRequests.find(x=>x.id===id);if(!t||norm(t.status)!=="pending")return alert("Request sudah diproses.");const reason=prompt("Alasan penolakan (opsional):","Bukti transfer belum sesuai");try{await updateDoc(doc(db,"saldoTopupRequests",id),{status:"rejected",rejectedByUid:uid,rejectedByName:nama(profile),rejectedAt:serverTimestamp(),rejectionReason:String(reason||""),updatedAt:serverTimestamp()});await loadTopupRequests();renderTopupApproval();render();renderMutasi();alert("Request top up ditolak.")}catch(e){console.error(e);alert("Penolakan top up gagal: "+(e?.message||e))}}
 window.openTopupForm=openTopupForm;window.openTopupApproval=openTopupApproval;window.submitTopup=submitTopup;window.approveTopup=approveTopup;window.rejectTopup=rejectTopup;
-
-function transferEmployee(){
- const el=$("transferFrom");
- document.querySelectorAll(".transfer-card").forEach(x=>x.remove());
- const sec=document.createElement("section");sec.className="section transfer-card";sec.innerHTML='<div class="section-title">↔️ Transfer Saldo Antar Karyawan</div><div class="bank-grid"><select id="transferToNew"><option value="">Pilih karyawan</option></select><input id="transferAmountNew" type="number" min="1" placeholder="Nominal transfer"><input id="transferNoteNew" placeholder="Keterangan"></div><button class="bank-submit" id="transferNewBtn">TRANSFER SEKARANG</button><div class="bank-note">Transfer antar karyawan langsung tercatat sebagai mutasi setelah berhasil.</div>';
- $("bankSection").parentNode.insertBefore(sec,$("bankSection"));
- const to=$("transferToNew");employees.filter(e=>employeeUid(e)!==uid).forEach(e=>{to.insertAdjacentHTML("beforeend",`<option value="${esc(employeeUid(e))}">${esc(employeeName(e))}</option>`)});
- $("transferNewBtn").onclick=async()=>{
-  const target=to.value,amount=Math.max(0,num($("transferAmountNew").value)),note=String($("transferNoteNew").value||"").trim();
-  const w=currentWallet();if(!target||amount<=0)return alert("Pilih karyawan dan isi nominal.");if(amount>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);
-  try{await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,fromEmployeeUid:uid,fromEmployeeName:employeeName(currentEmployee()||profile),toEmployeeUid:target,toEmployeeName:employeeName(employees.find(e=>employeeUid(e)===target)),nominal:amount,tanggal:serverTimestamp(),keterangan:note||"Transfer saldo tabungan",createdByUid:uid,createdByName:nama(profile),status:"approved"});await loadTransfers();render();alert("Transfer saldo berhasil.");}catch(e){alert("Transfer gagal: "+(e.message||e))}
- };
- sec.scrollIntoView({behavior:"smooth",block:"center"});
-}
-window.transferEmployee=transferEmployee;
+function transferEmployee(){document.querySelectorAll(".transfer-card").forEach(x=>x.remove());const sec=document.createElement("section");sec.className="section transfer-card";sec.innerHTML='<div class="section-title">↔️ Transfer Saldo Antar Karyawan</div><div class="bank-grid"><select id="transferToNew"><option value="">Pilih karyawan</option></select><input id="transferAmountNew" type="number" min="1" placeholder="Nominal transfer"><input id="transferNoteNew" placeholder="Keterangan"></div><button class="bank-submit" id="transferNewBtn">TRANSFER SEKARANG</button><div class="bank-note">Transfer antar karyawan langsung tercatat sebagai mutasi setelah berhasil.</div>';$("bankSection").parentNode.insertBefore(sec,$("bankSection"));const to=$("transferToNew");employees.filter(e=>employeeUid(e)!==uid).forEach(e=>{to.insertAdjacentHTML("beforeend",`<option value="${esc(employeeUid(e))}">${esc(employeeName(e))}</option>`)});$("transferNewBtn").onclick=async()=>{const target=to.value,amount=Math.max(0,num($("transferAmountNew").value)),note=String($("transferNoteNew").value||"").trim(),w=currentWallet();if(!target||amount<=0)return alert("Pilih karyawan dan isi nominal.");if(amount>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);try{await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,fromEmployeeUid:uid,fromEmployeeName:employeeName(currentEmployee()||profile),toEmployeeUid:target,toEmployeeName:employeeName(employees.find(e=>employeeUid(e)===target)),nominal:amount,tanggal:serverTimestamp(),keterangan:note||"Transfer saldo tabungan",createdByUid:uid,createdByName:nama(profile),status:"approved"});await loadTransfers();render();alert("Transfer saldo berhasil.")}catch(e){alert("Transfer gagal: "+(e.message||e))}};sec.scrollIntoView({behavior:"smooth",block:"center"})}window.transferEmployee=transferEmployee;
 function goApproval(){location.href="approval-order-member.html"}window.goApproval=goApproval;
-function openPulseForm(){
- document.querySelectorAll(".pulse-card").forEach(x=>x.remove());
- const sec=document.createElement("section");sec.className="section pulse-card";sec.innerHTML='<div class="section-title">📱 Beli Pulsa / Data</div><div class="bank-grid"><input id="pulsePhone" inputmode="numeric" placeholder="Nomor HP tujuan"><select id="pulseNominal"><option value="">Pilih nominal</option><option value="10000">Rp10.000</option><option value="15000">Rp15.000</option><option value="20000">Rp20.000</option><option value="25000">Rp25.000</option><option value="50000">Rp50.000</option><option value="100000">Rp100.000</option><option value="150000">Rp150.000</option><option value="200000">Rp200.000</option></select><input id="pulseNote" placeholder="Keterangan (opsional)"></div><button class="bank-submit" id="pulseSubmit">AJUKAN BELI PULSA</button><div class="bank-note">Pengajuan pulsa berstatus <b>Menunggu Approval Owner</b>. Saldo belum berkurang sebelum Owner menyetujui.</div>';
- $("bankSection").parentNode.insertBefore(sec,$("bankSection"));
- $("pulseSubmit").onclick=submitPulseRequest;
- sec.scrollIntoView({behavior:"smooth",block:"center"});
-}
-window.openPulseForm=openPulseForm;
-async function submitPulseRequest(){
- const me=currentEmployee(),w=currentWallet();
- if(!me)return alert("Akun karyawan tidak ditemukan.");
- const phone=String($("pulsePhone")?.value||"").replace(/\D/g,"");
- const nominal=Math.max(0,num($("pulseNominal")?.value));
- const note=String($("pulseNote")?.value||"").trim();
- if(phone.length<8||nominal<=0)return alert("Nomor HP dan nominal pulsa wajib diisi.");
- if(nominal>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);
- const btn=$("pulseSubmit");if(btn){btn.disabled=true;btn.textContent="MENGIRIM...";}
- try{
-  await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,jenis:"beli_pulsa",tipe:"beli_pulsa",status:"pending",employeeUid:uid,karyawanUid:uid,employeeName:employeeName(me),karyawanNama:employeeName(me),fromEmployeeUid:uid,fromEmployeeName:employeeName(me),toEmployeeUid:"PULSA_PENDING",toEmployeeName:"Pulsa / Data",nominal,nomorHp:phone,keterangan:note||`Beli pulsa ${phone}`,createdAt:serverTimestamp(),requestedAt:serverTimestamp(),createdByUid:uid});
-  await loadPulseRequests();render();alert("Pengajuan beli pulsa dikirim. Menunggu persetujuan Owner.");
- }catch(e){console.error(e);alert("Pengajuan pulsa gagal: "+(e.message||e));}
- finally{if(btn){btn.disabled=false;btn.textContent="AJUKAN BELI PULSA";}}
-}
-window.submitPulseRequest=submitPulseRequest;
-function goProduct(){location.href="input-order-member.html"}window.goProduct=goProduct;
-
-
-
-async function submitBankTransfer(){
- const me=currentEmployee(),w=currentWallet();
- if(!me)return alert("Akun karyawan tidak ditemukan.");
- const bankName=String($("bankName")?.value||"").trim(),bankAccount=String($("bankAccount")?.value||"").trim(),accountName=String($("bankOwner")?.value||"").trim(),nominal=Math.max(0,num($("bankAmount")?.value)),note=String($("bankNote")?.value||"").trim();
- if(!bankName||!bankAccount||!accountName||nominal<=0)return alert("Lengkapi data bank dan nominal transfer.");
- if(nominal>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);
- const btn=$("bankSubmit");if(btn){btn.disabled=true;btn.textContent="MENGIRIM...";}
- try{
-  await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,jenis:"transfer_bank",tipe:"transfer_bank",status:"pending",employeeUid:uid,karyawanUid:uid,employeeName:employeeName(me),karyawanNama:employeeName(me),fromEmployeeUid:uid,fromEmployeeName:employeeName(me),toEmployeeUid:"BANK_PENDING",toEmployeeName:`${bankName} • ${bankAccount}`,bankName,bankAccount,accountName,nominal,keterangan:note||"Transfer antar bank",createdAt:serverTimestamp(),requestedAt:serverTimestamp(),createdByUid:uid});
-  $("bankAmount").value="";$("bankNote").value="";await loadBankRequests();render();alert("Pengajuan transfer dikirim. Menunggu persetujuan Owner.");
- }catch(e){console.error(e);alert("Pengajuan gagal: "+(e.message||e));}
- finally{if(btn){btn.disabled=false;btn.textContent="AJUKAN TRANSFER";}}
-}
-window.submitBankTransfer=submitBankTransfer;
-
-async function loadPulseRequests(){
- const map=new Map();
- for(const field of ["ownerUid","ownerId"]){
-  const s=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));if(!s)continue;
-  s.forEach(d=>{const x={id:d.id,...(d.data()||{})};if(norm(x.jenis||x.tipe||"")==="beli_pulsa")map.set(d.id,x);});
- }
- pulseRequests=[...map.values()];
-}
-
-async function loadBankRequests(){
- const map=new Map();
- for(const field of ["ownerUid","ownerId"]){
-  const s=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));if(!s)continue;
-  s.forEach(d=>{const x={id:d.id,...(d.data()||{})};if(norm(x.jenis||x.tipe||"")==="transfer_bank")map.set(d.id,x);});
- }
- bankRequests=[...map.values()];
-}
-
-async function loadTopupRequests(){
- const map=new Map();
- for(const field of ["ownerUid","ownerId"]){
-   if(!ownerUid)continue;
-   const snap=await safeQuery(query(collection(db,"saldoTopupRequests"),where(field,"==",ownerUid)));
-   if(!snap)continue;
-   snap.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}));
- }
- topupRequests=[...map.values()].sort((a,b)=>{
-   const ta=toDate(a.createdAt||a.requestedAt)?.getTime()||0;
-   const tb=toDate(b.createdAt||b.requestedAt)?.getTime()||0;
-   return tb-ta;
- });
-}
-
-async function load(){
- if(!ownerUid||loading)return;
-
- loading=true;
- ready=false;
- notice("Menghubungkan Firebase FIXZY...","ok");
-
- try{
-   await Promise.all([loadMembers(),loadStock(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests(),loadPulseRequests(),loadTopupRequests()]);
-
-   if(!members.length)members=fallbackMembersFromOrders();
-
-   isiDropdownMember();
-   ready=true;
-   render();
-   renderEmployeeBalances();
-   fillTransferEmployees();
-
-   notice(`Firebase FIXZY terhubung • ${members.length} member • ${orders.length} order approved.`,"ok");
- }catch(e){
-   console.error(e);
-   notice("Gagal memuat Data Tabungan Member: "+(e?.message||e),"err");
- }finally{
-   loading=false;
- }
-}
-
-window.muatUlang=async()=>{
- if(auth.currentUser){
-   try{
-     const s=await getDoc(doc(db,"users",auth.currentUser.uid));
-     if(s.exists()){
-       profile=s.data()||{};
-       const role=norm(profile.role||profile.profileRole);
-       
-   // Izin Akses FIXZY: dataTabunganMember.
-   const rawPerm=profile.permissions;
-   const perms=(rawPerm&&typeof rawPerm==="object"&&!Array.isArray(rawPerm))
-     ?rawPerm
-     :(Array.isArray(rawPerm)?Object.fromEntries(rawPerm.map(k=>[k,true])):{});
-   const walletPermission =
-     role==="owner" || role==="admin" ||
-     perms.dataTabunganMember===true ||
-     perms.semua===true || perms.all===true;
-
-   if(["employee","karyawan","kasir","kurir","reseller"].includes(role) && !walletPermission){
-     throw Error("Akses FIXZY Wallet belum diberikan. Aktifkan izin dataTabunganMember di Izin Akses.");
-   }
-
-ownerUid=(role==="owner"||profile.isOwner===true)
-         ?auth.currentUser.uid
-         :String(profile.ownerUid||profile.ownerId||"").trim();
-     }
-   }catch(e){}
- }
- if(ownerUid)await load();
-};
-
-window.resetFilter=()=>{
- if($("search"))$("search").value="";
- if($("statusFilter"))$("statusFilter").value="";
- render();
-};
-
-// Kontrol filter/admin lama sudah tidak dipakai pada UI FIXZY WALLET.
-// Jangan pasang listener ke fungsi/elemen lama karena dapat memicu ReferenceError.
-
-$("dark")?.addEventListener("click",()=>{
- document.body.classList.toggle("dark");
- setText("dark",document.body.classList.contains("dark")?"☀️":"🌙");
-});
-
-onAuthStateChanged(auth,async u=>{
- if(!u){
-   notice("Menunggu sesi login FIXZY...");
-   return;
- }
-
- try{
-   uid=u.uid;
-
-   const s=await getDoc(doc(db,"users",uid));
-   if(!s.exists())throw Error("Profil akun tidak ditemukan di users/"+uid);
-
-   profile=s.data()||{};
-   const role=norm(profile.role||profile.profileRole);
-
-   if(role==="superadmin"||role==="super_admin"||norm(u.email)==="servicehpmaja@gmail.com")
-     throw Error("SUPERADMIN tidak memiliki akses data bisnis Owner.");
-
-   ownerUid=(role==="owner"||profile.isOwner===true)?uid:ownerOf(profile);
-
-   if(!ownerUid)throw Error("ownerUid/ownerId pemilik akun tidak ditemukan.");
-
-   setText("email",u.email||profile.email||"-");
-
-   await load();
- }catch(e){
-   console.error(e);
-   notice("Gagal memuat Data Tabungan Member: "+(e?.message||e),"err");
- }
-});
+function openPulseForm(){document.querySelectorAll(".pulse-card").forEach(x=>x.remove());const sec=document.createElement("section");sec.className="section pulse-card";sec.innerHTML='<div class="section-title">📱 Beli Pulsa / Data</div><div class="bank-grid"><input id="pulsePhone" inputmode="numeric" placeholder="Nomor HP tujuan"><select id="pulseNominal"><option value="">Pilih nominal</option><option value="10000">Rp10.000</option><option value="15000">Rp15.000</option><option value="20000">Rp20.000</option><option value="25000">Rp25.000</option><option value="50000">Rp50.000</option><option value="100000">Rp100.000</option><option value="150000">Rp150.000</option><option value="200000">Rp200.000</option></select><input id="pulseNote" placeholder="Keterangan (opsional)"></div><button class="bank-submit" id="pulseSubmit">AJUKAN BELI PULSA</button><div class="bank-note">Pengajuan pulsa berstatus <b>Menunggu Approval Owner</b>. Saldo belum berkurang sebelum Owner menyetujui.</div>';$("bankSection").parentNode.insertBefore(sec,$("bankSection"));$("pulseSubmit").onclick=submitPulseRequest;sec.scrollIntoView({behavior:"smooth",block:"center"})}window.openPulseForm=openPulseForm;
+async function submitPulseRequest(){const me=currentEmployee(),w=currentWallet();if(!me)return alert("Akun karyawan tidak ditemukan.");const phone=String($("pulsePhone")?.value||"").replace(/\D/g,""),nominal=Math.max(0,num($("pulseNominal")?.value)),note=String($("pulseNote")?.value||"").trim();if(phone.length<8||nominal<=0)return alert("Nomor HP dan nominal pulsa wajib diisi.");if(nominal>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);const btn=$("pulseSubmit");if(btn){btn.disabled=true;btn.textContent="MENGIRIM..."}try{await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,jenis:"beli_pulsa",tipe:"beli_pulsa",status:"pending",employeeUid:uid,karyawanUid:uid,employeeName:employeeName(me),karyawanNama:employeeName(me),fromEmployeeUid:uid,fromEmployeeName:employeeName(me),toEmployeeUid:"PULSA_PENDING",toEmployeeName:"Pulsa / Data",nominal,nomorHp:phone,keterangan:note||`Beli pulsa ${phone}`,createdAt:serverTimestamp(),requestedAt:serverTimestamp(),createdByUid:uid});await loadPulseRequests();render();alert("Pengajuan beli pulsa dikirim. Menunggu persetujuan Owner.")}catch(e){console.error(e);alert("Pengajuan pulsa gagal: "+(e.message||e))}finally{if(btn){btn.disabled=false;btn.textContent="AJUKAN BELI PULSA"}}}window.submitPulseRequest=submitPulseRequest;function goProduct(){location.href="input-order-member.html"}window.goProduct=goProduct;
+async function submitBankTransfer(){const me=currentEmployee(),w=currentWallet();if(!me)return alert("Akun karyawan tidak ditemukan.");const bankName=String($("bankName")?.value||"").trim(),bankAccount=String($("bankAccount")?.value||"").trim(),accountName=String($("bankOwner")?.value||"").trim(),nominal=Math.max(0,num($("bankAmount")?.value)),note=String($("bankNote")?.value||"").trim();if(!bankName||!bankAccount||!accountName||nominal<=0)return alert("Lengkapi data bank dan nominal transfer.");if(nominal>w.saldo)return alert(`Saldo tidak cukup. Saldo tersedia ${rp(w.saldo)}.`);const btn=$("bankSubmit");if(btn){btn.disabled=true;btn.textContent="MENGIRIM..."}try{await addDoc(collection(db,"transferSaldoTabungan"),{ownerUid,jenis:"transfer_bank",tipe:"transfer_bank",status:"pending",employeeUid:uid,karyawanUid:uid,employeeName:employeeName(me),karyawanNama:employeeName(me),fromEmployeeUid:uid,fromEmployeeName:employeeName(me),toEmployeeUid:"BANK_PENDING",toEmployeeName:`${bankName} • ${bankAccount}`,bankName,bankAccount,accountName,nominal,keterangan:note||"Transfer antar bank",createdAt:serverTimestamp(),requestedAt:serverTimestamp(),createdByUid:uid});$("bankAmount").value="";$("bankNote").value="";await loadBankRequests();render();alert("Pengajuan transfer dikirim. Menunggu persetujuan Owner.")}catch(e){console.error(e);alert("Pengajuan gagal: "+(e.message||e))}finally{if(btn){btn.disabled=false;btn.textContent="AJUKAN TRANSFER"}}}window.submitBankTransfer=submitBankTransfer;
+async function loadPulseRequests(){const map=new Map();for(const field of ["ownerUid","ownerId"]){const s=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));if(!s)continue;s.forEach(d=>{const x={id:d.id,...(d.data()||{})};if(norm(x.jenis||x.tipe||"")==="beli_pulsa")map.set(d.id,x)})}pulseRequests=[...map.values()]}
+async function loadBankRequests(){const map=new Map();for(const field of ["ownerUid","ownerId"]){const s=await safeQuery(query(collection(db,"transferSaldoTabungan"),where(field,"==",ownerUid)));if(!s)continue;s.forEach(d=>{const x={id:d.id,...(d.data()||{})};if(norm(x.jenis||x.tipe||"")==="transfer_bank")map.set(d.id,x)})}bankRequests=[...map.values()]}
+async function loadTopupRequests(){const map=new Map();for(const field of ["ownerUid","ownerId"]){if(!ownerUid)continue;const snap=await safeQuery(query(collection(db,"saldoTopupRequests"),where(field,"==",ownerUid)));if(!snap)continue;snap.forEach(d=>map.set(d.id,{id:d.id,...(d.data()||{})}))}topupRequests=[...map.values()].sort((a,b)=>(toDate(b.createdAt||b.requestedAt)?.getTime()||0)-(toDate(a.createdAt||a.requestedAt)?.getTime()||0))}
+async function load(){if(!ownerUid||loading)return;loading=true;ready=false;notice("Menghubungkan Firebase FIXZY...","ok");try{await Promise.all([loadMembers(),loadStock(),loadOrders(),loadWithdrawals(),loadAllExpenses(),loadEmployees(),loadTransfers(),loadBankRequests(),loadPulseRequests(),loadTopupRequests()]);if(!members.length)members=fallbackMembersFromOrders();isiDropdownMember();ready=true;render();renderEmployeeBalances();fillTransferEmployees();notice(`Firebase FIXZY terhubung • ${members.length} member • ${orders.length} order approved.`,"ok")}catch(e){console.error(e);notice("Gagal memuat Data Tabungan Member: "+(e?.message||e),"err")}finally{loading=false}}
+window.muatUlang=async()=>{if(auth.currentUser){try{const s=await getDoc(doc(db,"users",auth.currentUser.uid));if(s.exists()){profile=s.data()||{};const role=norm(profile.role||profile.profileRole),rawPerm=profile.permissions,perms=rawPerm&&typeof rawPerm==="object"&&!Array.isArray(rawPerm)?rawPerm:(Array.isArray(rawPerm)?Object.fromEntries(rawPerm.map(k=>[k,true])):{}),walletPermission=role==="owner"||role==="admin"||perms.dataTabunganMember===true||perms.semua===true||perms.all===true;if(["employee","karyawan","kasir","kurir","reseller"].includes(role)&&!walletPermission)throw Error("Akses FIXZY Wallet belum diberikan. Aktifkan izin dataTabunganMember di Izin Akses.");ownerUid=role==="owner"||profile.isOwner===true?auth.currentUser.uid:String(profile.ownerUid||profile.ownerId||"").trim()}}catch(e){}}if(ownerUid)await load()};
+window.resetFilter=()=>{if($("search"))$("search").value="";if($("statusFilter"))$("statusFilter").value="";render()};
+$("dark")?.addEventListener("click",()=>{document.body.classList.toggle("dark");setText("dark",document.body.classList.contains("dark")?"☀️":"🌙")});
+onAuthStateChanged(auth,async u=>{if(!u){notice("Menunggu sesi login FIXZY...");return}try{uid=u.uid;const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw Error("Profil akun tidak ditemukan di users/"+uid);profile=s.data()||{};const role=norm(profile.role||profile.profileRole);if(role==="superadmin"||role==="super_admin"||norm(u.email)==="servicehpmaja@gmail.com")throw Error("SUPERADMIN tidak memiliki akses data bisnis Owner.");ownerUid=role==="owner"||profile.isOwner===true?uid:ownerOf(profile);if(!ownerUid)throw Error("ownerUid/ownerId pemilik akun tidak ditemukan.");setText("email",u.email||profile.email||"-");await load()}catch(e){console.error(e);notice("Gagal memuat Data Tabungan Member: "+(e?.message||e),"err")}})
 </script>
 </body>
 </html>
