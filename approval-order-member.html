@@ -626,24 +626,150 @@ function renderApprovedHistoryOrder(r){
    Bagian berikut memakai implementasi asli yang dikirim user. */
 
 window.returnOrderForRevision=async id=>{
- const r=approvedRows.find(x=>x.id===id);if(!r)return msg("Order approved tidak ditemukan.","err");
- if(!r.orderMemberId)return msg("Order ini tidak memiliki orderMemberId. Tidak dapat direvisi otomatis.","err");
+ const r=approvedRows.find(x=>x.id===id);
+ if(!r)return msg("Order approved tidak ditemukan.","err");
+
+ // r.id adalah ID DOKUMEN order_member.
+ const orderMemberId=String(r.id||r.orderMemberId||"").trim();
+ if(!orderMemberId)return msg("ID order_member tidak ditemukan.","err");
+
  if(!confirm(`Kembalikan order ${r.nomorNota||id} untuk revisi?\n\nOrder Member lama tidak dihapus.`))return;
+
  try{
+  msg("Mencari order penjualan asal...");
+
+  // Prioritaskan ID sumber yang memang disimpan saat approval.
+  let sourcePenjualanId=String(
+    r.sourcePenjualanId||
+    r.revisionSourcePenjualanId||
+    r.penjualanId||
+    r.sourceId||
+    ""
+  ).trim();
+
+  // Data lama mungkin belum mempunyai sourcePenjualanId.
+  // Cari dokumen penjualan berdasarkan orderMemberId.
+  if(!sourcePenjualanId){
+   const candidates=new Map();
+
+   for(const field of ["ownerUid","ownerId"]){
+    try{
+     const qs=await getDocs(
+      query(
+       collection(db,"penjualan"),
+       where(field,"==",ownerUid),
+       where("orderMemberId","==",orderMemberId)
+      )
+     );
+     qs.forEach(d=>candidates.set(d.id,{id:d.id,...d.data()}));
+    }catch(e){
+     console.warn("Pencarian penjualan asal",field,e?.message||e);
+    }
+   }
+
+   const found=[...candidates.values()]
+    .filter(x=>String(x.status||"").toLowerCase()==="approved")
+    .sort((a,b)=>{
+      const at=a.approvedAt?.toMillis?a.approvedAt.toMillis():new Date(a.approvedAt||a.updatedAt||0).getTime();
+      const bt=b.approvedAt?.toMillis?b.approvedAt.toMillis():new Date(b.approvedAt||b.updatedAt||0).getTime();
+      return bt-at;
+    })[0];
+
+   if(found)sourcePenjualanId=found.id;
+  }
+
+  if(!sourcePenjualanId){
+   return msg("Data penjualan asal tidak ditemukan. Revisi dibatalkan agar data tidak salah.","err");
+  }
+
   msg("Mengembalikan order untuk revisi...");
-  const ref=doc(db,"penjualan",id),orderRef=doc(db,"order_member",String(r.orderMemberId)),saldoRef=doc(db,"saldo_owner",ownerUid);
+
+  const ref=doc(db,"penjualan",sourcePenjualanId);
+  const orderRef=doc(db,"order_member",orderMemberId);
+  const saldoRef=doc(db,"saldo_owner",ownerUid);
+
   await runTransaction(db,async tx=>{
-   const ps=await tx.get(ref),os=await tx.get(orderRef),ss=await tx.get(saldoRef);
-   if(!ps.exists())throw Error("Data penjualan tidak ditemukan.");if(!os.exists())throw Error("Data order_member lama tidak ditemukan.");
-   const p=ps.data()||{},o=os.data()||{};if(String(p.ownerUid||p.ownerId||"")!==ownerUid)throw Error("Pesanan bukan milik Owner ini.");if(String(o.ownerUid||o.ownerId||"")!==ownerUid)throw Error("Order Member bukan milik Owner ini.");if(String(p.status||"").toLowerCase()!=="approved")throw Error("Order sudah bukan status approved.");
-   const revisionItems=Array.isArray(p.approvedItems)?p.approvedItems:(Array.isArray(p.items)?p.items:[]),oldUP=Number(o.totalUPPengelola||0)||0,oldKas=Number(o.kasBulanan||0)||0,saldoPatch={updatedAt:serverTimestamp()};
-   if(oldUP||oldKas){if(!ss.exists())throw Error("saldo_owner tidak ditemukan. Pembalikan saldo dibatalkan.");if(oldUP)saldoPatch.saldoPengelola=increment(-oldUP);if(oldKas)saldoPatch.saldoKas=increment(-oldKas)}
-   tx.update(ref,{status:"menunggu_approval",approvalStatus:"menunggu_approval",items:revisionItems,revisionRequired:true,revisionAt:serverTimestamp(),revisionBy:uid,revisionFromOrderMemberId:String(r.orderMemberId),updatedAt:serverTimestamp()});
-   tx.update(orderRef,{status:"revisi",revisionRequired:true,revisionAt:serverTimestamp(),revisionBy:uid,revisionSourcePenjualanId:id,revisionPreviousTotalUPPengelola:oldUP,revisionPreviousKasBulanan:oldKas,kasApprovalCycle:Math.max(1,Number(o.kasApprovalCycle??0)||0),totalUPPengelola:0,totalTabunganMember:0,kasBulanan:0,updatedAt:serverTimestamp()});
-   if(Object.keys(saldoPatch).length>1)tx.set(saldoRef,saldoPatch,{merge:true});
+   const ps=await tx.get(ref);
+   const os=await tx.get(orderRef);
+   const ss=await tx.get(saldoRef);
+
+   if(!ps.exists())throw Error("Data penjualan asal tidak ditemukan.");
+   if(!os.exists())throw Error("Data order_member tidak ditemukan.");
+
+   const p=ps.data()||{};
+   const o=os.data()||{};
+
+   if(String(p.ownerUid||p.ownerId||"")!==ownerUid)
+    throw Error("Pesanan bukan milik Owner ini.");
+
+   if(String(o.ownerUid||o.ownerId||"")!==ownerUid)
+    throw Error("Order Member bukan milik Owner ini.");
+
+   if(String(p.status||"").toLowerCase()!=="approved")
+    throw Error(`Status penjualan saat ini "${p.status||"-"}", bukan approved.`);
+
+   const revisionItems=
+    Array.isArray(p.approvedItems)&&p.approvedItems.length
+      ?p.approvedItems
+      :(Array.isArray(p.items)?p.items:[]);
+
+   const oldUP=Number(o.totalUPPengelola||o.totalUpPengelola||0)||0;
+   const oldKas=Number(o.kasBulanan||o.uangKasBulanan||0)||0;
+
+   const saldoPatch={updatedAt:serverTimestamp()};
+
+   if(oldUP||oldKas){
+    if(!ss.exists())
+     throw Error("saldo_owner tidak ditemukan. Pembalikan saldo dibatalkan.");
+
+    if(oldUP)saldoPatch.saldoPengelola=increment(-oldUP);
+    if(oldKas)saldoPatch.saldoKas=increment(-oldKas);
+   }
+
+   // Kembalikan PENJUALAN asal ke antrean approval.
+   tx.update(ref,{
+    status:"menunggu_approval",
+    approvalStatus:"menunggu_approval",
+    items:revisionItems,
+    approvedItems:revisionItems,
+    revisionRequired:true,
+    revisionAt:serverTimestamp(),
+    revisionBy:uid,
+    revisionFromOrderMemberId:orderMemberId,
+    updatedAt:serverTimestamp()
+   });
+
+   // Tandai order_member lama sebagai revisi.
+   tx.update(orderRef,{
+    status:"revisi",
+    revisionRequired:true,
+    revisionAt:serverTimestamp(),
+    revisionBy:uid,
+    revisionSourcePenjualanId:sourcePenjualanId,
+    revisionPreviousTotalUPPengelola:oldUP,
+    revisionPreviousKasBulanan:oldKas,
+    kasApprovalCycle:Math.max(1,Number(o.kasApprovalCycle??0)||0),
+    totalUPPengelola:0,
+    totalUpPengelola:0,
+    totalTabunganMember:0,
+    totalTabungan:0,
+    totalTabunganOrder:0,
+    kasBulanan:0,
+    uangKasBulanan:0,
+    updatedAt:serverTimestamp()
+   });
+
+   if(Object.keys(saldoPatch).length>1)
+    tx.set(saldoRef,saldoPatch,{merge:true});
   });
-  msg("Order dikembalikan ke Menunggu Approval untuk direvisi.","ok");await load();
- }catch(e){console.error(e);msg("Gagal mengembalikan order: "+(e?.message||e),"err")}
+
+  msg("Order berhasil dikembalikan ke Menunggu Approval untuk direvisi.","ok");
+  await load();
+
+ }catch(e){
+  console.error("returnOrderForRevision:",e);
+  msg("Gagal mengembalikan order untuk revisi: "+(e?.message||e),"err");
+ }
 };
 window.sendApprovedHistoryWA=id=>{const r=approvedRows.find(x=>x.id===id);if(!r)return;sendWAData(r,"approved")};
 
