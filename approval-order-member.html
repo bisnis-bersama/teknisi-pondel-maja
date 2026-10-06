@@ -1144,36 +1144,117 @@ window.rejectTopup=async id=>{
 async function loadCicilanRequests(){
  cicilanRequests=[];
  if(!ownerUid)return;
+
  const map=new Map();
+
  for(const field of ["ownerUid","ownerId"]){
   try{
-   const snap=await getDocs(query(collection(db,"tabungan_member"),where(field,"==",ownerUid)));
+   const snap=await getDocs(
+    query(
+     collection(db,"tabungan_member"),
+     where(field,"==",ownerUid)
+    )
+   );
+
    snap.forEach(d=>{
-    const x={id:d.id,...d.data()},jenis=String(x.jenis??x.tipe??"").trim().toLowerCase(),own=String(x.ownerUid||x.ownerId||"").trim();
-    if(jenis==="cicilan_tagihan"&&own===ownerUid)map.set(d.id,x);
+    const x={id:d.id,...d.data()};
+    const jenis=String(x.jenis??x.tipe??"").trim().toLowerCase();
+    const own=String(x.ownerUid||x.ownerId||"").trim();
+
+    if(jenis==="cicilan_tagihan"&&own===ownerUid){
+     map.set(d.id,x);
+    }
    });
-  }catch(e){console.warn("Load cicilan requests "+field,e?.message||e)}
+
+  }catch(e){
+   console.warn("Load cicilan requests "+field,e?.message||e);
+  }
  }
+
  const all=[...map.values()];
+
  for(const r of all){
+
+  /*
+   * PENTING:
+   * UID pengaju cicilan berasal dari requestedByUid.
+   * UID ini adalah UID akun karyawan yang mengirim request.
+   */
+  const requestedByUid=String(r.requestedByUid||"").trim();
+
+  if(requestedByUid){
+   r.employeeUid=r.employeeUid||requestedByUid;
+   r.karyawanUid=r.karyawanUid||requestedByUid;
+  }
+
+  /*
+   * Tetap pertahankan pembacaan data order_member
+   * sebagai fallback untuk data lama.
+   */
   try{
    const omid=String(r.orderMemberId||"").trim();
+
    if(!omid)continue;
-   const s=await getDoc(doc(db,"order_member",omid));
+
+   const s=await getDoc(
+    doc(db,"order_member",omid)
+   );
+
    if(s.exists()){
     const o=s.data()||{};
-    r.karyawanUid=r.karyawanUid||r.employeeUid||o.employeeUid||o.approvalEmployeeUid||"";
-    r.karyawanNama=r.karyawanNama||r.employeeName||o.employeeName||o.approvalEmployeeName||"";
+
+    r.karyawanUid=
+     r.karyawanUid||
+     r.employeeUid||
+     o.employeeUid||
+     o.approvalEmployeeUid||
+     "";
+
+    r.employeeUid=
+     r.employeeUid||
+     r.karyawanUid||
+     o.employeeUid||
+     o.approvalEmployeeUid||
+     "";
+
+    r.karyawanNama=
+     r.karyawanNama||
+     r.employeeName||
+     o.employeeName||
+     o.approvalEmployeeName||
+     "";
+
+    r.employeeName=
+     r.employeeName||
+     r.karyawanNama||
+     o.employeeName||
+     o.approvalEmployeeName||
+     "";
+
     r.karyawan=r.karyawan||o.karyawan||null;
     r.employee=r.employee||o.employee||null;
    }
-  }catch(e){console.warn("Load employee cicilan "+r.id,e?.message||e)}
+
+  }catch(e){
+   console.warn(
+    "Load employee cicilan "+r.id,
+    e?.message||e
+   );
+  }
  }
+
  cicilanRequests=all.sort((a,b)=>{
-  const av=a.requestedAt?.toMillis?a.requestedAt.toMillis():new Date(a.requestedAt||a.createdAt||0).getTime();
-  const bv=b.requestedAt?.toMillis?b.requestedAt.toMillis():new Date(b.requestedAt||b.createdAt||0).getTime();
+  const av=a.requestedAt?.toMillis
+   ?a.requestedAt.toMillis()
+   :new Date(a.requestedAt||a.createdAt||0).getTime();
+
+  const bv=b.requestedAt?.toMillis
+   ?b.requestedAt.toMillis()
+   :new Date(b.requestedAt||b.createdAt||0).getTime();
+
   return bv-av;
  });
+
  renderCicilanRequests();
  refreshEmployeePendingIndicators();
 }
