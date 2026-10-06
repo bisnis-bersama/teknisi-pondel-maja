@@ -138,7 +138,7 @@ body.dark td{border-color:#334155}
     <div class="jt-empty">Memuat...</div>
   </div>
 </div>
-<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Nota</th><th>Member</th><th>Jenis</th><th>Status</th><th>Jatuh Tempo</th><th class="num">Qty Order</th><th class="num">Nilai Barang</th><th class="num">UP Pengelola</th><th class="num">Tabungan Member</th><th class="num">Kas Bulanan</th><th class="num">Pembayaran</th><th class="num">Sisa Tagihan</th>${isOwnerPage?"<th>WA</th>":""}</tr></thead><tbody id="orderTable"><tr><td colspan="${isOwnerPage?13:12}" class="empty">Memuat...</td></tr></tbody></table></div></div></main><script type="module">
+<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Nota</th><th>Member</th><th>Jenis</th><th>Status</th><th>Jatuh Tempo</th><th class="num">Qty Order</th><th class="num">Nilai Barang</th><th class="num">UP Pengelola</th><th class="num">Tabungan Member</th><th class="num">Kas Bulanan</th><th class="num">Pembayaran</th><th class="num">Sisa Tagihan</th><th id="waHead" style="display:none">WA</th></tr></thead><tbody id="orderTable"><tr><td colspan="12" class="empty">Memuat...</td></tr></tbody></table></div></div></main><script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import{getFirestore,collection,query,where,getDocs,getDoc,doc}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
@@ -557,25 +557,9 @@ function normalizeWaNumber(raw){
  return n;
 }
 function waButton(r,m,calc,sisa){
- const msg=[
-  `Halo Kak ${m?.nama||r?.memberName||"Member"} 👋`,
-  ``,
-  `Berikut informasi tagihan Kakak:`,
-  ``,
-  ` Nota: ${r?.nomorNota||r?.id||"-"}`,
-  `Status: ${sisa>0?"Tagihan":"Lunas"}`,
-  `Total Barang: ${rp(calc?.nilaiBarang||0)}`,
-  `Pembayaran: ${rp(calc?.paid||0)}`,
-  `Sisa Tagihan: ${rp(sisa||0)}`,
-  `📅 Jatuh Tempo: ${r?.jatuhTempo||"-"}`,
-  ``,
-  `Mohon untuk segera melakukan pelunasan sebelum tanggal jatuh tempo.`,
-  ``,
-  `Terima kasih atas perhatian dan kerja samanya. 🙏`,
-  ``,
-  `Salam,`,
-  `Komunitas Teknisi Ponsel Maja`
-].join("\n");
+ const raw=m?.wa||m?.noWa||m?.nomorWa||m?.phone||m?.telepon||r?.wa||r?.noWa||r?.nomorWa||r?.phone||r?.telepon||"";
+ const n=normalizeWaNumber(raw); if(!n||n.length<10)return "-";
+ const msg=[`Halo Kak ${m?.nama||r?.memberName||"Member"} 👋`,"",`Berikut informasi tagihan Kakak:`,"",`🧾 Nota: ${r?.nomorNota||r?.id||"-"}`,`📌 Status: ${sisa>0?"Tagihan":"Lunas"}`,`💰 Total Barang: ${rp(calc?.nilaiBarang||0)}`,`💵 Pembayaran: ${rp(calc?.paid||0)}`,`📋 Sisa Tagihan: ${rp(sisa||0)}`,`📅 Jatuh Tempo: ${r?.jatuhTempo||"-"}`,"",`Mohon untuk segera melakukan pelunasan sebelum tanggal jatuh tempo.`,"",`Terima kasih atas perhatian dan kerja samanya. 🙏`,"",`Salam,`,`Komunitas Teknisi Ponsel Maja`].join("\n");
  return `<a class="wa-btn" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WA</a>`;
 }
 
@@ -723,7 +707,7 @@ function renderRekap(){
  $("totalKas").textContent=rp(kas);
  $("sisaTotal").textContent=rp(sisaTotal);
 
- $("orderTable").innerHTML=rows||'<tr><td colspan="12" class="empty">Belum ada order member pada periode ini.</td></tr>';
+ $("orderTable").innerHTML=rows||`<tr><td colspan="${isOwnerPage?13:12}" class="empty">Belum ada order member pada periode ini.</td></tr>`;
 
  $("jatuhTempoSummary").innerHTML=panelData.length
    ? panelData.map(g=>{
@@ -778,6 +762,8 @@ async function bacaSesiIndex(){
     profile=s.profile||{};
     const role=String(s.role||profile.role||"").trim().toLowerCase();
     isOwnerPage=(role==="owner");
+    const waHead=$("waHead");
+    if(waHead)waHead.style.display=isOwnerPage?"":"none";
 
     if(!uid)return false;
 
