@@ -100,6 +100,7 @@ body.dark td{border-color:#334155}
   .acts .btn{padding:8px}
   .card{padding:12px}
 }
+.wa-btn{display:inline-block;padding:6px 9px;border-radius:7px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;font-size:12px}.wa-btn:hover{filter:brightness(.95)}
 </style></head><body>
 <header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="hi"><h1>Rekap Order Member</h1><span id="email" class="email">-</span></div><div class="acts"><button class="btn refresh" type="button" onclick="location.reload()">↻ Refresh</button><button id="dark" class="btn dark" type="button">🌙</button></div></div></header>
 <main><div id="notice" class="notice">Menunggu akun...</div>
@@ -137,7 +138,7 @@ body.dark td{border-color:#334155}
     <div class="jt-empty">Memuat...</div>
   </div>
 </div>
-<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Nota</th><th>Member</th><th>Jenis</th><th>Status</th><th>Jatuh Tempo</th><th class="num">Qty Order</th><th class="num">Nilai Barang</th><th class="num">UP Pengelola</th><th class="num">Tabungan Member</th><th class="num">Kas Bulanan</th><th class="num">Pembayaran</th><th class="num">Sisa Tagihan</th></tr></thead><tbody id="orderTable"><tr><td colspan="12" class="empty">Memuat...</td></tr></tbody></table></div></div></main><script type="module">
+<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Nota</th><th>Member</th><th>Jenis</th><th>Status</th><th>Jatuh Tempo</th><th class="num">Qty Order</th><th class="num">Nilai Barang</th><th class="num">UP Pengelola</th><th class="num">Tabungan Member</th><th class="num">Kas Bulanan</th><th class="num">Pembayaran</th><th class="num">Sisa Tagihan</th>${isOwnerPage?"<th>WA</th>":""}</tr></thead><tbody id="orderTable"><tr><td colspan="${isOwnerPage?13:12}" class="empty">Memuat...</td></tr></tbody></table></div></div></main><script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import{getFirestore,collection,query,where,getDocs,getDoc,doc}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
@@ -156,7 +157,7 @@ const rp=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num=v=>Number(v)||0;
 function notice(t,c=""){$("notice").textContent=t;$("notice").className="notice "+c;}
-let uid="",ownerUid="",profile={},orders=[],stockProducts=[],stockByKey=new Map(),ready=false;
+let uid="",ownerUid="",profile={},orders=[],stockProducts=[],stockByKey=new Map(),ready=false,isOwnerPage=false;
 
 function ownerOf(d){
  const role=String(d.role||"").toLowerCase();
@@ -550,6 +551,18 @@ function kasMemberDueKey(r){
  return memberId+"|"+dueKey;
 }
 
+function normalizeWaNumber(raw){
+ let n=String(raw||"").replace(/\D/g,"");
+ if(n.startsWith("0")) n="62"+n.slice(1); else if(n.startsWith("8")) n="62"+n;
+ return n;
+}
+function waButton(r,m,calc,sisa){
+ const raw=m?.wa||m?.noWa||m?.nomorWa||m?.phone||m?.telepon||r?.wa||r?.noWa||r?.nomorWa||r?.phone||r?.telepon||"";
+ const n=normalizeWaNumber(raw); if(!n||n.length<10)return "-";
+ const msg=[`Halo ${m?.nama||r?.memberName||"Member"}`,`Nota: ${r?.nomorNota||r?.id||"-"}`,`Status: ${r?.status||"-"}`,`Total barang: ${rp(calc?.nilaiBarang||0)}`,`Pembayaran: ${rp(calc?.paid||0)}`,`Sisa tagihan: ${rp(sisa||0)}`,r?.jatuhTempo?`Jatuh tempo: ${r.jatuhTempo}`:""].filter(Boolean).join("\n");
+ return `<a class="wa-btn" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WA</a>`;
+}
+
 function renderRekap(){
  const search=$("search").value.trim().toLowerCase();
  const data=orders.filter(inPeriod).filter(r=>{
@@ -619,6 +632,7 @@ function renderRekap(){
     <td class="num">${rp(v.kasRow)}</td>
     <td class="num">${rp(v.calc.paid)}</td>
     <td class="num">${rp(v.sisa)}</td>
+    ${isOwnerPage?`<td>${waButton(v.r,m,v.calc,v.sisa)}</td>`:""}
   </tr>`;
  }).join("");
 
@@ -747,6 +761,7 @@ async function bacaSesiIndex(){
     uid=String(s.uid||"").trim();
     profile=s.profile||{};
     const role=String(s.role||profile.role||"").trim().toLowerCase();
+    isOwnerPage=(role==="owner");
 
     if(!uid)return false;
 
