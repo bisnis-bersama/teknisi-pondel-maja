@@ -557,9 +557,25 @@ function normalizeWaNumber(raw){
  return n;
 }
 function waButton(r,m,calc,sisa){
- const raw=m?.wa||m?.noWa||m?.nomorWa||m?.phone||m?.telepon||r?.wa||r?.noWa||r?.nomorWa||r?.phone||r?.telepon||"";
- const n=normalizeWaNumber(raw); if(!n||n.length<10)return "-";
- const msg=[`Halo ${m?.nama||r?.memberName||"Member"}`,`Nota: ${r?.nomorNota||r?.id||"-"}`,`Status: ${r?.status||"-"}`,`Total barang: ${rp(calc?.nilaiBarang||0)}`,`Pembayaran: ${rp(calc?.paid||0)}`,`Sisa tagihan: ${rp(sisa||0)}`,r?.jatuhTempo?`Jatuh tempo: ${r.jatuhTempo}`:""].filter(Boolean).join("\n");
+ const msg=[
+  `Halo Kak ${m?.nama||r?.memberName||"Member"} 👋`,
+  ``,
+  `Berikut informasi tagihan Kakak:`,
+  ``,
+  ` Nota: ${r?.nomorNota||r?.id||"-"}`,
+  `Status: ${sisa>0?"Tagihan":"Lunas"}`,
+  `Total Barang: ${rp(calc?.nilaiBarang||0)}`,
+  `Pembayaran: ${rp(calc?.paid||0)}`,
+  `Sisa Tagihan: ${rp(sisa||0)}`,
+  `📅 Jatuh Tempo: ${r?.jatuhTempo||"-"}`,
+  ``,
+  `Mohon untuk segera melakukan pelunasan sebelum tanggal jatuh tempo.`,
+  ``,
+  `Terima kasih atas perhatian dan kerja samanya. 🙏`,
+  ``,
+  `Salam,`,
+  `Komunitas Teknisi Ponsel Maja`
+].join("\n");
  return `<a class="wa-btn" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WA</a>`;
 }
 
