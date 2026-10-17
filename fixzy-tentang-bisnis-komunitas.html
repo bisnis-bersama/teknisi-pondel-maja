@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0b0b">
+<title>FIXZY | Tentang Bisnis Komunitas</title>
+
+<style>
+:root{
+  --y:#FFC107;
+  --orange:#ff9800;
+  --bg:#0b0b0b;
+  --card:#181818;
+  --card2:#222;
+  --line:#303030;
+  --text:#fff;
+  --muted:#d5d5d5;
+  --max:1100px;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  background:linear-gradient(#111,#090909);
+  color:var(--text);
+  line-height:1.6;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+header{
+  padding:20px 15px 25px;
+  text-align:center;
+  border-bottom:2px solid var(--y);
+  background:radial-gradient(circle at center,#171717 0%,#0b0b0b 70%);
+}
+
+/* SLIDER SPONSOR */
+
+.promo-stage{
+  width:min(1100px,96vw);
+  height:205px;
+  margin:auto;
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  background:#0d0e10;
+  box-shadow:0 0 30px rgba(255,193,7,.20);
+}
+
+.promo-marquee{
+  position:absolute;
+  left:0;
+  top:8px;
+  height:189px;
+  display:flex;
+  width:max-content;
+  animation:fixzyPromoMarquee 35s linear infinite;
+  will-change:transform;
+}
+
+.promo-group{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:0 0 auto;
+  width:max-content;
+}
+
+.promo-grid{
+  flex:0 0 175px;
+  width:175px;
+  height:180px;
+  border-radius:18px;
+  overflow:hidden;
+  background:#181818;
+  border:1px solid #333;
+  box-shadow:0 4px 12px rgba(0,0,0,.35);
+}
+
+.promo-grid img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+@keyframes fixzyPromoMarquee{
+  from{
+    transform:translate3d(0,0,0);
+  }
+  to{
+    transform:translate3d(-50%,0,0);
+  }
+}
+
+/* =========================
+   GAMBAR FIXZY DIPERBESAR
+========================= */
+
+.fixzy-title{
+  width:100%;
+  margin:15px auto 0;
+  text-align:center;
+  line-height:0;
+}
+
+.fixzy-title img{
+  display:block;
+  width:min(750px,96vw);
+  max-width:100%;
+  height:auto;
+  max-height:none;
+  object-fit:contain;
+  margin:0 auto;
+  filter:drop-shadow(0 4px 10px rgba(255,193,7,.22));
+}
+
+/* Tidak menggunakan tagline,
+   deskripsi header, atau welcome badge */
+
+/* =========================
+   KONTROL HALAMAN
+========================= */
+
+.page-controls{
+  position:fixed;
+  top:12px;
+  right:12px;
+  z-index:9999;
+  display:flex;
+  gap:8px;
+}
+
+.page-control-btn{
+  border:1px solid #3b3210;
+  background:#1d1d1d;
+  color:var(--y);
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:bold;
+  font-size:14px;
+  cursor:pointer;
+  box-shadow:0 5px 15px rgba(0,0,0,.35);
+  transition:.2s;
+}
+
+.page-control-btn:hover{
+  background:var(--y);
+  color:#111;
+}
+
+.page-control-btn.close{
+  color:#fff;
+  border-color:#444;
+}
+
+.page-control-btn.close:hover{
+  background:#d32f2f;
+  color:#fff;
+}
+
+/* =========================
+   KONTEN UTAMA
+========================= */
+
+.wrap{
+  max-width:var(--max);
+  margin:auto;
+  padding:25px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:25px;
+  margin-bottom:22px;
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
+
+.card h2{
+  font-size:30px;
+  color:var(--y);
+  margin-bottom:13px;
+}
+
+.card p{
+  color:#eee;
+  font-size:16px;
+}
+
+.welcome{
+  background:linear-gradient(135deg,#1d1d1d,#111);
+  border:1px solid #4a3c0a;
+}
+
+.welcome p{
+  font-size:17px;
+  color:#f1f1f1;
+}
+
+.highlight{
+  margin-top:16px;
+  padding:15px 17px;
+  border-left:4px solid var(--y);
+  background:#222;
+  border-radius:12px;
+  color:#fff;
+  font-weight:700;
+}
+
+.signature{
+  margin-top:15px;
+  color:var(--y);
+  font-weight:900;
+}
+
+/* GRID FITUR */
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+.info{
+  background:var(--card2);
+  border:1px solid #333;
+  border-radius:16px;
+  padding:17px;
+}
+
+.info .icon{
+  font-size:27px;
+}
+
+.info h3{
+  margin:6px 0 5px;
+  color:var(--y);
+  font-size:18px;
+}
+
+.info p{
+  font-size:13px;
+  color:#ccc;
+}
+
+/* DETAIL FITUR */
+
+details{
+  background:#222;
+  border-radius:15px;
+  margin:12px 0;
+  border:1px solid #2f2f2f;
+}
+
+summary{
+  cursor:pointer;
+  padding:16px;
+  font-size:20px;
+  font-weight:bold;
+  color:var(--y);
+  list-style:none;
+}
+
+summary::-webkit-details-marker{
+  display:none;
+}
+
+.content{
+  padding:0 18px 18px;
+}
+
+.content li{
+  padding:9px 0;
+  border-bottom:1px solid #333;
+  color:#eee;
+}
+
+.content li:last-child{
+  border-bottom:0;
+}
+
+/* LANGKAH PENGGUNAAN */
+
+.steps{
+  counter-reset:step;
+  list-style:none;
+}
+
+.steps li{
+  position:relative;
+  margin:9px 0;
+  padding:13px 15px 13px 48px;
+  background:#222;
+  border-radius:12px;
+  color:#eee;
+}
+
+.steps li:before{
+  counter-increment:step;
+  content:counter(step);
+  position:absolute;
+  left:12px;
+  top:10px;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:var(--y);
+  color:#111;
+  font-weight:900;
+}
+
+/* BAGIAN PENUTUP */
+
+.closing{
+  text-align:center;
+  background:linear-gradient(135deg,#171717,#0d0d0d);
+}
+
+.closing h2{
+  font-size:28px;
+}
+
+.closing p{
+  max-width:780px;
+  margin:auto;
+  color:#ddd;
+}
+
+.slogan{
+  margin-top:15px;
+  display:inline-block;
+  padding:10px 16px;
+  background:linear-gradient(90deg,var(--y),var(--orange));
+  color:#111;
+  border-radius:13px;
+  font-weight:900;
+}
+
+footer{
+  text-align:center;
+  padding:25px;
+  color:#888;
+}
+
+/* =========================
+   RESPONSIVE TABLET
+========================= */
+
+@media(max-width:992px){
+
+  .wrap{
+    padding:20px;
+  }
+
+  .promo-stage{
+    height:180px;
+  }
+
+  .promo-marquee{
+    height:164px;
+  }
+
+  .promo-grid{
+    flex-basis:145px;
+    width:145px;
+    height:160px;
+  }
+
+  .card h2{
+    font-size:27px;
+  }
+
+  .fixzy-title img{
+    width:min(750px,96vw);
+  }
+}
+
+/* =========================
+   RESPONSIVE HP
+========================= */
+
+@media(max-width:768px){
+
+  header{
+    padding:15px 8px 20px;
+  }
+
+  .promo-stage{
+    height:150px;
+    border-radius:18px;
+  }
+
+  .promo-marquee{
+    height:134px;
+  }
+
+  .promo-grid{
+    flex-basis:112px;
+    width:112px;
+    height:130px;
+  }
+
+  .fixzy-title{
+    margin-top:12px;
+  }
+
+  .fixzy-title img{
+    width:96vw;
+    max-width:750px;
+  }
+
+  .wrap{
+    padding:15px;
+  }
+
+  .card{
+    padding:18px;
+    border-radius:18px;
+  }
+
+  .card h2{
+    font-size:23px;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .welcome p{
+    font-size:15px;
+  }
+
+  .page-controls{
+    top:8px;
+    right:8px;
+  }
+
+  .page-control-btn{
+    padding:8px 10px;
+    font-size:13px;
+    border-radius:10px;
+  }
+}
+
+/* =========================
+   RESPONSIVE HP KECIL
+========================= */
+
+@media(max-width:420px){
+
+  .promo-stage{
+    height:130px;
+  }
+
+  .promo-marquee{
+    height:114px;
+  }
+
+  .promo-grid{
+    flex-basis:95px;
+    width:95px;
+    height:110px;
+  }
+
+  .fixzy-title img{
+    width:96vw;
+  }
+
+  .card h2{
+    font-size:21px;
+  }
+
+  .card p{
+    font-size:14px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page-controls" aria-label="Kontrol halaman">
+  <button
+    class="page-control-btn"
+    type="button"
+    onclick="location.reload()"
+    title="Refresh halaman"
+    aria-label="Refresh halaman"
+  >🔄</button>
+</div>
+
+<header>
+
+  <!-- SLIDER SPONSOR: DIPERTAHANKAN -->
+  <div class="promo-stage" aria-label="Promo sponsor berjalan">
+    <div class="promo-marquee">
+
+      <div class="promo-group">
+        <div class="promo-grid">
+          <img src="iklan1.png" alt="Sponsor 1">
+        </div>
+
+        <div class="promo-grid">
+          <img src="iklan2.png" alt="Sponsor 2">
+        </div>
+
+        <div class="promo-grid">
+          <img src="sponsor3.png" alt="Sponsor 3">
+        </div>
+
+        <div class="promo-grid">
+          <img src="iklan4.png" alt="Sponsor 4">
+        </div>
+
+        <div class="promo-grid">
+          <img src="iklan5.png" alt="Sponsor 5">
+        </div>
+      </div>
+
+      <!-- Duplikat untuk animasi berulang -->
+      <div class="promo-group" aria-hidden="true">
+
+        <div class="promo-grid">
+          <img src="iklan1.png" alt="">
+        </div>
+
+        <div class="promo-grid">
+          <img src="iklan2.png" alt="">
+        </div>
+
+        <div class="promo-grid">
+          <img src="sponsor3.png" alt="">
+        </div>
+
+        <div class="promo-grid">
+          <img src="iklan4.png" alt="">
+        </div>
+
+        <div class="promo-grid">
+          <img src="iklan5.png" alt="">
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GAMBAR FIXZY DIPERBESAR -->
+  <!-- TAGLINE, DESKRIPSI, DAN LABEL SELAMAT DATANG DIHAPUS -->
+  <div class="fixzy-title">
+    <img
+      src="./fixzy-business.png"
+      alt="FIXZY BUSINESS"
+    >
+  </div>
+
+</header>
+
+<div class="wrap">
+
+  <!-- SAMBUTAN BISNIS KOMUNITAS -->
+  <section class="card welcome">
+    <h2>🤝 Selamat Datang di Bisnis Komunitas FIXZY</h2>
+    <p>
+      Bisnis Komunitas FIXZY adalah gagasan untuk membangun ekosistem usaha yang
+      saling terhubung, saling mendukung, dan tumbuh bersama. Pelaku usaha tidak
+      harus berjalan sendiri; melalui komunitas, anggota dapat berbagi pengalaman,
+      memperluas relasi, serta membuka peluang kerja sama.
+    </p>
+    <div class="highlight">
+      <b>Berjejaring • Berkolaborasi • Bertumbuh Bersama.</b><br>
+      Bisnis komunitas berfokus pada kekuatan hubungan antaranggota, kepercayaan,
+      pertukaran informasi, dan peluang yang memberi manfaat bagi usaha bersama.
+    </div>
+    <div class="signature">
+      Mari bangun komunitas usaha yang aktif, saling menguatkan, dan berkelanjutan. 🚀
+    </div>
+  </section>
+
+  <!-- TENTANG BISNIS KOMUNITAS -->
+  <section class="card">
+    <h2>📖 Apa Itu Bisnis Komunitas?</h2>
+    <p>
+      Bisnis komunitas adalah pendekatan pengembangan usaha yang melibatkan
+      sekelompok pelaku usaha dalam jaringan kerja sama. Anggota dapat saling
+      mengenalkan produk atau layanan, berbagi pengetahuan, bertukar informasi
+      kebutuhan pasar, dan menjajaki kolaborasi sesuai kesepakatan bersama.
+      Keikutsertaan dalam komunitas bukan jaminan keuntungan; hasilnya bergantung
+      pada aktivitas, kualitas layanan, kebutuhan pasar, dan kerja sama yang nyata.
+    </p>
+  </section>
+
+  <!-- MANFAAT BISNIS KOMUNITAS -->
+  <section class="card">
+    <h2>🎯 Manfaat Bisnis Komunitas</h2>
+    <div class="grid">
+      <div class="info">
+        <div class="icon">🤝</div>
+        <h3>Memperluas Relasi</h3>
+        <p>Membangun hubungan dengan sesama pelaku usaha, calon mitra, pemasok, dan pelanggan.</p>
+      </div>
+      <div class="info">
+        <div class="icon">🔄</div>
+        <h3>Peluang Kolaborasi</h3>
+        <p>Menjajaki promosi bersama, rujukan pelanggan, atau kegiatan usaha yang disepakati.</p>
+      </div>
+      <div class="info">
+        <div class="icon">📚</div>
+        <h3>Berbagi Pengetahuan</h3>
+        <p>Saling bertukar pengalaman, informasi pasar, dan praktik pengelolaan usaha.</p>
+      </div>
+      <div class="info">
+        <div class="icon">📣</div>
+        <h3>Mengenalkan Produk</h3>
+        <p>Memperkenalkan produk dan layanan anggota melalui jaringan komunitas secara transparan.</p>
+      </div>
+      <div class="info">
+        <div class="icon">🧩</div>
+        <h3>Saling Mendukung</h3>
+        <p>Menghubungkan anggota yang memiliki kebutuhan dengan anggota lain yang mampu membantu.</p>
+      </div>
+      <div class="info">
+        <div class="icon">📈</div>
+        <h3>Bertumbuh Bersama</h3>
+        <p>Mendorong peningkatan kualitas layanan, profesionalisme, dan keberlanjutan usaha.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINSIP KOMUNITAS -->
+  <section class="card">
+    <h2>🌱 Prinsip Bisnis Komunitas</h2>
+    <p>
+      Komunitas yang sehat dibangun melalui kepercayaan, komunikasi yang terbuka,
+      aturan yang jelas, dan manfaat yang dapat dipahami semua anggota. Setiap
+      kerja sama perlu memiliki tujuan, pembagian tanggung jawab, serta ketentuan
+      yang disepakati sejak awal.
+    </p>
+    <div class="highlight">
+      Utamakan manfaat yang nyata, informasi yang jujur, dan keputusan yang
+      transparan. Hindari janji keuntungan pasti atau klaim hasil yang tidak dapat dibuktikan.
+    </div>
+  </section>
+
+  <!-- KEGIATAN KOMUNITAS -->
+  <section class="card">
+    <h2>⚙️ Kegiatan yang Bisa Dilakukan</h2>
+    <details open>
+      <summary>🗣️ Diskusi & Berbagi Pengalaman</summary>
+      <div class="content">
+        <ul>
+          <li>Diskusi tantangan dan peluang usaha</li>
+          <li>Berbagi pengetahuan serta pengalaman praktis</li>
+          <li>Saling memberi masukan untuk meningkatkan layanan</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>📦 Promosi & Pengenalan Produk</summary>
+      <div class="content">
+        <ul>
+          <li>Mengenalkan produk atau layanan anggota</li>
+          <li>Membuat kegiatan promosi bersama sesuai kesepakatan</li>
+          <li>Menyampaikan harga, syarat, dan informasi produk secara jelas</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>🔗 Kemitraan & Kerja Sama</summary>
+      <div class="content">
+        <ul>
+          <li>Menghubungkan kebutuhan usaha dengan mitra yang relevan</li>
+          <li>Menyusun kesepakatan kerja sama secara tertulis bila diperlukan</li>
+          <li>Melakukan evaluasi terhadap hasil kerja sama</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>🛡️ Tata Kelola yang Terbuka</summary>
+      <div class="content">
+        <ul>
+          <li>Menjelaskan aturan dan tanggung jawab anggota</li>
+          <li>Menjaga data dan informasi anggota dengan baik</li>
+          <li>Menyampaikan biaya atau kewajiban secara transparan jika ada</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- LANGKAH BERGABUNG DAN BERPARTISIPASI -->
+  <section class="card">
+    <h2>📱 Cara Berpartisipasi</h2>
+    <ol class="steps">
+      <li>Pahami tujuan, aturan, dan bentuk kegiatan komunitas.</li>
+      <li>Kenalkan usaha, produk, layanan, serta kebutuhan Anda secara jelas.</li>
+      <li>Ikut berdiskusi dan berbagi informasi yang bermanfaat.</li>
+      <li>Jalin kerja sama berdasarkan kesepakatan yang dipahami semua pihak.</li>
+      <li>Jaga kepercayaan dengan komunikasi yang jujur dan tanggung jawab.</li>
+      <li>Evaluasi hasil kegiatan untuk memperbaiki kolaborasi berikutnya.</li>
+    </ol>
+  </section>
+
+  <!-- PENUTUP -->
+  <section class="card closing">
+    <h2>🌟 Kuat Karena Terhubung</h2>
+    <p>
+      Bisnis komunitas bukan sekadar berkumpul, melainkan membangun hubungan yang
+      menghasilkan nilai. Dengan saling mendukung, berbagi peluang, dan bekerja
+      secara transparan, anggota dapat membuka jalan bagi perkembangan usaha masing-masing.
+    </p>
+    <div class="slogan">
+      FIXZY — Terhubung • Berkolaborasi • Tumbuh Bersama
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  © 2026 FIXZY
+  <br>
+  Komunitas Kuat, Usaha Tumbuh Bersama
+</footer>
+
+<script>
+function tutupHalaman(){
+  try{
+    if(window.frameElement){
+      window.frameElement.remove();
+      return;
+    }
+  }catch(e){}
+
+  try{
+    if(window.parent!==window){
+      window.parent.postMessage(
+        {type:"FIXZY_CLOSE_PAGE"},
+        "*"
+      );
+      return;
+    }
+  }catch(e){}
+
+  try{
+    window.close();
+  }catch(e){}
+}
+</script>
+
+</body>
+</html>
