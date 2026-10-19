@@ -28,25 +28,29 @@ function extractReceiptFields(raw){const lines=raw.split(/\r?\n/).map(x=>x.trim(
  const po=pick(/Tanggal\s*PO\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
  const due=pick(/(?:Jatuh\s*tempo|Tanggal\s*jatuh\s*tempo)\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
  // Jumlah tagihan hanya diambil dari baris SUB TOTAL.
- // Tidak memakai fallback TOTAL atau nominal nota per item.
+ // Gabungkan digit meskipun OCR menyisipkan spasi di pemisah ribuan.
  let total="";
- const amountPattern=/(?:Rp\s*)?([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{5,})/gi;
- const amountFromLine=(line,label)=>{
-   const pos=line.toLowerCase().indexOf(label);
-   if(pos<0)return "";
-   const after=line.slice(pos+label.length);
-   const matches=[...after.matchAll(amountPattern)];
-   return matches.length?parseRupiah(matches[matches.length-1][1]):"";
- };
  const subtotalIndex=lines.findIndex(line=>/sub\s*total/i.test(line));
+ const digitsFromSubtotalText=(text)=>{
+   if(!text)return "";
+   const labelMatch=text.match(/sub\s*total/i);
+   const idx=text.search(/sub\s*total/i);
+   const tail=idx>=0?text.slice(idx+labelMatch[0].length):text;
+   // OCR kadang membaca "Rp7.394.820" sebagai "Rp7.394 820".
+   const candidates=tail.match(/(?:Rp\s*)?\d[\d\s.,]*\d|(?:Rp\s*)?\d/gi)||[];
+   const valid=candidates.map(v=>v.replace(/^Rp\s*/i,"").replace(/\s+/g,"").replace(/[^0-9]/g,"")).filter(v=>v.length>=4);
+   if(!valid.length)return "";
+   valid.sort((a,b)=>b.length-a.length);
+   return valid[0];
+ };
  if(subtotalIndex>=0){
-   total=amountFromLine(lines[subtotalIndex],(lines[subtotalIndex].match(/sub\s*total/i)||[])[0]||"sub total");
-   // Beberapa OCR memisahkan label dan nominal ke baris setelahnya.
+   total=digitsFromSubtotalText(lines[subtotalIndex]);
+   // Jika label dan nominal terpisah, periksa maksimal dua baris berikutnya.
    if(!total){
      for(let j=subtotalIndex+1;j<Math.min(lines.length,subtotalIndex+3);j++){
        if(/^(?:total|nota\s*ke\s*\d*)/i.test(lines[j]))break;
-       const candidates=[...lines[j].matchAll(amountPattern)];
-       if(candidates.length){total=parseRupiah(candidates[candidates.length-1][1]);break;}
+       const candidate=digitsFromSubtotalText(lines[j]);
+       if(candidate){total=candidate;break;}
      }
    }
  }
