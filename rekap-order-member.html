@@ -42,6 +42,10 @@ body.dark .jt-item .jt-date{color:#fbbf24}
 body.dark .jt-item .jt-nominal{color:#f59e0b}
 
 .jt-card{border:2px solid #111827;border-radius:10px;padding:12px;background:#fffbeb;min-width:0}
+.jt-card{position:relative}
+.jt-status-lunas{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border:1px solid #22c55e;border-radius:20px;background:#dcfce7;color:#166534;font-size:10px;font-weight:900}
+.jt-status-lunas .jt-check{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#16a34a;color:#fff;font-size:11px}
+body.dark .jt-status-lunas{background:#052e16;border-color:#22c55e;color:#86efac}
 .jt-date{font-size:12px;font-weight:900;color:#92400e;margin-bottom:3px}
 .jt-tempo{font-size:10px;font-weight:900;color:#64748b;margin-bottom:8px}
 .jt-row{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:11px;border-bottom:1px dashed #d1d5db}
@@ -604,6 +608,12 @@ function renderRekap(){
    const sisa=calc.cash?0:Math.max(0,totalAwal-calc.paid);
 
    return {r,calc,due,kasKey,qty,kasRow,totalAwal,sisa};
+ }).sort((a,b)=>{
+   // Urutkan tabel dari jatuh tempo paling dekat; tanpa tanggal di akhir.
+   if(!a.due && !b.due) return 0;
+   if(!a.due) return 1;
+   if(!b.due) return -1;
+   return a.due.getTime()-b.due.getTime();
  });
 
  let qty=0,nilai=0,up=0,tabungan=0,kas=0,sisaTotal=0;
@@ -719,8 +729,15 @@ function renderRekap(){
          ? `TEMPO ${tempoList.join(" / ")} HARI`
          : "TEMPO";
 
+       // Tandai LUNAS hanya jika tanggal sudah lewat dan seluruh sisa tagihan nol.
+       const hariIni=new Date();
+       hariIni.setHours(0,0,0,0);
+       const tanggalLewat=!!g.due && g.due.getTime()<hariIni.getTime();
+       const sudahLunas=tanggalLewat && g.tagihan<=0;
+
        return `<div class="jt-card">
-         <div class="jt-date">📅 ${esc(tanggal)}</div>
+         ${sudahLunas ? `<div class="jt-status-lunas"><span class="jt-check">✓</span> LUNAS</div>` : ""}
+         <div class="jt-date" style="${sudahLunas?'padding-right:78px':''}">📅 ${esc(tanggal)}</div>
          <div class="jt-tempo">${esc(tempoLabel)}</div>
 
          <div class="jt-row"><span>Nilai Barang</span><b>${rp(g.nilai)}</b></div>
