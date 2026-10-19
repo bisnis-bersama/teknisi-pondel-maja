@@ -58,6 +58,8 @@ body{overflow:hidden}
 .account-saving{display:none;font-size:10px;color:#166534;font-weight:900;margin-top:3px;white-space:nowrap}
 .account-saving.show{display:block}
 .account-saving b{font-size:11px}
+.account-saving.fix{color:#1d4ed8}
+.account-saving.fix b{font-size:11px}
 @media(max-width:480px){.account-saving{font-size:9px}.account-saving b{font-size:10px}}
 .content{position:fixed;top:62px;left:0;right:0;bottom:0;background:#f3f4f6;overflow:hidden;z-index:1}
 .content iframe{width:100%;height:100%;border:0;display:block;background:#fff;position:relative;z-index:1}
@@ -102,7 +104,8 @@ body{overflow:hidden}
   <div class="header-account">
     <div class="account-name" id="accountName">Memuat...</div>
     <div class="account-exp">Exp: <span id="accountExp">-</span></div>
-    <div class="account-saving" id="accountSaving">💰 Tabungan Anda: <b id="accountSavingValue">Rp 0</b></div>
+    <div class="account-saving" id="accountSaving">💰 Saldo Estimasi: <b id="accountSavingValue">Rp 0</b></div>
+    <div class="account-saving fix" id="accountSavingFix">✅ Saldo Fix (LUNAS + TOP UP): <b id="accountSavingFixValue">Rp 0</b></div>
   </div>
 </header>
 
@@ -471,6 +474,53 @@ function memberTabunganOrderHeader(r){
   const q=Math.max(0,numHeader(r.totalQty??r.approvedQty??r.qty??r.jumlah??0));
   return q*fallback;
 }
+async function loadGlobalFixedSavingsHeader(ownerUid){
+  const box=document.getElementById("accountSavingFix");
+  const val=document.getElementById("accountSavingFixValue");
+  if(!box||!val)return;
+  box.classList.remove("show");
+  val.textContent="Rp 0";
+  if(!ownerUid)return;
+  try{
+    // Total tabungan dari order berstatus LUNAS untuk semua member owner ini.
+    const ordersMap=new Map();
+    for(const field of ["ownerUid","ownerId"]){
+      try{
+        const snap=await getDocs(query(collection(db,"order_member"),where(field,"==",ownerUid)));
+        snap.forEach(d=>{if(!ordersMap.has(d.id))ordersMap.set(d.id,{id:d.id,...(d.data()||{})});});
+      }catch(e){console.warn("Query saldo fix order "+field+" dilewati",e?.message||e);}
+    }
+    let totalLunas=0;
+    ordersMap.forEach(r=>{
+      const status=normHeader(r.status||r.statusPembayaran||r.paymentStatus||"");
+      const approval=normHeader(r.approvalStatus||"");
+      // Hanya order yang benar-benar sudah LUNAS; TAGIHAN/pending tidak dihitung.
+      if(status==="lunas" || normHeader(r.statusPembayaran)==="lunas" || normHeader(r.paymentStatus)==="lunas"){
+        totalLunas+=memberTabunganOrderHeader(r);
+      }
+    });
+
+    // Saldo top up yang sudah disetujui tersimpan kumulatif pada saldo_tabungan.
+    const saldoMap=new Map();
+    for(const field of ["ownerUid","ownerId"]){
+      try{
+        const snap=await getDocs(query(collection(db,"saldo_tabungan"),where(field,"==",ownerUid)));
+        snap.forEach(d=>{if(!saldoMap.has(d.id))saldoMap.set(d.id,d.data()||{});});
+      }catch(e){console.warn("Query saldo_tabungan "+field+" dilewati",e?.message||e);}
+    }
+    let totalTopup=0;
+    saldoMap.forEach(r=>{
+      totalTopup+=Math.max(0,numHeader(r.saldoTabungan??r.saldo??r.totalTopupApproved??0));
+    });
+    val.textContent=rpHeader(totalLunas+totalTopup);
+    box.classList.add("show");
+  }catch(e){
+    console.warn("Saldo fix header belum dapat dimuat:",e?.message||e);
+    val.textContent="Rp 0";
+    box.classList.add("show");
+  }
+}
+
 async function loadMemberSavingsHeader(user, profile){
   const box=document.getElementById("accountSaving"), val=document.getElementById("accountSavingValue");
   if(!box||!val)return;
@@ -480,7 +530,7 @@ async function loadMemberSavingsHeader(user, profile){
   val.textContent="Rp 0";
 
   // SUPERADMIN/ADMIN tidak menampilkan tabungan bisnis.
-  if(role==="superadmin"||role==="admin")return;
+  if(role==="superadmin"||role==="admin"){document.getElementById("accountSavingFix")?.classList.remove("show");return;}
 
   try{
     const uid=String(user?.uid||"").trim();
@@ -497,6 +547,7 @@ async function loadMemberSavingsHeader(user, profile){
       profile?.ownerUid||profile?.ownerId||
       (role==="owner"?uid:"")
     ).trim();
+    await loadGlobalFixedSavingsHeader(ownerUid);
 
     if(!ownerUid && role!=="owner"){
       val.textContent="Rp 0";
