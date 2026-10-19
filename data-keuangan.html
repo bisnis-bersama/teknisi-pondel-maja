@@ -120,13 +120,24 @@ function totals(list){
  }
  return{qty,tab,up,kas}
 }
+function expenseInPeriod(e){
+ const p=$("periode").value;
+ if(p==="all")return true;
+ // Gunakan tanggal transaksi untuk pengeluaran, bukan waktu dokumen dibuat.
+ const d=dt(e.tanggal||e.date||e.createdAt);
+ if(!d)return false;
+ const n=new Date();
+ return p==="month"
+  ? d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()
+  : d.getFullYear()===n.getFullYear();
+}
 function expenseTotals(list){
  let tab=0,kas=0,up=0;
- for(const e of list.filter(inPeriod)){
-  const n=Math.max(0,num(e.nominal)),s=norm(e.sumberDana||e.sumber),j=norm(e.jenisLabel||e.jenis);
-  if(s==="tabungan"||j.includes("pengambilan tabungan"))tab+=n;
-  else if(s.includes("pengelola")||j.includes("pengelola"))up+=n;
-  else if(s.includes("kas")||!s||j.includes("transport")||j.includes("acara")||j.includes("lain"))kas+=n;
+ for(const e of list.filter(expenseInPeriod)){
+  const n=Math.max(0,num(e.nominal)),s=norm(e.sumberDana||e.sumber),j=norm(e.jenisLabel||e.jenis),m=norm(e.modul);
+  if(s==="tabungan"||j.includes("pengambilan tabungan")||(!s&&m==="member"))tab+=n;
+  else if(s==="pengelola"||j.includes("pengelola")||(!s&&m==="pengelola"))up+=n;
+  else if(s==="kas"||j.includes("transport")||j.includes("acara")||j.includes("lain")||(!s&&m==="kas"))kas+=n;
  }
  return{tab,kas,up}
 }
@@ -154,9 +165,9 @@ function render(){
  $("qty").textContent=t.qty.toLocaleString("id-ID")+" pcs";
  $("up").textContent=rp(t.up);$("kas").textContent=rp(t.kas);
  $("outTab").textContent=rp(ex.tab);$("outKas").textContent=rp(ex.kas);$("outUp").textContent=rp(ex.up);$("outTotal").textContent=rp(ex.tab+ex.kas+ex.up);
- $("saldoTab").textContent=rp(Math.max(0,t.tab-ex.tab));
- $("saldoKas").textContent=rp(Math.max(0,t.kas-ex.kas));
- $("saldoUp").textContent=rp(Math.max(0,t.up-ex.up));
+ $("saldoTab").textContent=rp(t.tab-ex.tab);
+ $("saldoKas").textContent=rp(t.kas-ex.kas);
+ $("saldoUp").textContent=rp(t.up-ex.up);
  const m=new Map();
  for(const r of os.filter(approved)){
   const k=month(r),xs=items(r),q=xs.reduce((a,x)=>a+x.qty,0),tab=xs.reduce((a,x)=>a+x.qty*x.tab,0),up=xs.reduce((a,x)=>a+x.qty*x.up,0);
