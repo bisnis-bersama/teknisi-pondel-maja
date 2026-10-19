@@ -144,7 +144,11 @@ function billSummary(){
  // Khusus Owner: ikuti sumber perhitungan Nilai Barang dari Rekap Order Member.
  // Satu order berstatus LUNAS tidak dihitung; tagihan distributor hanya nilai barang.
  if(owner){
-  const rows=billOrders.filter(r=>!isOrderLunas(r));
+  // Owner menghitung kewajiban distributor berdasarkan Nilai Barang order,
+  // tidak berdasarkan pembayaran member. Pembayaran member tidak menghapus
+  // nilai barang dari rekap distributor; tanggal terdekat tetap memilih
+  // tanggal jatuh tempo hari ini/masa depan, sehingga tanggal lampau dilewati.
+  const rows=billOrders;
   const bills=rows.map(r=>{
    const calc=rekapOrderCalculation(r);
    const dueRaw=r.jatuhTempo||r.tanggalJatuhTempo||r.dueDate||r.tanggalTempo||r.tanggalJatuh||r.tglJatuhTempo||r.tempoDate;
@@ -156,10 +160,12 @@ function billSummary(){
    }
    return{r,nilaiBarang:Math.max(0,num(calc.nilaiBarang)),due};
   }).filter(x=>x.nilaiBarang>0);
-  const total=bills.reduce((sum,x)=>sum+x.nilaiBarang,0);
-  const count=bills.length;
   const now=new Date();now.setHours(0,0,0,0);
+  // Panel Owner menampilkan nilai barang pada tanggal jatuh tempo hari ini dan mendatang.
+  // Status lunas karyawan tidak menghapus kewajiban Owner kepada distributor.
   const upcoming=bills.filter(x=>x.due&&(()=>{const d=new Date(x.due);d.setHours(0,0,0,0);return d>=now})()).sort((a,b)=>a.due-b.due);
+  const total=upcoming.reduce((sum,x)=>sum+x.nilaiBarang,0);
+  const count=upcoming.length;
   let nearest=null;
   if(upcoming.length){
    const target=new Date(upcoming[0].due);target.setHours(0,0,0,0);
