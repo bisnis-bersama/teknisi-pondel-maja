@@ -9,7 +9,15 @@ import {initializeApp,getApps} from "https://www.gstatic.com/firebasejs/11.10.0/
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);const $=id=>document.getElementById(id);let currentUser=null,profile=null,selectedFile=null,busy=false;
 function status(msg,cls=""){$("status").className=cls;$("status").textContent=msg}
 onAuthStateChanged(auth,async user=>{currentUser=user;if(!user){status("Sesi login tidak ditemukan. Silakan login kembali ke FIXZY.","err");return}try{const snap=await getDoc(doc(db,"users",user.uid));if(!snap.exists()){status("Profil pengguna tidak ditemukan di Firebase.","err");return}profile=snap.data()||{};const role=String(profile.role||"").toLowerCase();const ownerUid=String(profile.ownerUid||profile.ownerId||(role==="owner"?user.uid:"")).trim();if(!ownerUid&&!['superadmin','admin'].includes(role)){status("ownerUid tidak ditemukan pada profil akun. Data tidak bisa disimpan dengan aman.","err");return}profile={...profile,role,ownerUid:ownerUid||user.uid};status("Login aktif. Hasil OCR akan disimpan ke akun bisnis yang sesuai.","ok")}catch(e){status("Gagal memeriksa sesi: "+(e.message||e),"err")}});
-function handleImageChange(input){selectedFile=input.files?.[0]||null;const img=$("preview");if(selectedFile){img.src=URL.createObjectURL(selectedFile);img.style.display="block";status("Foto dipilih. Tekan ‘Baca Nota (OCR)’ untuk mulai membaca.","ok")}else{img.removeAttribute("src");img.style.display="none"}}
+function handleImageChange(input){
+  selectedFile=input.files&&input.files.length?input.files[0]:null;
+  const img=$("preview");
+  if(!selectedFile){img.removeAttribute("src");img.style.display="none";return}
+  if(selectedFile.size===0){selectedFile=null;status("File foto kosong atau tidak dapat dibaca. Pilih foto lain.","err");return}
+  // Reset object URL sebelumnya agar pratinjau tidak memakai URL lama.
+  if(img.dataset.objectUrl){URL.revokeObjectURL(img.dataset.objectUrl);delete img.dataset.objectUrl}
+  const url=URL.createObjectURL(selectedFile);img.dataset.objectUrl=url;img.onload=()=>status("Foto berhasil dipilih. Tekan ‘Baca Nota (OCR)’ untuk mulai membaca.","ok");img.onerror=()=>status("Pratinjau gagal ditampilkan. Coba pilih foto lain atau ambil foto langsung.","err");img.src=url;img.style.display="block";
+}
 function toDateInput(raw){if(!raw)return "";const m=String(raw).match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);if(!m)return "";return `${m[3]}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`}
 function parseRupiah(raw){if(!raw)return "";const digits=String(raw).replace(/[^0-9]/g,"");return digits||""}
 function extractReceiptFields(raw){const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const all=lines.join("\n");
@@ -19,19 +27,25 @@ function extractReceiptFields(raw){const lines=raw.split(/\r?\n/).map(x=>x.trim(
  const order=pick(/No\s*Pemesanan\s*[:：]?\s*([A-Z0-9/-]+)/i);
  const po=pick(/Tanggal\s*PO\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
  const due=pick(/(?:Jatuh\s*tempo|Tanggal\s*jatuh\s*tempo)\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
- // JUMLAH TOTAL WAJIB diambil dari baris "sub total" saja.
- // Jangan fallback ke nominal terakhir karena bisa mengambil total nota ke-1/ke-2.
+ // Jumlah tagihan hanya diambil dari baris SUB TOTAL.
+ // Tidak memakai fallback TOTAL atau nominal nota per item.
  let total="";
+ const amountPattern=/(?:Rp\s*)?([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{5,})/gi;
+ const amountFromLine=(line,label)=>{
+   const pos=line.toLowerCase().indexOf(label);
+   if(pos<0)return "";
+   const after=line.slice(pos+label.length);
+   const matches=[...after.matchAll(amountPattern)];
+   return matches.length?parseRupiah(matches[matches.length-1][1]):"";
+ };
  const subtotalIndex=lines.findIndex(line=>/sub\s*total/i.test(line));
  if(subtotalIndex>=0){
-   const subtotalLine=lines[subtotalIndex];
-   // Kasus umum: "sub total Rp7.394.820" berada dalam satu baris.
-   let m=subtotalLine.match(/sub\s*total[^0-9]{0,40}((?:Rp\s*)?[0-9][0-9.,]*)/i);
-   if(m) total=parseRupiah(m[1]);
-   // Beberapa hasil OCR memisahkan label dan nominal ke baris berikutnya.
+   total=amountFromLine(lines[subtotalIndex],(lines[subtotalIndex].match(/sub\s*total/i)||[])[0]||"sub total");
+   // Beberapa OCR memisahkan label dan nominal ke baris setelahnya.
    if(!total){
      for(let j=subtotalIndex+1;j<Math.min(lines.length,subtotalIndex+3);j++){
-       const candidates=[...lines[j].matchAll(/(?:Rp\s*)?([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{5,})/gi)];
+       if(/^(?:total|nota\s*ke\s*\d*)/i.test(lines[j]))break;
+       const candidates=[...lines[j].matchAll(amountPattern)];
        if(candidates.length){total=parseRupiah(candidates[candidates.length-1][1]);break;}
      }
    }
@@ -41,11 +55,33 @@ function extractReceiptFields(raw){const lines=raw.split(/\r?\n/).map(x=>x.trim(
  if(invoice)$("invoiceNumber").value=invoice;if(order)$("orderNumber").value=order;
  if(po)$("poDate").value=toDateInput(po);if(due)$("dueDate").value=toDateInput(due);if(total)$("receiptTotal").value=parseRupiah(total);
 }
+async function decodeImageToCanvas(file){
+  const maxSide=2000;
+  const drawToCanvas=(source,w,h)=>{
+    const scale=Math.min(1,maxSide/Math.max(w,h));
+    const c=document.createElement("canvas");
+    c.width=Math.max(1,Math.round(w*scale));c.height=Math.max(1,Math.round(h*scale));
+    const ctx=c.getContext("2d");if(!ctx)throw new Error("Canvas tidak didukung browser ini.");
+    ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(source,0,0,c.width,c.height);return c;
+  };
+  // Jalur utama: createImageBitmap sering lebih stabil untuk foto galeri Android dan EXIF orientation.
+  if("createImageBitmap" in window){
+    try{const bitmap=await createImageBitmap(file);try{return drawToCanvas(bitmap,bitmap.width,bitmap.height)}finally{bitmap.close?.()}}catch(err){console.warn("createImageBitmap gagal; mencoba jalur Image:",err)}
+  }
+  // Jalur cadangan: data URL, lalu object URL bila FileReader tidak tersedia/gagal.
+  const loadImage=(src)=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{if(image.naturalWidth&&image.naturalHeight)resolve(image);else reject(new Error("Ukuran gambar tidak valid."))};image.onerror=()=>reject(new Error("Browser tidak dapat mendekode file foto ini. Coba simpan ulang sebagai JPG atau ambil foto baru."));image.src=src});
+  try{
+    const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("File foto gagal dibaca oleh browser."));reader.readAsDataURL(file)});
+    const image=await loadImage(dataUrl);return drawToCanvas(image,image.naturalWidth,image.naturalHeight);
+  }catch(readerError){
+    const url=URL.createObjectURL(file);try{const image=await loadImage(url);return drawToCanvas(image,image.naturalWidth,image.naturalHeight)}finally{URL.revokeObjectURL(url)}
+  }
+}
 $("pickGallery").addEventListener("click",()=>$("imageInput").click());$("pickCamera").addEventListener("click",()=>$("cameraInput").click());$("imageInput").addEventListener("change",()=>handleImageChange($("imageInput")));$("cameraInput").addEventListener("change",()=>handleImageChange($("cameraInput")));
 $("runOcr").addEventListener("click",async()=>{if(busy)return;if(!selectedFile){status("Pilih foto nota terlebih dahulu.","err");return}if(!window.Tesseract){status("Mesin OCR belum berhasil dimuat. Periksa koneksi internet lalu muat ulang halaman.","err");return}busy=true;$("runOcr").disabled=true;$("progress").style.display="block";$("progressBar").style.width="0%";try{status("Memproses foto di perangkat ini. Foto tidak diunggah ke Firebase.");// Konversi File menjadi data URL terlebih dahulu agar kompatibel dengan browser Android.
 // Decode the selected photo into a canvas first. This avoids Tesseract worker FileReader failures on some Android browsers and large gallery images.
-const canvas=await new Promise((resolve,reject)=>{const url=URL.createObjectURL(selectedFile);const image=new Image();image.onload=()=>{try{const maxSide=2200,scale=Math.min(1,maxSide/Math.max(image.naturalWidth,image.naturalHeight));const c=document.createElement("canvas");c.width=Math.max(1,Math.round(image.naturalWidth*scale));c.height=Math.max(1,Math.round(image.naturalHeight*scale));const ctx=c.getContext("2d");if(!ctx)throw new Error("Canvas tidak didukung browser.");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(image,0,0,c.width,c.height);URL.revokeObjectURL(url);resolve(c)}catch(err){URL.revokeObjectURL(url);reject(err)}};image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Gambar tidak bisa dibuka. Coba pilih file JPG atau PNG lain."))};image.src=url});
-const result=await Tesseract.recognize(canvas,"eng",{workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js",corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js",langPath:"https://tessdata.projectnaptha.com/4.0.0",logger:m=>{if(m.status){status("OCR: "+m.status+(m.progress!=null?" ("+Math.round(m.progress*100)+"%)":""));if(m.progress!=null)$("progressBar").style.width=Math.round(m.progress*100)+"%"}}});$("ocrText").value=String(result.data.text||"").trim();extractReceiptFields($("ocrText").value);status($("ocrText").value?"OCR selesai. Periksa 6 informasi yang terisi otomatis sebelum menyimpan.":"Teks tidak terbaca. Coba foto yang lebih terang dan fokus.",$("ocrText").value?"ok":"err")}catch(e){console.error("OCR error",e);status("OCR gagal: "+(e.message||e)+". Coba lagi dengan foto JPG/PNG. Pastikan koneksi internet aktif agar mesin OCR dapat dimuat.","err")}finally{busy=false;$("runOcr").disabled=false}});
+const canvas=await decodeImageToCanvas(selectedFile);
+const result=await Tesseract.recognize(canvas,"eng",{workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js",corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js",langPath:"https://tessdata.projectnaptha.com/4.0.0",logger:m=>{if(m.status){status("OCR: "+m.status+(m.progress!=null?" ("+Math.round(m.progress*100)+"%)":""));if(m.progress!=null)$("progressBar").style.width=Math.round(m.progress*100)+"%"}}});$("ocrText").value=String(result.data.text||"").trim();extractReceiptFields($("ocrText").value);status($("ocrText").value?"OCR selesai. Periksa 6 informasi yang terisi otomatis sebelum menyimpan.":"Teks tidak terbaca. Coba foto yang lebih terang dan fokus.",$("ocrText").value?"ok":"err")}catch(e){console.error("OCR error",e);status("OCR gagal: "+(e.message||e)+". Coba simpan foto sebagai JPG/JPEG atau PNG, lalu pilih ulang. Pastikan koneksi internet aktif untuk memuat mesin OCR.","err")}finally{busy=false;$("runOcr").disabled=false}});
 $("save").addEventListener("click",async()=>{if(busy)return;if(!currentUser||!profile){status("Sesi FIXZY belum siap. Tunggu sebentar atau login ulang.","err");return}const text=String($("ocrText").value||"").trim();if(!text){status("Hasil OCR masih kosong. Baca nota terlebih dahulu.","err");return}if(["superadmin","admin"].includes(profile.role)){status("Akun admin aplikasi tidak memiliki owner bisnis untuk nota ini. Gunakan akun bisnis yang sesuai.","err");return}busy=true;$("save").disabled=true;try{const payload={ownerUid:profile.ownerUid,createdBy:currentUser.uid,createdByEmail:currentUser.email||profile.email||"",createdByNama:profile.namaKonter||profile.namaPemilik||profile.nama||currentUser.email||"",namaToko:String($("storeName").value||"").trim(),nomorInvoice:String($("invoiceNumber").value||"").trim(),nomorPesanan:String($("orderNumber").value||"").trim(),tanggalPO:$("poDate").value||"",tanggalJatuhTempo:$("dueDate").value||"",jumlahTotal:String($("receiptTotal").value||"").trim(),teksOCR:text,sumber:"upload_ocr",createdAt:serverTimestamp(),updatedAt:serverTimestamp()};await addDoc(collection(db,"ocr_nota"),payload);status("Berhasil disimpan ke Firestore (ocr_nota). Foto nota asli tidak disimpan.","ok")}catch(e){console.error(e);status("Gagal menyimpan. Periksa koneksi dan Firestore Rules untuk koleksi ocr_nota. Detail: "+(e.message||e),"err")}finally{busy=false;$("save").disabled=false}});
-$("clear").addEventListener("click",()=>{selectedFile=null;$("imageInput").value="";$("cameraInput").value="";$("preview").removeAttribute("src");$("preview").style.display="none";["storeName","invoiceNumber","orderNumber","poDate","dueDate","receiptTotal","ocrText"].forEach(id=>$(id).value="");$("progress").style.display="none";$("progressBar").style.width="0%";status("Form dibersihkan.")});
+$("clear").addEventListener("click",()=>{selectedFile=null;$("imageInput").value="";$("cameraInput").value="";if($("preview").dataset.objectUrl){URL.revokeObjectURL($("preview").dataset.objectUrl);delete $("preview").dataset.objectUrl}$("preview").removeAttribute("src");$("preview").style.display="none";["storeName","invoiceNumber","orderNumber","poDate","dueDate","receiptTotal","ocrText"].forEach(id=>$(id).value="");$("progress").style.display="none";$("progressBar").style.width="0%";status("Form dibersihkan.")});
 </script></body></html>
