@@ -23,7 +23,7 @@ button{border:0;border-radius:9px;padding:12px 15px;font-weight:900;cursor:point
 <main>
   <div class="card">
     <h2>1. Pilih foto nota</h2>
-    <p class="hint">Pilih foto dari galeri atau ambil langsung dengan kamera. Foto akan dikompres lalu langsung diunggah ke penyimpanan admin menggunakan API yang sama dengan halaman Data Identitas. OCR tidak digunakan.</p>
+    <p class="hint">Pilih foto dari galeri atau ambil langsung dengan kamera. Foto saja yang dipilih dan diunggah. Tidak ada formulir nama atau NIK pada halaman ini; data owner yang sudah tersimpan digunakan di belakang layar untuk memenuhi API penyimpanan.</p>
     <div class="actions" style="margin-top:0">
       <button id="pickGallery" class="primary" type="button">🖼️ Pilih dari Galeri</button>
       <button id="pickCamera" class="secondary" type="button">📷 Ambil Foto</button>
@@ -123,9 +123,20 @@ $("upload").onclick=async()=>{
    reader.readAsDataURL(compressed);
   });
   const idToken=await currentUser.getIdToken(true);
+  // Upload hanya gambar nota dari sisi pengguna.
+  // Metadata identitas minimum diambil dari profil owner yang sudah ada agar API KTP lama
+  // tidak gagal pada validasi nama/ownerUid/NIK. NIK tidak ditampilkan atau diminta di form.
+  const profileSnap=await getDoc(doc(db,"users",currentUser.uid));
+  const savedProfile=profileSnap.exists()?(profileSnap.data()||{}):{};
+  const identity=savedProfile.dataKtp||{};
+  const ownerName=String(identity.nama||savedProfile.namaKonter||savedProfile.namaPemilik||savedProfile.nama||currentUser.email||"").trim();
+  const ownerNik=String(identity.nik||"").replace(/\\D/g,"");
+  if(!ownerName)throw new Error("Nama owner tidak ditemukan di profil. Lengkapi data identitas owner terlebih dahulu.");
+  if(!ownerNik)throw new Error("NIK owner belum tersimpan pada Data Identitas. Lengkapi data identitas sekali saja, lalu upload nota kembali.");
   const payload={
-   nama:String(profile.namaKonter||profile.namaPemilik||profile.nama||currentUser.email||""),
+   nama:ownerName,
    ownerUid:profile.ownerUid,
+   nik:ownerNik,
    jenisFile:"nota",
    namaFile:"nota-"+Date.now()+".jpg",
    fotoBase64:String(dataUrl).split(",")[1],
