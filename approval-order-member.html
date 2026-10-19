@@ -1116,16 +1116,8 @@ window.approveTopup=async id=>{
    if(!employeeUid)throw Error("UID karyawan pemohon tidak ditemukan.");
    const saldoRef=doc(db,"saldo_tabungan",employeeUid);
    const saldoSnap=await tx.get(saldoRef);
-   const saldoData=saldoSnap.exists()?(saldoSnap.data()||{}):{};
-   // Validasi kepemilikan dokumen saldo sebelum menambah nominal.
-   if(saldoSnap.exists()){
-    if(String(saldoData.employeeUid||"")!==employeeUid)
-     throw Error("ID karyawan pada dokumen saldo tidak cocok. Periksa data saldo_tabungan.");
-    if(String(saldoData.ownerUid||"")!==ownerUid)
-     throw Error("Dokumen saldo belum terhubung ke Owner ini. Periksa ownerUid pada saldo_tabungan dan profil users karyawan.");
-   }
-   const oldSaldo=saldoSnap.exists()?Math.max(0,num(saldoData.saldo??saldoData.saldoTabungan??0)):0;
-   tx.set(saldoRef,{ownerUid:ownerUid,employeeUid:employeeUid,saldo:oldSaldo+amount,saldoTabungan:oldSaldo+amount,updatedAt:serverTimestamp()},{merge:true});
+   const oldSaldo=saldoSnap.exists()?Math.max(0,num(saldoSnap.data()?.saldo??saldoSnap.data()?.saldoTabungan??0)):0;
+   tx.set(saldoRef,{ownerUid,employeeUid,saldo:oldSaldo+amount,saldoTabungan:oldSaldo+amount,updatedAt:serverTimestamp()},{merge:true});
    tx.update(ref,{status:"approved",approvedByUid:uid,approvedByName:profile.nama||profile.name||profile.email||"Owner",approvedAt:serverTimestamp(),updatedAt:serverTimestamp()});
   });
   msg("Tambah saldo berhasil disetujui dan saldo karyawan diperbarui.","ok");
