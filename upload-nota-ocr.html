@@ -19,43 +19,20 @@ function extractReceiptFields(raw){const lines=raw.split(/\r?\n/).map(x=>x.trim(
  const order=pick(/No\s*Pemesanan\s*[:：]?\s*([A-Z0-9/-]+)/i);
  const po=pick(/Tanggal\s*PO\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
  const due=pick(/(?:Jatuh\s*tempo|Tanggal\s*jatuh\s*tempo)\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
- // Prioritas jumlah: baris SUB TOTAL. Jika tidak ada, gunakan baris TOTAL.
- // Jangan mengambil total per nota (mis. "NOTA KE 1/2") atau nominal produk.
+ // JUMLAH TOTAL WAJIB diambil dari baris "sub total" saja.
+ // Jangan fallback ke nominal terakhir karena bisa mengambil total nota ke-1/ke-2.
  let total="";
- const amountPattern=/(?:Rp\s*)?([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{5,})/gi;
- const amountFromLine=(line,label)=>{
-   const pos=line.toLowerCase().indexOf(label);
-   if(pos<0)return "";
-   const after=line.slice(pos+label.length);
-   const matches=[...after.matchAll(amountPattern)];
-   return matches.length?parseRupiah(matches[matches.length-1][1]):"";
- };
  const subtotalIndex=lines.findIndex(line=>/sub\s*total/i.test(line));
  if(subtotalIndex>=0){
-   total=amountFromLine(lines[subtotalIndex],(lines[subtotalIndex].match(/sub\s*total/i)||[])[0]||"sub total");
-   // Beberapa OCR memisahkan label dan nominal ke baris setelahnya.
+   const subtotalLine=lines[subtotalIndex];
+   // Kasus umum: "sub total Rp7.394.820" berada dalam satu baris.
+   let m=subtotalLine.match(/sub\s*total[^0-9]{0,40}((?:Rp\s*)?[0-9][0-9.,]*)/i);
+   if(m) total=parseRupiah(m[1]);
+   // Beberapa hasil OCR memisahkan label dan nominal ke baris berikutnya.
    if(!total){
      for(let j=subtotalIndex+1;j<Math.min(lines.length,subtotalIndex+3);j++){
-       if(/^(?:total|nota\s*ke\s*\d*)/i.test(lines[j]))break;
-       const candidates=[...lines[j].matchAll(amountPattern)];
+       const candidates=[...lines[j].matchAll(/(?:Rp\s*)?([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{5,})/gi)];
        if(candidates.length){total=parseRupiah(candidates[candidates.length-1][1]);break;}
-     }
-   }
- }
- // Jika label SUB TOTAL memang tidak ada, cari label TOTAL yang berdiri sendiri.
- if(!total){
-   const totalIndex=lines.findIndex(line=>/\btotal\b/i.test(line) &&
-     !/sub\s*total/i.test(line) &&
-     !/nota\s*ke\s*\d*/i.test(line) &&
-     !/jumlah\s*produk/i.test(line));
-   if(totalIndex>=0){
-     total=amountFromLine(lines[totalIndex],(lines[totalIndex].match(/\btotal\b/i)||[])[0]||"total");
-     if(!total){
-       for(let j=totalIndex+1;j<Math.min(lines.length,totalIndex+3);j++){
-         if(/nota\s*ke\s*\d*/i.test(lines[j]))break;
-         const candidates=[...lines[j].matchAll(amountPattern)];
-         if(candidates.length){total=parseRupiah(candidates[candidates.length-1][1]);break;}
-       }
      }
    }
  }
