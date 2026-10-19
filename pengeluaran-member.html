@@ -477,14 +477,39 @@ async function muatMember(){
  }
 }
 
-async function ambilData(){rows=[];const map=new Map();for(const field of ["ownerUid","ownerId","uid"]){const value=field==="uid"?uid:ownerUid;if(!value)continue;try{const s=await getDocs(query(collection(db,"pengeluaran"),where(field,"==",value)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}))}catch(e){console.warn("pengeluaran",field,e.message)}}rows=[...map.values()].filter(r=>String(r.modul||"").toLowerCase()==="member")}
+function sumberTransaksi(r){
+  const s=String(r.sumberDana||r.sumber||"").trim().toLowerCase();
+  if(["tabungan","kas","pengelola"].includes(s))return s;
+  const m=String(r.modul||"").trim().toLowerCase();
+  if(m==="member")return "tabungan";
+  if(m==="kas")return "kas";
+  if(m==="pengelola")return "pengelola";
+  const j=String(r.jenisLabel||r.jenis||"").trim().toLowerCase();
+  if(j.includes("pengambilan tabungan"))return "tabungan";
+  if(j.includes("pengelola"))return "pengelola";
+  if(j.includes("transport")||j.includes("acara")||j.includes("lain"))return "kas";
+  return "";
+}
+async function ambilData(){
+  rows=[];
+  const map=new Map();
+  for(const field of ["ownerUid","ownerId","uid"]){
+    const value=field==="uid"?uid:ownerUid;
+    if(!value)continue;
+    try{
+      const s=await getDocs(query(collection(db,"pengeluaran"),where(field,"==",value)));
+      s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
+    }catch(e){console.warn("pengeluaran",field,e.message)}
+  }
+  rows=[...map.values()].filter(r=>!!sumberTransaksi(r));
+}
 function render(){
  const period=$("filterBulan").value||monthNow();
  const data=rows.filter(r=>String(r.tanggal||"").startsWith(period)).sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));
- const total=data.reduce((s,r)=>s+(Number(r.nominal)||0),0);
- const kas=data.filter(r=>String(r.sumberDana||"").toLowerCase()==="kas").reduce((s,r)=>s+(Number(r.nominal)||0),0);
- const pengelola=data.filter(r=>String(r.sumberDana||"").toLowerCase()==="pengelola").reduce((s,r)=>s+(Number(r.nominal)||0),0);
- $("total").textContent=money(total);$("kas").textContent=money(kas);$("pengelola").textContent=money(pengelola);$("jumlah").textContent=data.length;
+ const tabungan=data.filter(r=>sumberTransaksi(r)==="tabungan").reduce((s,r)=>s+(Number(r.nominal)||0),0);
+ const kas=data.filter(r=>sumberTransaksi(r)==="kas").reduce((s,r)=>s+(Number(r.nominal)||0),0);
+ const pengelola=data.filter(r=>sumberTransaksi(r)==="pengelola").reduce((s,r)=>s+(Number(r.nominal)||0),0);
+ $("total").textContent=money(tabungan);$("kas").textContent=money(kas);$("pengelola").textContent=money(pengelola);$("jumlah").textContent=data.length;
  $("tbody").innerHTML=data.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.tanggal||"-")}</td><td><span class="badge">${esc(r.jenis||"-")}</span></td><td>${esc(r.keterangan||r.memberNama||"-")}</td><td class="num amount">${money(r.nominal)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Belum ada pengeluaran member pada bulan ini.</td></tr>'
 }
 async function simpan(){
