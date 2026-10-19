@@ -20,44 +20,61 @@ function handleImageChange(input){
 }
 function toDateInput(raw){if(!raw)return "";const m=String(raw).match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);if(!m)return "";return `${m[3]}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`}
 function parseRupiah(raw){if(!raw)return "";const digits=String(raw).replace(/[^0-9]/g,"");return digits||""}
-function extractReceiptFields(raw){const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const all=lines.join("\n");
+function extractReceiptFields(raw){
+ const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const all=lines.join("\n");
  const pick=(re)=>{const m=all.match(re);return m?String(m[1]||"").trim().replace(/[,:;]+$/g,""):""};
- let supplier=pick(/(?:Kepada\s*Yth\.?\s*\n?)([^\n]+)/i); if(!supplier){supplier=lines.find(x=>/TEKNISI|SUPPLIER|DISTRIBUTOR|TOKO/i.test(x)&&!/invoice|pemesanan|tanggal|tempo/i.test(x))||"";} if(/^TEKNISI PONSEL$/i.test(supplier)){} 
+ // Ambil nama penerima setelah "Kepada Yth", bukan baris metadata lain.
+ let supplier="";
+ const kepadaIndex=lines.findIndex(x=>/kepada\s*y[h]?t/i.test(x));
+ if(kepadaIndex>=0){
+   for(let i=kepadaIndex+1;i<Math.min(lines.length,kepadaIndex+4);i++){
+     const candidate=lines[i].replace(/^[:\-\s]+/,"").trim();
+     if(candidate && !/^(no\s*invoice|no\s*pemesanan|tanggal\s*po|jatuh\s*tempo|invoice|nota\s*ke)/i.test(candidate)){
+       if(!/^(maja|indonesia|alamat)$/i.test(candidate)){supplier=candidate;break;}
+     }
+   }
+ }
+ if(!supplier) supplier=lines.find(x=>/TEKNISI|SUPPLIER|DISTRIBUTOR|TOKO|CV\.|PT\./i.test(x)&&!/invoice|pemesanan|tanggal|tempo/i.test(x))||"";
  const invoice=pick(/No\s*Invoice\s*[:：]?\s*([A-Z0-9/-]+)/i);
  const order=pick(/No\s*Pemesanan\s*[:：]?\s*([A-Z0-9/-]+)/i);
  const po=pick(/Tanggal\s*PO\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
  const due=pick(/(?:Jatuh\s*tempo|Tanggal\s*jatuh\s*tempo)\s*[:：]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i);
- // Jumlah tagihan hanya diambil dari baris SUB TOTAL.
- // Gabungkan digit meskipun OCR menyisipkan spasi di pemisah ribuan.
+ // Jumlah tagihan hanya dari area label SUB TOTAL. Cari nominal pada baris itu
+ // dan maksimal dua baris sesudahnya karena OCR kadang memisahkan kolom tabel.
+ const findAmounts=(text)=>{
+   const re=/(?:Rp\s*)?([0-9][0-9.,\s]{2,})/gi; const out=[]; let m;
+   while((m=re.exec(text))!==null){
+     const digits=m[1].replace(/\s/g,"").replace(/[^0-9]/g,"");
+     if(digits.length>=5) out.push({digits,value:Number(digits),index:m.index});
+   }
+   return out;
+ };
  let total="";
  const subtotalIndex=lines.findIndex(line=>/sub\s*total/i.test(line));
- const digitsFromSubtotalText=(text)=>{
-   if(!text)return "";
-   const labelMatch=text.match(/sub\s*total/i);
-   const idx=text.search(/sub\s*total/i);
-   const tail=idx>=0?text.slice(idx+labelMatch[0].length):text;
-   // OCR kadang membaca "Rp7.394.820" sebagai "Rp7.394 820".
-   const candidates=tail.match(/(?:Rp\s*)?\d[\d\s.,]*\d|(?:Rp\s*)?\d/gi)||[];
-   const valid=candidates.map(v=>v.replace(/^Rp\s*/i,"").replace(/\s+/g,"").replace(/[^0-9]/g,"")).filter(v=>v.length>=4);
-   if(!valid.length)return "";
-   valid.sort((a,b)=>b.length-a.length);
-   return valid[0];
- };
  if(subtotalIndex>=0){
-   total=digitsFromSubtotalText(lines[subtotalIndex]);
-   // Jika label dan nominal terpisah, periksa maksimal dua baris berikutnya.
-   if(!total){
-     for(let j=subtotalIndex+1;j<Math.min(lines.length,subtotalIndex+3);j++){
-       if(/^(?:total|nota\s*ke\s*\d*)/i.test(lines[j]))break;
-       const candidate=digitsFromSubtotalText(lines[j]);
-       if(candidate){total=candidate;break;}
-     }
+   const labelLine=lines[subtotalIndex];
+   const labelPos=labelLine.search(/sub\s*total/i);
+   let candidates=findAmounts(labelLine.slice(labelPos+labelLine.match(/sub\s*total/i)[0].length));
+   // Periksa hanya area yang langsung berdekatan dengan label subtotal.
+   for(let j=subtotalIndex+1;j<Math.min(lines.length,subtotalIndex+3);j++){
+     if(/^(?:metode\s*pembayaran|transfer|hormat\s*kami|total\b)/i.test(lines[j])) break;
+     candidates=candidates.concat(findAmounts(lines[j]));
+   }
+   if(candidates.length){
+     // Pilih nominal terbesar di area subtotal; angka kecil seperti "Rp19"
+     // atau nomor halaman tidak memenuhi syarat panjang nominal.
+     candidates.sort((a,b)=>b.value-a.value);
+     total=candidates[0].digits;
    }
  }
  if(supplier && /^(invoice|kepada|no invoice|no pemesanan|tanggal|jatuh tempo)/i.test(supplier))supplier="";
  if(supplier)$("storeName").value=supplier.replace(/^Kepada\s*Yth\.?\s*/i,"").trim();
- if(invoice)$("invoiceNumber").value=invoice;if(order)$("orderNumber").value=order;
- if(po)$("poDate").value=toDateInput(po);if(due)$("dueDate").value=toDateInput(due);if(total)$("receiptTotal").value=parseRupiah(total);
+ if(invoice)$("invoiceNumber").value=invoice;
+ if(order)$("orderNumber").value=order;
+ if(po)$("poDate").value=toDateInput(po);
+ if(due)$("dueDate").value=toDateInput(due);
+ if(total && total.length>=5)$("receiptTotal").value=total;
 }
 async function decodeImageToCanvas(file){
   const maxSide=2000;
