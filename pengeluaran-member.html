@@ -477,39 +477,14 @@ async function muatMember(){
  }
 }
 
-function sumberTransaksi(r){
-  const s=String(r.sumberDana||r.sumber||"").trim().toLowerCase();
-  if(["tabungan","kas","pengelola"].includes(s))return s;
-  const m=String(r.modul||"").trim().toLowerCase();
-  if(m==="member")return "tabungan";
-  if(m==="kas")return "kas";
-  if(m==="pengelola")return "pengelola";
-  const j=String(r.jenisLabel||r.jenis||"").trim().toLowerCase();
-  if(j.includes("pengambilan tabungan"))return "tabungan";
-  if(j.includes("pengelola"))return "pengelola";
-  if(j.includes("transport")||j.includes("acara")||j.includes("lain"))return "kas";
-  return "";
-}
-async function ambilData(){
-  rows=[];
-  const map=new Map();
-  for(const field of ["ownerUid","ownerId","uid"]){
-    const value=field==="uid"?uid:ownerUid;
-    if(!value)continue;
-    try{
-      const s=await getDocs(query(collection(db,"pengeluaran"),where(field,"==",value)));
-      s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
-    }catch(e){console.warn("pengeluaran",field,e.message)}
-  }
-  rows=[...map.values()].filter(r=>!!sumberTransaksi(r));
-}
+async function ambilData(){rows=[];const map=new Map();for(const collectionName of ["pengeluaran","pengeluaranMember"]){for(const field of ["ownerUid","ownerId","uid"]){const value=field==="uid"?uid:ownerUid;if(!value)continue;try{const snap=await getDocs(query(collection(db,collectionName),where(field,"==",value)));snap.docs.forEach(d=>map.set(collectionName+":"+d.id,{id:d.id,...d.data()}))}catch(e){console.warn(collectionName,field,e.message)}}}rows=[...map.values()].filter(r=>{const s=String(r.sumberDana||r.sumber||"").toLowerCase(),m=String(r.modul||"").toLowerCase(),j=String(r.jenis||r.jenisLabel||"").toLowerCase();return m==="member"||["tabungan","kas","pengelola"].includes(s)||j.includes("pengambilan up pengelola")})}
 function render(){
  const period=$("filterBulan").value||monthNow();
  const data=rows.filter(r=>String(r.tanggal||"").startsWith(period)).sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));
- const tabungan=data.filter(r=>sumberTransaksi(r)==="tabungan").reduce((s,r)=>s+(Number(r.nominal)||0),0);
- const kas=data.filter(r=>sumberTransaksi(r)==="kas").reduce((s,r)=>s+(Number(r.nominal)||0),0);
- const pengelola=data.filter(r=>sumberTransaksi(r)==="pengelola").reduce((s,r)=>s+(Number(r.nominal)||0),0);
- $("total").textContent=money(tabungan);$("kas").textContent=money(kas);$("pengelola").textContent=money(pengelola);$("jumlah").textContent=data.length;
+ const total=data.filter(r=>String(r.sumberDana||"").toLowerCase()==="tabungan"||String(r.modul||"").toLowerCase()==="member").reduce((s,r)=>s+(Number(r.nominal)||0),0);
+ const kas=data.filter(r=>String(r.sumberDana||"").toLowerCase()==="kas").reduce((s,r)=>s+(Number(r.nominal)||0),0);
+ const pengelola=data.filter(r=>String(r.sumberDana||"").toLowerCase()==="pengelola"||String(r.jenis||r.jenisLabel||"").toLowerCase().includes("pengambilan up pengelola")).reduce((s,r)=>s+(Number(r.nominal)||0),0);
+ $("total").textContent=money(total);$("kas").textContent=money(kas);$("pengelola").textContent=money(pengelola);$("jumlah").textContent=data.length;
  $("tbody").innerHTML=data.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.tanggal||"-")}</td><td><span class="badge">${esc(r.jenis||"-")}</span></td><td>${esc(r.keterangan||r.memberNama||"-")}</td><td class="num amount">${money(r.nominal)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Belum ada pengeluaran member pada bulan ini.</td></tr>'
 }
 async function simpan(){
@@ -526,15 +501,23 @@ async function simpan(){
  if(sumberDana==="pengelola"&&jenis!=="Pengambilan UP Pengelola"){showPopup("Sumber dana tidak sesuai","Pengelola hanya untuk Pengambilan UP Pengelola.");return}
  if(isTabungan&&!memberId){showPopup("Member belum dipilih","Pilih member untuk pengambilan tabungan.");return}
  try{
+  $("status").textContent="⏳ Memeriksa saldo sumber dana...";
+  if(sumberDana==="kas"||sumberDana==="pengelola"){
+    const saldoSnap=await getDoc(doc(db,"saldo_owner",ownerUid));
+    const saldoData=saldoSnap.exists()?(saldoSnap.data()||{}):{};
+    const field=sumberDana==="kas"?"saldoKas":"saldoPengelola";
+    const available=Number(saldoData[field]);
+    if(Number.isFinite(available)&&available>=0&&nominal>available){
+      showPopup("Saldo tidak mencukupi",`Saldo ${sumberDana==="kas"?"uang kas":"UP Pengelola"} yang tersimpan ${money(available)}. Pengeluaran tidak disimpan.`);
+      $("status").textContent="⚠️ Pengeluaran dibatalkan karena saldo tidak cukup.";
+      return;
+    }
+  }
   $("status").textContent="⏳ Menyimpan pengeluaran member ke Firebase...";
   const modul=sumberDana==="tabungan"?"member":sumberDana;
-  await addDoc(collection(db,"pengeluaran"),{uid,ownerUid,ownerId:ownerUid,email:auth.currentUser?.email||"",namaKonter:namaKonter||"",modul,sumberDana,tanggal,jenis,memberId,memberNama,nominal,keterangan,createdBy:auth.currentUser?.uid||uid,createdAt:serverTimestamp()});
-
-  // Tabungan Member tetap diproses sebagai tabungan. Kas dan UP mengurangi
-  // saldo Owner yang sama dengan yang dibentuk oleh Input Order Member.
+  await addDoc(collection(db,"pengeluaran"),{uid,ownerUid,ownerId:ownerUid,email:auth.currentUser?.email||"",namaKonter:namaKonter||"",modul,sumberDana,tanggal,jenis,memberId,memberNama,memberUid:memberId,employeeUid:memberId,karyawanUid:memberId,nominal,keterangan,createdBy:auth.currentUser?.uid||uid,createdAt:serverTimestamp()});
   if(sumberDana==="kas"||sumberDana==="pengelola"){
-    const saldoRef=doc(db,"saldo_owner",ownerUid);
-    const perubahan={updatedAt:serverTimestamp()};
+    const saldoRef=doc(db,"saldo_owner",ownerUid),perubahan={updatedAt:serverTimestamp()};
     if(sumberDana==="kas")perubahan.saldoKas=increment(-nominal);
     if(sumberDana==="pengelola")perubahan.saldoPengelola=increment(-nominal);
     await setDoc(saldoRef,perubahan,{merge:true});
