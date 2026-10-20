@@ -103,11 +103,21 @@ function month(r){const d=dt(r.approvedAt||r.createdAt||r.tanggal||r.date)||new 
 function memberKey(r){const m=r.member||r.pelanggan||{};return String(r.memberUid||r.memberId||m.uid||m.userId||r.memberEmail||m.email||r.memberNama||m.nama||"")}
 function inPeriod(r){
  const p=$("periode").value;if(p==="all")return true;
- const d=dt(r.approvedAt||r.createdAt||r.tanggal||r.date);if(!d)return true;const n=new Date();
+ const d=dt(r.tanggalLunas||r.paidAt||r.approvedAt||r.tanggal||r.date||r.createdAt);if(!d)return false;const n=new Date();
  return p==="month"?d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth():d.getFullYear()===n.getFullYear();
 }
 function items(r){const a=Array.isArray(r.approvedItems)?r.approvedItems:(Array.isArray(r.items)?r.items:[]);return a.map(x=>({qty:Math.max(0,num(x.approvedQty??x.qty??x.jumlah)),tab:num(x.tabunganPerPcs??r.tabunganPerPcs),up:num(x.upPengelolaPerPcs??r.upPengelolaPerPcs)}))}
-function approved(r){const a=norm(r.approvalStatus),s=norm(r.status);return a==="approved"||["approved","order_member","tagihan","lunas"].includes(s)}
+function approved(r){
+ // Samakan dengan wallet Owner: hanya order yang benar-benar LUNAS.
+ const status=norm(r.status||r.paymentStatus||r.statusPembayaran||r.payment_status||"");
+ const tipe=norm(r.tipeOrder||r.tipeTransaksi||r.jenisTransaksi||r.metodePembayaran||r.paymentMethod||"");
+ const cash=["member_cash","cash","tunai","cash/tunai","cash_tunai","member cash"].includes(tipe);
+ if(cash)return true;
+ if(["lunas","paid","fully_paid","selesai_lunas"].includes(status))return true;
+ const total=Math.max(0,num(r.approvedTotal??r.totalTagihan??r.totalBayar??r.total??0));
+ const paid=Math.max(0,num(r.totalDibayar??r.pembayaran??r.approvedDp??r.dp??r.uangMuka??0));
+ return total>0&&paid>=total;
+}
 function totals(list){
  let qty=0,tab=0,up=0,kas=0,seen=new Set();
  for(const r of list){
@@ -120,24 +130,13 @@ function totals(list){
  }
  return{qty,tab,up,kas}
 }
-function expenseInPeriod(e){
- const p=$("periode").value;
- if(p==="all")return true;
- // Gunakan tanggal transaksi untuk pengeluaran, bukan waktu dokumen dibuat.
- const d=dt(e.tanggal||e.date||e.createdAt);
- if(!d)return false;
- const n=new Date();
- return p==="month"
-  ? d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()
-  : d.getFullYear()===n.getFullYear();
-}
 function expenseTotals(list){
  let tab=0,kas=0,up=0;
- for(const e of list.filter(expenseInPeriod)){
-  const n=Math.max(0,num(e.nominal)),s=norm(e.sumberDana||e.sumber),j=norm(e.jenisLabel||e.jenis),m=norm(e.modul);
-  if(s==="tabungan"||j.includes("pengambilan tabungan")||(!s&&m==="member"))tab+=n;
-  else if(s==="pengelola"||j.includes("pengelola")||(!s&&m==="pengelola"))up+=n;
-  else if(s==="kas"||j.includes("transport")||j.includes("acara")||j.includes("lain")||(!s&&m==="kas"))kas+=n;
+ for(const e of list.filter(inPeriod)){
+  const n=Math.max(0,num(e.nominal)),s=norm(e.sumberDana||e.sumber),j=norm(e.jenisLabel||e.jenis);
+  if(s==="tabungan"||j.includes("pengambilan tabungan"))tab+=n;
+  else if(s.includes("pengelola")||j.includes("pengelola"))up+=n;
+  else if(s.includes("kas")||!s||j.includes("transport")||j.includes("acara")||j.includes("lain"))kas+=n;
  }
  return{tab,kas,up}
 }
@@ -165,9 +164,9 @@ function render(){
  $("qty").textContent=t.qty.toLocaleString("id-ID")+" pcs";
  $("up").textContent=rp(t.up);$("kas").textContent=rp(t.kas);
  $("outTab").textContent=rp(ex.tab);$("outKas").textContent=rp(ex.kas);$("outUp").textContent=rp(ex.up);$("outTotal").textContent=rp(ex.tab+ex.kas+ex.up);
- $("saldoTab").textContent=rp(t.tab-ex.tab);
- $("saldoKas").textContent=rp(t.kas-ex.kas);
- $("saldoUp").textContent=rp(t.up-ex.up);
+ $("saldoTab").textContent=rp(Math.max(0,t.tab-ex.tab));
+ $("saldoKas").textContent=rp(Math.max(0,t.kas-ex.kas));
+ $("saldoUp").textContent=rp(Math.max(0,t.up-ex.up));
  const m=new Map();
  for(const r of os.filter(approved)){
   const k=month(r),xs=items(r),q=xs.reduce((a,x)=>a+x.qty,0),tab=xs.reduce((a,x)=>a+x.qty*x.tab,0),up=xs.reduce((a,x)=>a+x.qty*x.up,0);
