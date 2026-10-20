@@ -111,10 +111,8 @@ function makeProducts(){
 }
 
 function supplierPhone(s){
-  const k=norm(s).toLowerCase().replace(/[^a-z0-9]/g,"");
-  if(k.includes("zevan"))return"6281362292115";
-  if(k.includes("deris"))return"6281917697481";
-  return"";
+  // WhatsApp dibuka tanpa nomor tujuan; supplier tetap mengikuti pengelompokan yang sama.
+  return "";
 }
 
 function render(){
@@ -175,10 +173,8 @@ function render(){
       `</div>`
     ).join("");
 
-    const action=phone
-      ?`<button class="wa" onclick='sendWA(${JSON.stringify(s)})'>📲 Kirim Order ke WhatsApp ${esc(s)}</button>`+
-       `<div style="margin-top:10px;text-align:center;font-weight:900;color:#64748b;font-size:13px">Supplier ${esc(s)} • ${phone.replace(/^62/,"0")}</div>`
-      :`<div style="margin-top:15px;text-align:center;font-weight:900;color:#b45309;font-size:13px">Nomor WhatsApp supplier ${esc(s)} belum diatur.</div>`;
+    const action=
+      `<button class="wa" onclick='sendWA(${JSON.stringify(s)})'>📲 Buka WhatsApp untuk Order ${esc(s)}</button>`;
 
     out+=
       `<section class="card">`+
@@ -257,13 +253,12 @@ function waMessage(supplier){
 }
 
 window.sendWA=(supplier)=>{
-  const phone=supplierPhone(supplier);
   const p=[...products].filter(x=>norm(x.supplier).toLowerCase()===norm(supplier).toLowerCase());
 
   if(!p.length)return notice("Belum ada produk untuk supplier "+supplier+".","err");
-  if(!phone)return notice("Nomor WhatsApp supplier "+supplier+" belum diatur.","err");
 
-  window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(waMessage(supplier)),"_blank");
+  // Buka WhatsApp tanpa nomor distributor, dengan pesan order yang sudah disiapkan.
+  window.open("https://wa.me/?text="+encodeURIComponent(waMessage(supplier)),"_blank");
 };
 
 window.loadOrders=async()=>{
