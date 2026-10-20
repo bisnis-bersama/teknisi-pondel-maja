@@ -83,7 +83,7 @@ function makeProducts(){
       const supplier=x.supplier||"BELUM ADA SUPPLIER";
       const nama=x.nama||"Produk";
       const ident=x.kode?("KODE:"+x.kode.toLowerCase()):("NAMA:"+nama.toLowerCase());
-      const key=[supplier.toLowerCase(),ident].join("|");
+      const key=ident;
       if(!m.has(key)){
         m.set(key,{
           supplier,
@@ -146,44 +146,28 @@ function render(){
     return;
   }
 
-  const groups={};
-  p.forEach(x=>{
-    const s=norm(x.supplier)||"BELUM ADA SUPPLIER";
-    (groups[s]??=[]).push(x);
-  });
-
-  let out="";
-  Object.keys(groups).sort((a,b)=>a.localeCompare(b,"id")).forEach(s=>{
-    const arr=groups[s];
-    const totalS=arr.reduce((a,x)=>a+x.qty,0);
-    const phone=supplierPhone(s);
-
-    const lines=arr.map((x,i)=>
-      `<div class="product">`+
-        `<div>`+
-          `<div class="name">${i+1}. ${esc(x.display||x.nama)}</div>`+
-          `<div class="meta">`+
-            `${x.brand?"Brand: "+esc(x.brand)+" • ":""}`+
-            `${x.tipe?"Tipe: "+esc(x.tipe)+" • ":""}`+
-            `${x.merk?"Merk: "+esc(x.merk)+" • ":""}`+
-            `Kode: ${esc(x.kode||"-")}`+
-          `</div>`+
+  const lines=p.map((x,i)=>
+    `<div class="product">`+
+      `<div>`+
+        `<div class="name">${i+1}. ${esc(x.display||x.nama)}</div>`+
+        `<div class="meta">`+
+          `${x.brand?"Brand: "+esc(x.brand)+" • ":""}`+
+          `${x.tipe?"Tipe: "+esc(x.tipe)+" • ":""}`+
+          `${x.merk?"Merk: "+esc(x.merk)+" • ":""}`+
+          `Kode: ${esc(x.kode||"-")}`+
         `</div>`+
-        `<div class="qty">${x.qty.toLocaleString("id-ID")} pcs</div>`+
-      `</div>`
-    ).join("");
+      `</div>`+
+      `<div class="qty">${x.qty.toLocaleString("id-ID")} pcs</div>`+
+    `</div>`
+  ).join("");
 
-    const action=
-      `<button class="wa" onclick='sendWA(${JSON.stringify(s)})'>📲 Buka WhatsApp untuk Order ${esc(s)}</button>`;
+  $("list").innerHTML=
+    `<section class="card">`+
+      `<h2>SEMUA PRODUK <span style="float:right;font-size:13px;color:#64748b">${total.toLocaleString("id-ID")} pcs</span></h2>`+
+      `${lines}`+
+      `<button class="wa" onclick="sendWA()">📲 Buka WhatsApp untuk Semua Order</button>`+
+    `</section>`;
 
-    out+=
-      `<section class="card">`+
-        `<h2>SUPPLIER: ${esc(s)} <span style="float:right;font-size:13px;color:#64748b">${totalS.toLocaleString("id-ID")} pcs</span></h2>`+
-        `${lines}${action}`+
-      `</section>`;
-  });
-
-  $("list").innerHTML=out;
 }
 
 function esc(s){
@@ -214,51 +198,26 @@ function cleanProductName(x){
     : (norm(x.nama) || "Produk");
 }
 
-function waMessage(supplier){
-  const p=[...products]
-    .filter(x=>
-      norm(x.supplier).toLowerCase() ===
-      norm(supplier).toLowerCase()
-    )
-    .sort((a,b)=>
-      a.display.localeCompare(b.display,"id")
-    );
-
-  let t="*Order produk komunitas TEKNISI PONSEL MAJA*\n\n";
-
+function waMessage(){
+  const p=[...products].sort((a,b)=>
+    (a.display||a.nama).localeCompare((b.display||b.nama),"id")
+  );
+  let t="*Order produk komunitas TEKNISI PONSEL MAJA*\\n\\n";
   p.forEach((x,i)=>{
     const nama=norm(x.display)||norm(x.nama)||"Produk";
     const kode=norm(x.kode);
-
     t+=`${i+1}. ${nama}`;
-
-    // Kode hanya ditampilkan jika berbeda dari nama produk
-    if(
-      kode &&
-      kode.toLowerCase() !== nama.toLowerCase()
-    ){
-      t+=` (${kode})`;
-    }
-
-    t+=` — *${x.qty} pcs*\n`;
+    if(kode && kode.toLowerCase() !== nama.toLowerCase()) t+=` (${kode})`;
+    t+=` — *${x.qty} pcs*\\n`;
   });
-
   const total=p.reduce((a,x)=>a+x.qty,0);
-
-  t+=`\n*TOTAL: ${total} pcs*`;
-  t+=`\n\nMohon diproses sesuai orderan.`;
-  t+=`\nTerima kasih.`;
-
+  t+=`\\n*TOTAL: ${total} pcs*\\n\\nMohon diproses sesuai orderan.\\nTerima kasih.`;
   return t;
 }
 
-window.sendWA=(supplier)=>{
-  const p=[...products].filter(x=>norm(x.supplier).toLowerCase()===norm(supplier).toLowerCase());
-
-  if(!p.length)return notice("Belum ada produk untuk supplier "+supplier+".","err");
-
-  // Buka WhatsApp tanpa nomor distributor, dengan pesan order yang sudah disiapkan.
-  window.open("https://wa.me/?text="+encodeURIComponent(waMessage(supplier)),"_blank");
+window.sendWA=()=>{
+  if(!products.length)return notice("Belum ada produk untuk dipesan.","err");
+  window.open("https://wa.me/?text="+encodeURIComponent(waMessage()),"_blank");
 };
 
 window.loadOrders=async()=>{
