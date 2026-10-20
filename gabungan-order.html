@@ -199,19 +199,17 @@ function cleanProductName(x){
 }
 
 function waMessage(){
-  const p=[...products].sort((a,b)=>
-    (a.display||a.nama).localeCompare((b.display||b.nama),"id")
-  );
-  let t="*Order produk komunitas TEKNISI PONSEL MAJA*\\n\\n";
+  const p=[...products].sort((a,b)=>(a.display||a.nama).localeCompare((b.display||b.nama),"id"));
+  let t="*Order produk komunitas TEKNISI PONSEL MAJA*\n\n";
   p.forEach((x,i)=>{
     const nama=norm(x.display)||norm(x.nama)||"Produk";
     const kode=norm(x.kode);
     t+=`${i+1}. ${nama}`;
     if(kode && kode.toLowerCase() !== nama.toLowerCase()) t+=` (${kode})`;
-    t+=` — *${x.qty} pcs*\\n`;
+    t+=` — *${x.qty} pcs*\n`;
   });
   const total=p.reduce((a,x)=>a+x.qty,0);
-  t+=`\\n*TOTAL: ${total} pcs*\\n\\nMohon diproses sesuai orderan.\\nTerima kasih.`;
+  t+=`\n*TOTAL: ${total} pcs*\n\nMohon diproses sesuai orderan.\nTerima kasih.`;
   return t;
 }
 
