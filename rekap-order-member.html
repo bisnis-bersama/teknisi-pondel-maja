@@ -338,29 +338,29 @@ function itemList(r){
 
   const diskon=Math.max(0,num(item.diskon??item.discount??sourceItem.diskon??0));
 
-  // Nilai barang murni.
-  // Prioritas: hargaDasar tersimpan -> harga stok/modal -> harga tempo/jual
-  // -> harga gabungan dikurangi Tabungan + UP.
-  let hargaDasar=positiveFrom(
-   item.hargaDasar,
-   sourceItem.hargaDasar,
-   item.hargaAwal,
-   sourceItem.hargaAwal
-  );
+  // Ambil harga sesuai jenis pembayaran yang dipilih saat input order.
+  // Approval menyimpan harga tunai/tempo pada field khusus; rekap harus
+  // membaca field yang sesuai terlebih dahulu, bukan mendahulukan hargaDasar.
+  let hargaDasar=0;
+  if(isCashOrder(r)){
+   hargaDasar=positiveFrom(
+    item.hargaCash,sourceItem.hargaCash,
+    item.modalSatuan,sourceItem.modalSatuan,
+    item.hargaModal,sourceItem.hargaModal
+   );
+  }else{
+   hargaDasar=positiveFrom(
+    item.hargaTempo,sourceItem.hargaTempo,
+    item.hargaJual,sourceItem.hargaJual
+   );
+  }
 
+  // Cadangan untuk data approval lama yang tidak menyimpan field harga khusus.
   if(!hargaDasar){
-   if(isCashOrder(r)){
-    hargaDasar=positiveFrom(
-     item.hargaCash,sourceItem.hargaCash,
-     item.modalSatuan,sourceItem.modalSatuan,
-     item.hargaModal,sourceItem.hargaModal
-    );
-   }else{
-    hargaDasar=positiveFrom(
-     item.hargaTempo,sourceItem.hargaTempo,
-     item.hargaJual,sourceItem.hargaJual
-    );
-   }
+   hargaDasar=positiveFrom(
+    item.hargaDasar,sourceItem.hargaDasar,
+    item.hargaAwal,sourceItem.hargaAwal
+   );
   }
 
   if(!hargaDasar){
