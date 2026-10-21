@@ -338,33 +338,39 @@ function itemList(r){
 
   const diskon=Math.max(0,num(item.diskon??item.discount??sourceItem.diskon??0));
 
-  // Harga rekap wajib mengikuti jenis order:
-  // TEMPO memakai hargaJual; TUNAI memakai hargaDasar.
-  // Field harga dari item yang disimpan diprioritaskan, lalu fallback ke sourceItem.
-  let hargaDasar=0;
-  if(isCashOrder(r)){
-   hargaDasar=positiveFrom(
-    item.hargaDasar,sourceItem.hargaDasar,
-    item.hargaCash,sourceItem.hargaCash,
-    item.modalSatuan,sourceItem.modalSatuan,
-    item.hargaAwal,sourceItem.hargaAwal
-   );
-  }else{
-   hargaDasar=positiveFrom(
-    item.hargaJual,sourceItem.hargaJual,
-    item.hargaTempo,sourceItem.hargaTempo,
-    item.hargaMemberPerPcs,sourceItem.hargaMemberPerPcs,
-    item.harga,sourceItem.harga,
-    item.hargaDasar,sourceItem.hargaDasar,
-    item.hargaAwal,sourceItem.hargaAwal
-   );
+  // Nilai barang murni.
+  // Prioritas: hargaDasar tersimpan -> harga stok/modal -> harga tempo/jual
+  // -> harga gabungan dikurangi Tabungan + UP.
+  let hargaDasar=positiveFrom(
+   item.hargaDasar,
+   sourceItem.hargaDasar,
+   item.hargaAwal,
+   sourceItem.hargaAwal
+  );
+
+  if(!hargaDasar){
+   if(isCashOrder(r)){
+    hargaDasar=positiveFrom(
+     item.hargaCash,sourceItem.hargaCash,
+     item.modalSatuan,sourceItem.modalSatuan,
+     item.hargaModal,sourceItem.hargaModal
+    );
+   }else{
+    hargaDasar=positiveFrom(
+     item.hargaTempo,sourceItem.hargaTempo,
+     item.hargaJual,sourceItem.hargaJual
+    );
+   }
   }
 
   if(!hargaDasar){
    const hargaGabungan=positiveFrom(
-    item.hargaMemberPerPcs,sourceItem.hargaMemberPerPcs,
-    item.harga,sourceItem.harga,
-    r.hargaMemberPerPcs,r.harga
+    item.hargaMemberPerPcs,
+    sourceItem.hargaMemberPerPcs,
+    item.harga,
+    sourceItem.harga,
+    r.hargaMemberPerPcs,
+    r.harga
    );
    if(hargaGabungan>0)hargaDasar=Math.max(0,hargaGabungan-tabungan-up);
   }
