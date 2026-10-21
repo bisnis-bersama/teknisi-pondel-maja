@@ -356,8 +356,13 @@ function syncTempoPricesForCard(card){
  els.forEach((el,i)=>{
    const x=items[i];if(!x)return;
    const selectedId=el.dataset.selectedProduct||x.produkId;
-   const p=stockCatalog.find(z=>String(z.id)===String(selectedId))
-      ||stockCatalog.find(z=>String(z.kode||z.kodeProduk)===String(x.kode||x.kodeProduk));
+   // Utamakan baris spreadsheet yang cocok kode/nama agar harga tempo terbaru
+   // tidak tertimpa dokumen katalog lama yang kebetulan punya ID sama.
+   const codeKey=String(x.kode||x.kodeProduk||"").trim().toLowerCase();
+   const nameKey=String(x.nama||x.namaProduk||"").trim().toLowerCase();
+   const p=stockCatalog.find(z=>codeKey && String(z.kode||z.kodeProduk||"").trim().toLowerCase()===codeKey)
+      ||stockCatalog.find(z=>nameKey && String(z.nama||z.namaProduk||"").trim().toLowerCase()===nameKey)
+      ||stockCatalog.find(z=>String(z.id)===String(selectedId));
    if(!p)return;
    const tab=firstPositive(x?.tabunganPerPcs,x?.tabungan,r?.tabunganPerPcs,r?.tabunganMember);
    const up=firstPositive(x?.upPengelolaPerPcs,x?.upPengelola,r?.upPengelolaPerPcs,r?.upPengelola,profile?.upPengelolaPerPcs,profile?.upPengelola,profile?.up);
@@ -784,8 +789,13 @@ window.approveOrder=async id=>{
  const approved=original.map((x,i)=>{
   const el=card.querySelectorAll(".item")[i];if(!el)return null;
   const selectedId=el.dataset.selectedProduct||x.produkId;
-  const p=stockCatalog.find(z=>String(z.id)===String(selectedId))||
-          stockCatalog.find(z=>String(z.kode||z.kodeProduk)===String(x.kode))||x;
+  // Harga spreadsheet adalah sumber harga terbaru. Cocokkan kode/nama dahulu,
+  // karena ID produk lama di Firebase bisa menunjuk katalog dengan harga modal.
+  const codeKey=String(x.kode||x.kodeProduk||"").trim().toLowerCase();
+  const nameKey=String(x.nama||x.namaProduk||"").trim().toLowerCase();
+  const p=stockCatalog.find(z=>codeKey && String(z.kode||z.kodeProduk||"").trim().toLowerCase()===codeKey)||
+          stockCatalog.find(z=>nameKey && String(z.nama||z.namaProduk||"").trim().toLowerCase()===nameKey)||
+          stockCatalog.find(z=>String(z.id)===String(selectedId))||x;
   const q=Math.max(0,Number(el.querySelector(".approved")?.value)||0);
   const tab=firstPositive(x?.tabunganPerPcs,x?.tabungan,r?.tabunganPerPcs,r?.tabunganMember);
   const up=firstPositive(x?.upPengelolaPerPcs,x?.upPengelola,r?.upPengelolaPerPcs,r?.upPengelola,profile?.upPengelolaPerPcs,profile?.upPengelola,profile?.up);
@@ -849,9 +859,11 @@ window.approveOrder=async id=>{
     const catalogTempoBase=Math.max(0,Number(x.hargaTempo)||0);
     const catalogCashBase=Math.max(0,Number(x.hargaCash)||0);
     const baseFromStored=Number(x.hargaDasar??bx.hargaDasar)||0;
+    // Harga dasar harus berasal dari harga katalog sesuai jenis order.
+    // Harga final tetap harga yang disetujui (harga per pcs + tabungan + UP).
     const base=Math.max(0,isCash(freshData)
-      ? (catalogCashBase||finalPrice-up-tab||baseFromStored)
-      : (catalogTempoBase||baseFromStored));
+      ? (catalogCashBase||baseFromStored||finalPrice-up-tab)
+      : (catalogTempoBase||baseFromStored||finalPrice-up-tab));
     const diskon=Math.min(Math.max(0,Number(x.diskon)||0),finalPrice*qty);
     return {
      ...x,
