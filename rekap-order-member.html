@@ -171,20 +171,9 @@ function ownerOf(d){
 }
 
 function isCashOrder(r){
- // Field eksplisit dari approval menjadi sumber utama. Jangan sampai field lama
- // bernilai cash mengalahkan jenis harga terbaru yang sudah ditetapkan tempo.
- const jenis=String(r?.jenisHarga??"").trim().toLowerCase();
- if(jenis==="tempo"||jenis==="kredit"||jenis==="member_tempo")return false;
- if(jenis==="cash"||jenis==="tunai"||jenis==="cash/tunai"||jenis==="cash_tunai")return true;
- const tipe=String(r?.tipeOrder??"").trim().toLowerCase();
- if(tipe==="member_tempo"||tipe==="tempo")return false;
- if(tipe==="member_cash"||tipe==="cash"||tipe==="tunai")return true;
- const transaksi=String(r?.tipeTransaksi??"").trim().toLowerCase();
- if(transaksi==="member_tempo"||transaksi==="tempo")return false;
- if(transaksi==="member_cash"||transaksi==="cash"||transaksi==="tunai")return true;
- const vals=[r?.paymentType,r?.metodePembayaran,r?.jenisPembayaran,r?.caraBayar]
+ const vals=[r.tipeOrder,r.tipeTransaksi,r.jenisHarga,r.paymentType,r.metodePembayaran,r.jenisPembayaran,r.caraBayar]
    .map(v=>String(v??"").trim().toLowerCase());
- return vals.some(v=>["cash","tunai","cash/tunai","cash_tunai","member cash"].includes(v));
+ return vals.some(v=>["member_cash","cash","tunai","cash/tunai","cash_tunai","member cash"].includes(v));
 }
 
 function orderStatus(r){
@@ -252,27 +241,27 @@ function basePriceOfItem(x,r={}){
    has(r,"tabunganPerPcs")?numv(r.tabunganPerPcs):
    has(r,"tabungan")?numv(r.tabungan):0;
 
- // Utamakan harga katalog khusus jenis order; hargaDasar pada data lama
- // terkadang masih berisi modal walaupun order menggunakan harga tempo.
+ // hargaDasar = nilai barang murni per PCS yang sudah terurai.
+ if(has(x,"hargaDasar")) return Math.max(0,numv(x.hargaDasar));
+
+ // Jika nilaiBarang tersedia, field ini sudah merupakan TOTAL nilai barang item.
+ // Pemanggil itemList menangani nilai total tersebut secara langsung.
+ if(has(x,"nilaiBarang")){
+   const qty=Math.max(1,numv(x.qty??x.jumlah??x.quantity??1));
+   return Math.max(0,numv(x.nilaiBarang)/qty);
+ }
+
+ // Jika Firebase hanya menyimpan harga gabungan, uraikan Tabungan + UP.
  const candidates=cash
-   ? ["hargaCash","modalSatuan"]
-   : ["hargaTempo","hargaJual"];
+   ? ["hargaCash","modalSatuan","harga"]
+   : ["hargaTempo","hargaJual","harga"];
+
  for(const k of candidates){
    if(has(x,k)){
      const v=numv(x[k]);
-     if(v>0)return Math.max(0,v);
+     if(v>0)return Math.max(0,v-up-tab);
    }
  }
- // hargaDasar hanya dipakai sebagai fallback untuk data lama.
- if(has(x,"hargaDasar") && numv(x.hargaDasar)>0) return Math.max(0,numv(x.hargaDasar));
- if(has(x,"nilaiBarang")){
-   const qty=Math.max(1,numv(x.qty??x.jumlah??x.quantity??1));
-   const v=numv(x.nilaiBarang)/qty;
-   if(v>0)return Math.max(0,v);
- }
- // Harga gabungan disimpan per pcs; pisahkan tabungan dan UP.
- const combined=numv(x.hargaMemberPerPcs??x.harga??x.hargaJual);
- if(combined>0)return Math.max(0,combined-up-tab);
  return 0;
 }
 
@@ -349,26 +338,23 @@ function itemList(r){
 
   const diskon=Math.max(0,num(item.diskon??item.discount??sourceItem.diskon??0));
 
-  // Ambil harga sesuai jenis pembayaran yang dipilih saat input order.
-  // Approval menyimpan harga tunai/tempo pada field khusus; rekap harus
-  // membaca field yang sesuai terlebih dahulu, bukan mendahulukan hargaDasar.
+  // Harga rekap wajib mengikuti jenis order:
+  // TEMPO memakai hargaJual; TUNAI memakai hargaDasar.
+  // Field harga dari item yang disimpan diprioritaskan, lalu fallback ke sourceItem.
   let hargaDasar=0;
   if(isCashOrder(r)){
    hargaDasar=positiveFrom(
+    item.hargaDasar,sourceItem.hargaDasar,
     item.hargaCash,sourceItem.hargaCash,
     item.modalSatuan,sourceItem.modalSatuan,
-    item.hargaModal,sourceItem.hargaModal
+    item.hargaAwal,sourceItem.hargaAwal
    );
   }else{
    hargaDasar=positiveFrom(
+    item.hargaJual,sourceItem.hargaJual,
     item.hargaTempo,sourceItem.hargaTempo,
-    item.hargaJual,sourceItem.hargaJual
-   );
-  }
-
-  // Cadangan untuk data approval lama yang tidak menyimpan field harga khusus.
-  if(!hargaDasar){
-   hargaDasar=positiveFrom(
+    item.hargaMemberPerPcs,sourceItem.hargaMemberPerPcs,
+    item.harga,sourceItem.harga,
     item.hargaDasar,sourceItem.hargaDasar,
     item.hargaAwal,sourceItem.hargaAwal
    );
@@ -376,12 +362,9 @@ function itemList(r){
 
   if(!hargaDasar){
    const hargaGabungan=positiveFrom(
-    item.hargaMemberPerPcs,
-    sourceItem.hargaMemberPerPcs,
-    item.harga,
-    sourceItem.harga,
-    r.hargaMemberPerPcs,
-    r.harga
+    item.hargaMemberPerPcs,sourceItem.hargaMemberPerPcs,
+    item.harga,sourceItem.harga,
+    r.hargaMemberPerPcs,r.harga
    );
    if(hargaGabungan>0)hargaDasar=Math.max(0,hargaGabungan-tabungan-up);
   }
