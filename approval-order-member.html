@@ -789,13 +789,17 @@ window.approveOrder=async id=>{
   const q=Math.max(0,Number(el.querySelector(".approved")?.value)||0);
   const tab=firstPositive(x?.tabunganPerPcs,x?.tabungan,r?.tabunganPerPcs,r?.tabunganMember);
   const up=firstPositive(x?.upPengelolaPerPcs,x?.upPengelola,r?.upPengelolaPerPcs,r?.upPengelola,profile?.upPengelolaPerPcs,profile?.upPengelola,profile?.up);
-  const tempoBase=firstPositive(p?.hargaTempo,p?.jual,x?.hargaTempo,x?.jual,x?.hargaDasar);
-  const cashBase=firstPositive(p?.hargaCash,p?.modal,x?.hargaCash,x?.modalSatuan,x?.hargaDasar);
+  // Ambil harga dasar sesuai jenis pembayaran. Jangan biarkan hargaDasar
+  // dari katalog (yang bisa berupa modal) menimpa harga TEMPO saat disimpan.
+  const cash=isCash(r);
+  const tempoBase=firstPositive(p?.hargaTempo,p?.jual,x?.hargaTempo,x?.jual);
+  const cashBase=firstPositive(p?.hargaCash,p?.modal,p?.modalSatuan,x?.hargaCash,x?.modalSatuan);
+  const base=cash?cashBase:tempoBase;
   const manualHarga=Math.max(0,Number(el.querySelector(".price")?.value)||0);
-  const harga=isCash(r) ? (manualHarga||cashBase+tab+up) : (tempoBase+tab+up);
+  const harga=cash?(manualHarga||base+tab+up):(base+tab+up);
   return {...x,...p,produkId:p.produkId||p.id||x.produkId,nama:stockName(p)||x.nama,kode:stockCode(p)||x.kode,
-          harga:Math.max(0,harga),hargaDasar:isCash(r)?cashBase:tempoBase,hargaTempo:tempoBase,hargaCash:cashBase,
-          hargaJual:tempoBase,tabunganPerPcs:tab,upPengelolaPerPcs:up,
+          harga:Math.max(0,harga),hargaDasar:base,hargaAwal:base,hargaTempo:tempoBase,hargaCash:cashBase,
+          hargaJual:Math.max(0,harga),tabunganPerPcs:tab,upPengelolaPerPcs:up,
           modalSatuan:stockModal(p)||Number(x.modalSatuan)||0,approvedQty:q};
  }).filter(x=>x&&x.approvedQty>0);
  if(!approved.length)return msg("Minimal satu produk harus disetujui.","err");
@@ -843,9 +847,10 @@ window.approveOrder=async id=>{
     const up=Number(bx.upPengelolaPerPcs)||0;
     const finalPrice=Math.max(0,Number(x.harga)||0);
     const catalogTempoBase=Math.max(0,Number(x.hargaTempo)||0);
-    const baseFromStored=Number(bx.hargaDasar)||0;
+    const catalogCashBase=Math.max(0,Number(x.hargaCash)||0);
+    const baseFromStored=Number(x.hargaDasar??bx.hargaDasar)||0;
     const base=Math.max(0,isCash(freshData)
-      ? (finalPrice-up-tab||baseFromStored)
+      ? (catalogCashBase||finalPrice-up-tab||baseFromStored)
       : (catalogTempoBase||baseFromStored));
     const diskon=Math.min(Math.max(0,Number(x.diskon)||0),finalPrice*qty);
     return {
