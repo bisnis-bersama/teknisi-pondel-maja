@@ -351,8 +351,8 @@ async function loadSpreadsheetCatalog(){
 function syncTempoPricesForCard(card){
  if(!card)return;
  const orderId=card.dataset.id,r=rows.find(x=>x.id===orderId);
- if(!r||isCash(r)||!stockCatalog?.length)return;
- const items=normalizeItems(r),els=card.querySelectorAll(".item");
+ if(!r||!stockCatalog?.length)return;
+ const cash=isCash(r),items=normalizeItems(r),els=card.querySelectorAll(".item");
  els.forEach((el,i)=>{
    const x=items[i];if(!x)return;
    const selectedId=el.dataset.selectedProduct||x.produkId;
@@ -361,7 +361,11 @@ function syncTempoPricesForCard(card){
    if(!p)return;
    const tab=firstPositive(x?.tabunganPerPcs,x?.tabungan,r?.tabunganPerPcs,r?.tabunganMember);
    const up=firstPositive(x?.upPengelolaPerPcs,x?.upPengelola,r?.upPengelolaPerPcs,r?.upPengelola,profile?.upPengelolaPerPcs,profile?.upPengelola,profile?.up);
-   const base=firstPositive(p?.hargaTempo,p?.jual,x?.hargaTempo,x?.hargaDasar);
+   // Pilih harga dasar berdasarkan jenis order member, bukan hargaDasar
+   // yang pada katalog spreadsheet bisa berisi harga modal.
+   const base=cash
+     ? firstPositive(p?.hargaCash,p?.modal,p?.modalSatuan,x?.hargaCash,x?.modalSatuan)
+     : firstPositive(p?.hargaTempo,p?.jual,x?.hargaTempo,x?.jual);
    if(!base)return;
    const input=el.querySelector(".price");
    if(input)input.value=base+tab+up;
